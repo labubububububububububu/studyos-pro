@@ -1,0 +1,3320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Coach CGU – StudyOS Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --transition: 0.25s ease;
+            --primary: #8b5cf6;
+            --bg: #0b0d1a;
+            --surface: rgba(20, 25, 45, 0.7);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --radius: 24px;
+            --radius-sm: 16px;
+            --radius-xs: 10px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.3);
+            --border: 1px solid rgba(255, 255, 255, 0.04);
+            --border-light: 1px solid rgba(255, 255, 255, 0.06);
+            --border-hover: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            background-image: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 60%), radial-gradient(circle at 90% 80%, rgba(0, 200, 255, 0.04) 0%, transparent 60%);
+        }
+        .app {
+            width: 100%;
+            max-width: 1600px;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            border: var(--border-light);
+            padding: 20px 24px 28px;
+            position: relative;
+            overflow: hidden;
+            transition: all .3s ease;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+        }
+        .app::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.06), transparent 60%), radial-gradient(circle at 70% 60%, rgba(0, 200, 255, 0.04), transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: rotateGlow 60s linear infinite;
+        }
+        @keyframes rotateGlow {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.4);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.7);
+        }
+        input,
+        select,
+        button,
+        textarea {
+            font-family: inherit;
+        }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .logo h1 small {
+            font-size: 0.7rem;
+            font-weight: 400;
+            background: rgba(255, 255, 255, 0.06);
+            -webkit-text-fill-color: #94a3b8;
+            padding: 0 14px;
+            border-radius: 40px;
+            line-height: 2;
+            border: var(--border-light);
+            backdrop-filter: blur(4px);
+        }
+        .top-stats {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px 14px;
+            border-radius: 60px;
+            border: var(--border);
+            font-size: .85rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+        .stat-item .value {
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        .stat-item .value.danger {
+            color: #f87171;
+        }
+        .stat-item .value.warning {
+            color: #fbbf24;
+        }
+        .stat-item .value.success {
+            color: #4ade80;
+        }
+        .progress-ring {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: conic-gradient(#8b5cf6 var(--pct, 0%), rgba(255, 255, 255, 0.05) var(--pct, 0%));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .7rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        .progress-ring::after {
+            content: attr(data-label);
+        }
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.04);
+            border: var(--border-light);
+            color: #e2e8f0;
+            padding: 6px 16px;
+            border-radius: 60px;
+            font-size: .75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: scale(1.02);
+        }
+        .btn-glass.primary {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .btn-glass.primary:hover {
+            background: rgba(139, 92, 246, 0.35);
+        }
+        .btn-glass.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .btn-glass.success {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+        .btn-glass.warning {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 280px;
+            background: rgba(12, 16, 30, 0.95);
+            backdrop-filter: blur(30px);
+            border-right: var(--border);
+            transform: translateX(-100%);
+            transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+            z-index: 1000;
+            padding: 24px 18px;
+            overflow-y: auto;
+            box-shadow: 20px 0 60px rgba(0, 0, 0, 0.5);
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 18px;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: .2s;
+        }
+        .sidebar .close-btn:hover {
+            color: #e2e8f0;
+            transform: rotate(90deg);
+        }
+        .sidebar .logo-side {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .nav-list li {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 16px;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: .2s;
+            color: #94a3b8;
+            font-weight: 500;
+            font-size: .9rem;
+        }
+        .nav-list li:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: #e2e8f0;
+        }
+        .nav-list li.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            border-left: 3px solid #8b5cf6;
+        }
+        .nav-list li .icon {
+            font-size: 1.2rem;
+            width: 28px;
+            text-align: center;
+        }
+        .nav-list li .badge {
+            margin-left: auto;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            font-size: .65rem;
+            padding: 0 8px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
+        .main-content {
+            position: relative;
+            z-index: 2;
+        }
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 1.6rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 12px;
+            transition: .2s;
+        }
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .page {
+            display: none;
+            animation: fadeIn .4s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius);
+            border: var(--border);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            transition: .3s ease;
+            box-shadow: var(--shadow);
+        }
+        .card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-lg);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .card-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-header .sub {
+            font-size: .75rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .mission-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(0, 200, 255, 0.1));
+            border-radius: 28px;
+            padding: 24px;
+            text-align: center;
+            border: var(--border-light);
+            margin-bottom: 20px;
+        }
+        .mission-card .label {
+            font-size: 0.9rem;
+            color: #a78bfa;
+            font-weight: 600;
+        }
+        .mission-card .title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 8px 0;
+        }
+        .mission-card .sub {
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .mission-card .time {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .mission-card .action-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            background: rgba(139, 92, 246, 0.2);
+            color: #e2e8f0;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: var(--transition);
+        }
+        .btn-action:hover {
+            background: rgba(139, 92, 246, 0.35);
+        }
+        .btn-action.pause {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+        .btn-action.pause:hover {
+            background: rgba(251, 191, 36, 0.3);
+        }
+        .btn-action.stop {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .btn-action.stop:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        .btn-action.skip {
+            background: rgba(100, 116, 139, 0.2);
+            border-color: rgba(100, 116, 139, 0.3);
+        }
+        .btn-action.skip:hover {
+            background: rgba(100, 116, 139, 0.35);
+        }
+        .justify-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        .indicator-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: var(--border);
+        }
+        .indicator-card .number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #a78bfa;
+        }
+        .indicator-card .label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .discipline {
+            margin-bottom: 12px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .discipline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .discipline-header:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .disc-name {
+            font-weight: 600;
+        }
+        .disc-stats {
+            font-size: 0.85rem;
+            color: #a78bfa;
+        }
+        .discipline-body {
+            display: none;
+            padding: 0 16px 12px;
+        }
+        .discipline-body.open {
+            display: block;
+        }
+        .lesson-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            flex-wrap: wrap;
+        }
+        .lesson-item.done {
+            opacity: 0.6;
+        }
+        .lesson-title {
+            flex: 1;
+            min-width: 200px;
+            font-size: 0.9rem;
+        }
+        .forget-indicator {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 30px;
+            white-space: nowrap;
+        }
+        .forget-indicator.low {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+        .forget-indicator.medium {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+        .forget-indicator.high {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+        .btn-anotacoes {
+            background: none;
+            border: var(--border-light);
+            color: #94a3b8;
+            border-radius: 30px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-anotacoes:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #e2e8f0;
+        }
+        .text-muted {
+            color: #64748b;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: rgba(20, 25, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius);
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .close-modal {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        .close-modal:hover {
+            color: #fff;
+        }
+        .modal-body textarea {
+            width: 100%;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.2);
+            border: var(--border-light);
+            color: #e2e8f0;
+            padding: 8px;
+            border-radius: 12px;
+            resize: vertical;
+        }
+        .modal-body input[type="number"] {
+            background: rgba(0, 0, 0, 0.2);
+            border: var(--border-light);
+            color: #e2e8f0;
+            padding: 8px;
+            border-radius: 12px;
+        }
+        .file-input-wrapper {
+            margin-top: 8px;
+        }
+        .image-preview img {
+            max-width: 100px;
+            margin: 4px;
+            border-radius: 8px;
+        }
+        .tema {
+            background: rgba(139, 92, 246, 0.2);
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            margin: 2px;
+            display: inline-block;
+        }
+        .arquiteto-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .arquiteto-chat {
+            grid-column: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius);
+            border: var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            overflow: hidden;
+        }
+        .arquiteto-chat .messages {
+            flex: 1;
+            padding: 16px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .arquiteto-chat .messages .msg {
+            max-width: 85%;
+            padding: 10px 16px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: .9rem;
+        }
+        .arquiteto-chat .messages .msg.user {
+            align-self: flex-end;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-bottom-right-radius: 4px;
+        }
+        .arquiteto-chat .messages .msg.bot {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.04);
+            border: var(--border);
+            border-bottom-left-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .arquiteto-chat .input-area {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .arquiteto-chat .input-area input {
+            flex: 1;
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: var(--border-light);
+            background: rgba(0, 0, 0, 0.2);
+            color: #e2e8f0;
+            font-size: .9rem;
+            outline: none;
+        }
+        .arquiteto-chat .input-area input:focus {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .arquiteto-chat .input-area button {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .arquiteto-side {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .arquiteto-side .notif-item {
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid #8b5cf6;
+            margin-bottom: 6px;
+            font-size: .85rem;
+        }
+        .historico-item {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            font-size: .85rem;
+        }
+        .badge-risk {
+            display: inline-block;
+            padding: 0 10px;
+            border-radius: 30px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+        .badge-risk.low {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+        .badge-risk.medium {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+        .badge-risk.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+        .policy-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .policy-selector label {
+            color: #94a3b8;
+            font-size: .85rem;
+        }
+        .policy-selector select {
+            background: rgba(0, 0, 0, 0.3);
+            border: var(--border-light);
+            color: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: .85rem;
+        }
+        .flashcard {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 400px;
+            height: 200px;
+            margin: 16px auto;
+            cursor: pointer;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.04);
+            border: var(--border-light);
+            text-align: center;
+            font-size: 1rem;
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background: rgba(139, 92, 246, 0.1);
+        }
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: var(--border-light);
+            background: rgba(0, 0, 0, 0.2);
+            color: #e2e8f0;
+            font-size: .9rem;
+            outline: none;
+        }
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .gamification-xp {
+            font-size: 0.85rem;
+            color: #fbbf24;
+        }
+        .gamification-level {
+            font-size: 0.75rem;
+            background: rgba(139, 92, 246, 0.2);
+            padding: 2px 10px;
+            border-radius: 30px;
+        }
+        .goal-progress {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 4px 0;
+        }
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6, #60a5fa);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .progresso-grid-estatisticas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .progresso-grid-graficos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            border: var(--border);
+            min-height: 260px;
+            position: relative;
+        }
+        .chart-container canvas {
+            max-height: 250px;
+        }
+        .lei-detalhe {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .lei-detalhe input {
+            width: 60px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border: var(--border-light);
+            color: #e2e8f0;
+            font-size: .8rem;
+        }
+        .lei-detalhe .btn-anotacoes {
+            font-size: .7rem;
+            padding: 2px 8px;
+        }
+        .questoes-badge {
+            background: rgba(96, 165, 250, 0.15);
+            color: #60a5fa;
+            font-size: .7rem;
+            padding: 1px 8px;
+            border-radius: 20px;
+            margin-left: 4px;
+        }
+        @media (max-width: 900px) {
+            .arquiteto-container {
+                grid-template-columns: 1fr;
+            }
+            .arquiteto-chat {
+                height: 400px;
+            }
+            .progresso-grid-graficos {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .app {
+                padding: 12px;
+                border-radius: 24px;
+            }
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .top-stats {
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .sidebar {
+                width: 100%;
+                max-width: 280px;
+            }
+            .card {
+                padding: 14px 16px;
+            }
+            .arquiteto-chat {
+                height: 350px;
+            }
+            .flashcard {
+                height: 160px;
+            }
+            .progresso-grid-graficos {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <div class="sidebar" id="sidebar">
+            <span class="close-btn" id="closeSidebar">&times;</span>
+            <div class="logo-side">🎯 Coach CGU</div>
+            <ul class="nav-list" id="navList">
+                <li class="active" data-page="page-home"><span class="icon">🏠</span> Missão do Dia</li>
+                <li data-page="page-bloco1"><span class="icon">📚</span> Bloco 1</li>
+                <li data-page="page-bloco2"><span class="icon">📝</span> Bloco 2</li>
+                <li data-page="page-revisao"><span class="icon">🔄</span> Revisões</li>
+                <li data-page="page-leis"><span class="icon">📜</span> Leis</li>
+                <li data-page="page-progresso"><span class="icon">📊</span> Progresso</li>
+                <li data-page="page-diario"><span class="icon">📖</span> Diário</li>
+                <li data-page="page-simulados"><span class="icon">📋</span> Simulados</li>
+                <li data-page="page-flashcards"><span class="icon">🃏</span> Flashcards</li>
+                <li data-page="page-chat"><span class="icon">💬</span> Chat IA</li>
+                <li data-page="page-arquiteto"><span class="icon">🧠</span> Arquiteto IA</li>
+                <li data-page="page-gerenciar"><span class="icon">🛠️</span> Gerenciar Dados</li>
+                <li data-page="page-config"><span class="icon">⚙️</span> Configurações</li>
+            </ul>
+        </div>
+        <div class="overlay" id="overlay"></div>
+
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="menu-toggle" id="menuToggle">☰</button>
+                <div class="logo"><h1>🎯 Coach CGU <small>StudyOS Pro</small></h1></div>
+            </div>
+            <div class="top-stats">
+                <div class="stat-item"><span>🔥</span><span class="streak-badge" id="streakTop">0</span><span style="font-size:0.7rem;">dias</span></div>
+                <div class="stat-item"><span>⭐</span><span class="value" id="xpTop">0 XP</span></div>
+                <div class="stat-item"><span>⏱️</span><span class="value" id="clockTime">00:00:00</span></div>
+                <div class="stat-item"><span>📅</span><span class="value" id="diasProvaTop">--</span></div>
+                <div class="stat-item"><span>📌</span><span class="value" id="tarefasPendentesTop">0</span></div>
+                <div class="progress-ring" id="progressRing" data-label="0%"></div>
+                <div class="top-actions">
+                    <button class="btn-glass primary" id="exportBtn">📤 Exportar</button>
+                    <button class="btn-glass" id="importBtn">📥 Importar</button>
+                    <input type="file" id="fileInput" accept=".json" style="display:none;" />
+                    <button class="btn-glass danger" id="resetAllBtn">⟲ Resetar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="page-home" class="page active">
+                <div class="mission-card" id="missionCard">
+                    <div class="label">🎯 Missão de Hoje</div>
+                    <div class="title" id="missionTitle">Carregando...</div>
+                    <div class="sub" id="missionSub">Disciplina · Assunto</div>
+                    <div class="time" id="missionTime">⏱️ Tempo estimado: --</div>
+                    <div class="action-group">
+                        <button class="btn-action" id="startLessonBtn">▶ Iniciar</button>
+                        <button class="btn-action pause" id="pauseLessonBtn" disabled>⏸ Pausar</button>
+                        <button class="btn-action stop" id="stopLessonBtn" disabled>⏹ Concluir</button>
+                        <button class="btn-action skip" id="skipLessonBtn">⏭ Pular</button>
+                    </div>
+                    <div class="justify-box" id="justifyBox">💡 <strong>Por que esta aula?</strong> Carregando justificativa...</div>
+                </div>
+                <div class="indicators-grid" id="indicatorsGrid">
+                    <div class="indicator-card"><div class="number" id="indDominio">0%</div><div class="label">Domínio geral</div></div>
+                    <div class="indicator-card"><div class="number" id="indHorasEstudadas">0h</div><div class="label">Horas estudadas</div></div>
+                    <div class="indicator-card"><div class="number" id="indPrevisao">--</div><div class="label">Previsão Bloco 1</div></div>
+                    <div class="indicator-card"><div class="number" id="indRiscoAtraso">--</div><div class="label">Risco de atraso</div></div>
+                    <div class="indicator-card"><div class="number" id="indConsistencia">--</div><div class="label">Consistência (7d)</div></div>
+                    <div class="indicator-card"><div class="number" id="indFadiga">--</div><div class="label">Fadiga estimada</div></div>
+                    <div class="indicator-card"><div class="number" id="indStreak">0</div><div class="label">Sequência de dias</div></div>
+                    <div class="indicator-card"><div class="number" id="indNivel">1</div><div class="label">Nível</div></div>
+                </div>
+                <div class="card" id="weeklyGoalsCard">
+                    <div class="card-header"><h3>🎯 Metas da Semana</h3><button class="btn-glass" id="definirMetaBtn">Definir Meta</button></div>
+                    <div id="weeklyGoalsContainer"><p class="text-muted">Nenhuma meta definida.</p></div>
+                </div>
+            </div>
+
+            <div id="page-bloco1" class="page">
+                <div class="search-box"><input type="text" id="searchBloco1" placeholder="🔍 Buscar aula no Bloco 1..." oninput="filtrarBloco(0, this.value)" /></div>
+                <div id="bloco1Container"></div>
+            </div>
+            <div id="page-bloco2" class="page">
+                <div class="search-box"><input type="text" id="searchBloco2" placeholder="🔍 Buscar aula no Bloco 2..." oninput="filtrarBloco(1, this.value)" /></div>
+                <div id="bloco2Container"></div>
+            </div>
+
+            <div id="page-revisao" class="page"><div id="revisaoContainer"></div></div>
+
+            <div id="page-leis" class="page"><div class="card"><h3>📜 Leis</h3><div id="leisContainer"></div></div></div>
+
+            <div id="page-progresso" class="page"><div id="progressoContainer"></div></div>
+
+            <div id="page-diario" class="page"><div id="diarioContainer"><div id="diarioList"></div></div></div>
+
+            <div id="page-simulados" class="page"><div id="simuladosContainer"></div></div>
+
+            <div id="page-flashcards" class="page">
+                <div class="card">
+                    <div class="card-header"><h3>🃏 Sistema de Flashcards (Repetição Espaçada)</h3></div>
+                    <div id="flashcardsControls" style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                        <button class="btn-glass primary" id="novoFlashcardBtn">+ Novo Flashcard</button>
+                        <button class="btn-glass" id="revisarFlashcardsBtn">🔄 Revisar Pendentes</button>
+                        <select id="flashcardDisciplinaFiltro" style="background:rgba(0,0,0,0.2); border:var(--border-light); color:#e2e8f0; padding:4px 12px; border-radius:30px;"><option value="">Todas disciplinas</option></select>
+                    </div>
+                    <div id="flashcardReviewArea" style="display:none;">
+                        <div class="flashcard" id="flashcardElement" onclick="flipFlashcard()">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front" id="flashcardFront">Frente</div>
+                                <div class="flashcard-back" id="flashcardBack">Verso</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
+                            <button class="btn-action stop" onclick="avaliarFlashcard(1)">😰 Difícil</button>
+                            <button class="btn-action pause" onclick="avaliarFlashcard(3)">🤔 Médio</button>
+                            <button class="btn-action" onclick="avaliarFlashcard(5)">😊 Fácil</button>
+                        </div>
+                    </div>
+                    <div id="flashcardsList"></div>
+                </div>
+            </div>
+
+            <div id="page-chat" class="page">
+                <div class="chat-container" style="background:rgba(255,255,255,0.02); border-radius:20px; border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; height:420px; overflow:hidden;">
+                    <div class="chat-messages" id="chatMessages" style="flex:1; padding:16px 20px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;"></div>
+                    <div class="chat-input-area" style="display:flex; gap:10px; padding:12px 16px; border-top:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.1);">
+                        <input type="text" id="chatInput" placeholder="Digite sua pergunta..." style="flex:1; padding:8px 16px; border-radius:40px; border:var(--border-light); background:rgba(0,0,0,0.2); color:#e2e8f0; font-size:.9rem; outline:none;" />
+                        <button class="btn-glass primary" id="chatSendBtn">Enviar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-arquiteto" class="page">
+                <div class="card">
+                    <div class="card-header"><h3>🧠 Arquiteto IA</h3><span class="sub">Assistente inteligente para evolução do sistema</span></div>
+                    <div class="arquiteto-container">
+                        <div class="arquiteto-chat">
+                            <div class="messages" id="arquitetoMessages"></div>
+                            <div class="input-area">
+                                <input type="text" id="arquitetoInput" placeholder="Ex: Melhore o dashboard..." />
+                                <button id="arquitetoSendBtn">Enviar</button>
+                            </div>
+                        </div>
+                        <div class="arquiteto-side">
+                            <div class="card"><h4>📊 Insights & Recomendações</h4><div id="arquitetoInsights"></div></div>
+                            <div class="card"><h4>🔔 Notificações</h4><div id="arquitetoNotificacoes"></div></div>
+                            <div class="card"><h4>📜 Histórico</h4><div id="arquitetoHistorico"></div></div>
+                            <div class="card">
+                                <h4>⚙️ Política</h4>
+                                <select id="arquitetoPolicy"><option value="manual">Manual</option><option value="auto">Automático</option></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-gerenciar" class="page">
+                <div class="card">
+                    <h3>🛠️ Gerenciar Dados do Sistema</h3>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+                        <button class="btn-glass primary" id="gerenciarAulasBtn">📚 Gerenciar Disciplinas/Aulas</button>
+                        <button class="btn-glass" id="gerenciarLeisBtn">📜 Gerenciar Leis</button>
+                        <button class="btn-glass" id="gerenciarQuestoesBtn">📝 Registrar Questões</button>
+                        <button class="btn-glass" id="gerenciarArquivosBtn">📎 Gerenciar Arquivos</button>
+                    </div>
+                    <div id="gerenciarConteudo"></div>
+                </div>
+            </div>
+
+            <div id="page-config" class="page">
+                <div class="card">
+                    <h3>⚙️ Configurações do Sistema</h3>
+                    <label>Estratégia de estudo</label>
+                    <select id="configStrategy" style="width:100%; margin:8px 0;">
+                        <option value="cobertura">Cobertura Máxima</option>
+                        <option value="nota">Maior Nota Esperada</option>
+                        <option value="recuperacao">Recuperação</option>
+                        <option value="retafinal">Reta Final</option>
+                        <option value="manutencao">Manutenção</option>
+                    </select>
+                    <label>Horas por dia</label>
+                    <input type="number" id="configHoursPerDay" value="4" min="1" max="12" step="0.5" style="width:100%; margin:8px 0;" />
+                    <label>Meta semanal de aulas</label>
+                    <input type="number" id="configMetaSemanal" value="14" min="1" max="50" style="width:100%; margin:8px 0;" />
+                    <button class="btn-glass primary" id="configSaveBtn">💾 Salvar</button>
+                    <div id="configStatus" style="margin-top:8px; font-size:.85rem;"></div>
+                </div>
+                <div class="card">
+                    <h3>🔑 API Gemini</h3>
+                    <input type="text" id="configApiKey" placeholder="Chave API" style="width:100%; margin:8px 0;" />
+                    <button class="btn-glass primary" id="configSaveApiKeyBtn">💾 Salvar Chave</button>
+                    <div id="configApiFeedback" style="margin-top:8px; font-size:.85rem;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAnotacoes">
+        <div class="modal-box">
+            <span class="close-modal" id="closeModalAnotacoes">&times;</span>
+            <h3 id="modalAnotacoesTitulo">📝 Anotações</h3>
+            <div class="modal-body">
+                <input type="text" id="modalAnotacoesAula" readonly style="width:100%; background:transparent; border:none; color:#94a3b8;" />
+                <textarea id="modalAnotacoesTexto" placeholder="Escreva suas anotações..."></textarea>
+                <div class="file-input-wrapper">
+                    <label>📎 Anexar imagens</label>
+                    <input type="file" id="uploadImagem" accept="image/*" multiple />
+                </div>
+                <div class="image-preview" id="modalAnotacoesImagens"></div>
+                <button class="btn-glass" id="salvarAnotacoesBtn">💾 Salvar</button>
+                <button class="btn-glass primary" id="resumirIABtn">🤖 Resumir com IA</button>
+                <div id="modalResumoBox" style="display:none; margin-top:12px;">
+                    <strong>📌 Resumo</strong>
+                    <div id="modalResumoTexto"></div>
+                    <div id="modalResumoTemas"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalFlashcard">
+        <div class="modal-box">
+            <span class="close-modal" id="closeModalFlashcard">&times;</span>
+            <h3>🃏 Novo Flashcard</h3>
+            <div class="modal-body">
+                <label>Disciplina</label>
+                <select id="flashcardDisciplina" style="width:100%; margin:8px 0; background:rgba(0,0,0,0.2); border:var(--border-light); color:#e2e8f0; padding:8px; border-radius:12px;"></select>
+                <label>Frente (Pergunta)</label>
+                <textarea id="flashcardFrente" placeholder="Ex: O que é o PPA?" style="width:100%; margin:8px 0;"></textarea>
+                <label>Verso (Resposta)</label>
+                <textarea id="flashcardVerso" placeholder="Ex: Plano Plurianual, estabelece diretrizes, objetivos e metas..." style="width:100%; margin:8px 0;"></textarea>
+                <button class="btn-glass primary" id="salvarFlashcardBtn">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalMetas">
+        <div class="modal-box">
+            <span class="close-modal" id="closeModalMetas">&times;</span>
+            <h3>🎯 Definir Metas da Semana</h3>
+            <div class="modal-body">
+                <label>Aulas esta semana</label>
+                <input type="number" id="metaAulas" value="14" min="1" max="50" style="width:100%; margin:8px 0;" />
+                <label>Horas de estudo</label>
+                <input type="number" id="metaHoras" value="20" min="1" max="80" step="0.5" style="width:100%; margin:8px 0;" />
+                <button class="btn-glass primary" id="salvarMetasBtn">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalConclusao">
+        <div class="modal-box">
+            <span class="close-modal" id="closeModalConclusao">&times;</span>
+            <h3>✅ Concluir Aula</h3>
+            <div class="modal-body">
+                <p id="modalConclusaoAula" style="color:#a78bfa; margin-bottom:12px;"></p>
+                <label>📝 Questões resolvidas</label>
+                <input type="number" id="questoesResolvidas" value="0" min="0" style="width:100%; margin:8px 0; background:rgba(0,0,0,0.2); border:var(--border-light); color:#e2e8f0; padding:8px; border-radius:12px;" />
+                <label>✅ Acertos</label>
+                <input type="number" id="questoesAcertos" value="0" min="0" style="width:100%; margin:8px 0; background:rgba(0,0,0,0.2); border:var(--border-light); color:#e2e8f0; padding:8px; border-radius:12px;" />
+                <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+                    <button class="btn-action skip" id="concluirSemQuestoes">Concluir sem questões</button>
+                    <button class="btn-action primary" id="concluirComQuestoes">💾 Concluir e registrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalLeiAnotacao">
+        <div class="modal-box">
+            <span class="close-modal" id="closeModalLeiAnotacao">&times;</span>
+            <h3>📜 Anotações da Lei</h3>
+            <div class="modal-body">
+                <p id="modalLeiNome" style="color:#a78bfa;"></p>
+                <label>📄 Página/Artigo atual</label>
+                <input type="text" id="leiPaginaAtualInput" placeholder="Ex: Art. 5º, página 12" style="width:100%; margin:8px 0; background:rgba(0,0,0,0.2); border:var(--border-light); color:#e2e8f0; padding:8px; border-radius:12px;" />
+                <label>📝 Anotações</label>
+                <textarea id="leiAnotacaoTexto" placeholder="Anotações sobre esta lei..." style="width:100%; min-height:80px;"></textarea>
+                <button class="btn-glass primary" id="salvarLeiAnotacaoBtn">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const DISCIPLINA_PESOS = {
+                'Auditoria Governamental e Controle': 100,
+                'Contabilidade Pública': 98,
+                'Finanças Públicas': 95,
+                'Finanças Públicas II': 95,
+                'Avaliação de Políticas Públicas': 92,
+                'Direito Administrativo (Prof. Herbert Almeida)': 90,
+                'Noções de Direito Administrativo (Prof. Antonio Daud)': 90,
+                'Administração Financeira e Orçamentária (AFO)': 88,
+                'Administração Pública': 85,
+                'Direito Constitucional': 82,
+                'Português': 80,
+                'Fundamentos de Auditoria Governamental': 78,
+                'Organização, Competências e Sistemas': 70,
+                'Inglês': 55,
+                'Ética no Serviço Público': 65,
+                'Legislação': 72,
+                'Políticas Públicas': 75,
+            };
+
+            function getPesoDisciplina(nome) {
+                if (DISCIPLINA_PESOS[nome] !== undefined) return DISCIPLINA_PESOS[nome];
+                const match = Object.entries(DISCIPLINA_PESOS).find(([k]) =>
+                    nome.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(nome.toLowerCase())
+                );
+                return match ? match[1] : 60;
+            }
+
+            const DEFAULT_DATA = [{
+                id: 'bloco1',
+                name: 'Bloco 1: Teoria Nova (2h - MGI)',
+                disciplines: [
+                    { name: 'Administração Financeira e Orçamentária (AFO)',
+                        lessons: ['Aula 09 - 6 Gestão organizacional das finanças públicas (Lei nº 10.180/2001)',
+                            'Aula 10 - LRF Parte I: Introdução à LRF, Disposições Preliminares, Planejamento',
+                            'Aula 11 - LRF Parte II: Despesa Pública',
+                            'Aula 12 - (Título não especificado no documento)',
+                            'Aula 13 - LRF Parte IV: Dívida e Endividamento'
+                        ] },
+                    { name: 'Administração Pública',
+                        lessons: ['Aula 02 - Gestão por resultados na produção de serviços públicos',
+                            'Aula 03 - Processos participativos de gestão pública',
+                            'Aula 04 - Intermediação de interesses (clientelismo, corporativismo e neocorporativismo)',
+                            'Aula 05 - Planejamento nas organizações públicas. O ciclo do planejamento (Parte I)',
+                            'Aula 06 - Planejamento nas organizações públicas. O ciclo do planejamento (Parte II)',
+                            'Aula 07 - Políticas públicas. O ciclo das políticas públicas',
+                            'Aula 08 - Indicadores de políticas públicas',
+                            'Aula 09 - Corrupção e políticas públicas',
+                            'Aula 10 - Governo Digital e Governo Aberto',
+                            'Aula 11 - (Título não especificado no documento)',
+                            'Aula 12 - Gestão por resultados na produção de serviços públicos (Empreendedorismo)'
+                        ] },
+                    { name: 'Auditoria Governamental e Controle',
+                        lessons: ['Aula 02 - 3. Instrução Normativa SFC nº 3, de 9 de julho de 2017',
+                            'Aula 03 - 2. Manual de Orientações Técnicas da Atividade de Auditoria... Parte 1',
+                            'Aula 04 - (Título não especificado no documento)',
+                            'Aula 05 - 4. Orientação Prática: Relatório de Auditoria... e 5. Auditoria Anual de Contas',
+                            'Aula 06 - 7. Tópicos Específicos de Auditoria Interna (IPPF/IIA, gestão de riscos, etc.)'
+                        ] },
+                    { name: 'Avaliação de Políticas Públicas',
+                        lessons: ['Aula 03 - Conselho de Monitoramento e Avaliação de Políticas Públicas - CMAP'] },
+                    { name: 'Contabilidade Pública',
+                        lessons: ['Aula 07 - Estrutura e conteúdo das demonstrações contábeis: Balanço Orçamentário',
+                            'Aula 08 - Estrutura e conteúdo das demonstrações contábeis: Balanço Financeiro',
+                            'Aula 09 - Estrutura e conteúdo das demonstrações contábeis: Balanço Patrimonial',
+                            'Aula 10 - Estrutura e conteúdo das demonstrações contábeis: DVP',
+                            'Aula 11 - Estrutura e conteúdo das demonstrações contábeis: DFC. DMPL. Notas Explicativas',
+                            'Aula 12 - Título IV da Lei nº 4.320/1964 (Nome inferido)',
+                            'Aula 14 - Tópicos das NBC TSP Vigentes',
+                            'Aula 15 - Tópicos das NBC TSP Vigentes II',
+                            'Aula 16 - 6 Tópicos Especiais de Contabilidade Aplicada ao Setor Público: Manual de Custos',
+                            'Aula 17 - 6 Tópicos Especiais de Contabilidade Aplicada ao Setor Público: NBC TSP 34',
+                            'Aula 18 - Tópicos da LRF (II): Tópicos Selecionados da Lei Complementar nº 101/2000',
+                            'Vídeo - 6.2 Manual de Informações de Custos do Governo Federal'
+                        ] },
+                    { name: 'Direito Administrativo (Prof. Herbert Almeida)',
+                        lessons: ['Aula 09 - Lei nº 13.303/2016 e Decreto nº 8.945/2016',
+                            'Aula 18 - posteriores ao exercício do cargo ou emprego',
+                            'Aula 19 - 15. Direito de acesso à informação no Brasil: normas constitucionais, Lei nº 12.527/2011, Decreto nº 7.724/2012 e Decreto nº 8.777/2016'
+                        ] },
+                    { name: 'Direito Administrativo (itens 14 à 16) - Prof. Paulo Sousa',
+                        lessons: [
+                            'Aula 01 - 14. Lei de Introdução às Normas do Direito Brasileiro (Decreto-Lei nº 4.657/1942). 14.1 Decreto nº 9.830/2019',
+                            'Aula 02 - 16. Tratamento de dados pessoais pelo Poder Público (LGPD)',
+                            'Aula 03 - Somente em PDF - 14.1 Decreto nº 9.830/2019'
+                        ] },
+                    { name: 'Direito Constitucional',
+                        lessons: ['Aula 14 - Funções essenciais à justiça. Ministério Público e Advocacia Pública',
+                            'Aula 15 - Ordem Econômica e Financeira: princípios gerais da atividade econômica',
+                            'Aula Extra - Questões FGV - Banca do último concurso'
+                        ] },
+                    { name: 'Ética no Serviço Público',
+                        lessons: [
+                            'Aula 01 - Código de Ética Profissional do Servidor Público Civil do Poder Executivo Federal (Decreto no 1.171/1994)',
+                            'Aula 02 - Sistema de Gestão da Ética do Poder Executivo Federal (Decreto no 6.029/2007)'
+                        ] },
+                    { name: 'Finanças Públicas', lessons: ['Aula 03 - 6 Federalismo fiscal'] },
+                    { name: 'Finanças Públicas II',
+                        lessons: ['Aula 10 - 11.2 Programação de desembolso e mecanismos retificadores do orçamento',
+                            'Aula 11 - (Título não especificado no documento)',
+                            'Aula 12 - 12 Gestão organizacional das finanças públicas',
+                            'Aula 13 - 15 Tópicos selecionados da LC 101/2000 (LRF) Parte I: Introdução e Planejamento',
+                            'Aula 14 - 15 Tópicos selecionados da LC 101/2000 (LRF) Parte II: Despesa Pública',
+                            'Aula 15 - 15 Tópicos selecionados da LC 101/2000 (LRF) Parte III: Transparência e Controle',
+                            'Aula 16 - 15 Tópicos selecionados da LC 101/2000 (LRF) Parte IV: Dívida e Endividamento',
+                            'Aula 5-II - (Título não especificado no documento)'
+                        ] },
+                    { name: 'Fundamentos de Auditoria Governamental',
+                        lessons: [
+                            'Aula 01 - 3 Instrução Normativa SFC nº 3, de 9 de julho de 2017',
+                            'Aula 02 - 2 Manual de Orientações Técnicas da Atividade de Auditoria Interna Governamental do Poder Executivo Federal - MOT 2017 - Parte 1',
+                            'Aula 03 - 2 Manual de Orientações Técnicas da Atividade de Auditoria Interna Governamental do Poder Executivo Federal - MOT 2017 - Parte 2'
+                        ] },
+                    { name: 'Inglês',
+                        lessons: ['Aula 00 - Interpretação de textos, Cognatos e Resolução de Provas',
+                            'Aula 01 - Substantivos, Artigos, Pronomes, Preposições e Resolução de Provas',
+                            'Aula 02 - Adjetivos, Advérbios, Afixos e Resolução de Provas',
+                            'Aula 03 - Verbos Frasais e Resolução de provas',
+                            'Aula 04 - Tempos Verbais (Parte 1) e Resolução de Provas',
+                            'Aula 06 - Expressões (Idioms) e Resolução de Provas',
+                            'Aula 07 - Resolução de Provas'
+                        ] },
+                    { name: 'Legislação',
+                        lessons: [
+                            'Aula 00 - Controladoria-Geral da União: Lei n.º 14.600/2023 - Organização Básica do Poder Executivo Federal',
+                            'Aula 01 - Decreto Federal nº 5.480/2005 (Sistema de Correição do Poder Executivo Federal)',
+                            'Aula 02 - Lei 10.180/2021, Decreto nº 3.591/2000, Decreto 9.492/2018, Decreto 10.756/2021'
+                        ] },
+                    { name: 'Noções de Direito Administrativo (Prof. Antonio Daud)',
+                        lessons: ['Aula 13 - Parceria Público-Privada',
+                            'Aula 17 - 10.4 Improbidade administrativa: Lei nº 8.429/1992',
+                            'Aula 18 - 15. Direito de acesso à informação no Brasil (Lei nº 12.527/2011 e Decreto nº 7.724/2012)',
+                            'Aula 19 - Lei nº 13.460/2018 e seus regulamentos',
+                            'Aula 20 - Lei 12.813/2013 (conflito de interesses)',
+                            'Aula 21 - Revisão Acelerada em Videoaulas e Resumos'
+                        ] },
+                    { name: 'Organização, Competências e Sistemas',
+                        lessons: ['Aula 00 - Estrutura Regimental da CGU - Parte 1',
+                            'Aula 01 - Estrutura Regimental da CGU - Parte 2',
+                            'Aula 02 - Sistema de Controle Interno do Poder Executivo Federal - Parte 1',
+                            'Aula 03 - Sistema de Controle Interno do Poder Executivo Federal - Parte 2',
+                            'Aula 04 - (Título não especificado no documento)',
+                            'Aula 05 - Sistema de Ouvidorias Públicas do Poder Executivo Federal',
+                            'Aula 06 - Sistema de Integridade Pública do Poder Executivo Federal'
+                        ] },
+                    { name: 'Políticas Públicas',
+                        lessons: [
+                            'Aula 00 - Políticas públicas. O ciclo das políticas públicas. Papel das instituições nas políticas públicas',
+                            'Aula 01 - Indicadores de políticas públicas',
+                            'Aula 02 - Intermediação de interesses (clientelismo, corporativismo e neocorporativismo)',
+                            'Aula 03 - Corrupção e políticas públicas'
+                        ] },
+                    { name: 'Português',
+                        lessons: ['Aula 07 - Sintaxe: frase e oração; termos da oração',
+                            'Aula 08 - Sintaxe: processos de coordenação e subordinação',
+                            'Aula 11 - Transitividade e regência de nomes e verbos. Emprego do sinal indicativo de crase',
+                            'Aula 13 - Semântica: sentido e emprego dos vocábulos; campos semânticos. Figuras de linguagem',
+                            'Aula 15 - Variação linguística: norma culta', 'Aula 16 - Resumo'
+                        ] }
+                ]
+            }, {
+                id: 'bloco2',
+                name: 'Bloco 2: Revisão por Questões (2h - MGI)',
+                disciplines: [
+                    { name: 'Administração Financeira e Orçamentária (AFO)',
+                        lessons: ['Aula 00 - 2 Orçamento segundo a CF 88: PPA, LDO e LOA',
+                            'Aula 01 - 1 Orçamento Público: princípios orçamentários',
+                            'Aula 02 - Lei Orçamentária Anual - LOA', 'Aula 03 - Ciclo orçamentário',
+                            'Aula 04 - (Título não especificado no documento)',
+                            'Aula 05 - 4 Classificação econômica da Receita',
+                            'Aula 06 - 4 Classificação econômica Despesa pública',
+                            'Aula 07 - 4 Classificação econômica Despesa pública. (Cont.)',
+                            'Aula 08 - 5 Conceito e estágios da Receita e da Despesa pública'
+                        ] },
+                    { name: 'Administração Pública',
+                        lessons: ['Aula 00 - Conceitos introdutórios de Administração Pública',
+                            'Aula 01 - Princípios de governabilidade e governança'
+                        ] },
+                    { name: 'Auditoria Governamental e Controle',
+                        lessons: ['Aula 00 - 6. NBC TA Estrutura Conceitual',
+                            'Aula 01 - 1. O Sistema de Controle Interno do Poder Executivo Federal'
+                        ] },
+                    { name: 'Avaliação de Políticas Públicas',
+                        lessons: ['Aula 01 - Análise Ex Ante', 'Aula 02 - Análise Ex Post'] },
+                    { name: 'Contabilidade Pública',
+                        lessons: ['Aula 00 - Contabilidade Pública: aspectos introdutórios',
+                            'Aula 01 - 2. MCASP: Procedimentos Contábeis Orçamentários (I)',
+                            'Aula 02 - 2. 2. MCASP: Procedimentos Contábeis Orçamentários (II)',
+                            'Aula 03 - 2. 2. MCASP: Procedimentos Contábeis Patrimoniais (I)',
+                            'Aula 04 - 2. 2. MCASP: Procedimentos Contábeis Patrimoniais (II)',
+                            'Aula 06 - 2. 2. MCASP: 3.2 Estrutura do PCASP',
+                            'Aula 13 - 1 NBC TSP Estrutura Conceitual'
+                        ] },
+                    { name: 'Direito Administrativo (Prof. Herbert Almeida)',
+                        lessons: [
+                            'Aula 00 - 6 Princípios expressos e implícitos da Administração Pública',
+                            'Aula 01 - 1 Estado, governo e Administração Pública. 1.1 Conceitos. 1.2 Elementos. 2 Direito administrativo',
+                            'Aula 02 - 9 Organização administrativa. 9.1 Centralização, descentralização, concentração e desconcentração',
+                            'Aula 03 - 9 Organização administrativa. 9.2 Administração direta e indireta. 9.4 Empresas estatais',
+                            'Aula 05 - 3 Ato administrativo. 3.1 Conceito, requisitos, atributos, classificação e espécies',
+                            'Aula 06 - 12. Licitações e contratos administrativos: normas gerais - Lei 14.133 (licitações parte 1)',
+                            'Aula 07 - 12. Licitações e contratos administrativos: normas gerais - Lei 14.133 (licitações parte 2)',
+                            'Aula 08 - 12. Licitações e contratos administrativos: normas gerais, Lei 14.133 (contratos)',
+                            'Aula 10 - 8 Serviços públicos. 8.1 Conceito. 8.2 Elementos constitutivos',
+                            'Aula 12 - 7 Responsabilidade civil do Estado',
+                            'Aula 13 - 4 Agentes públicos. 4.1 Conceito. 4.2 Espécies. 4.3 Cargo, emprego e função pública',
+                            'Aula 14 - 4.11 Lei nº 8.112/1990. 4.4 Provimento. 4.5 Vacância',
+                            'Aula 15 - 4.11 Lei nº 8.112/1990. 4.4 Provimento. 4.5 Vacância',
+                            'Aula 16 - 4.11 Lei nº 8.112/1990. 4.9 Responsabilidade. 4.10 Processo administrativo disciplinar',
+                            'Aula 17 - 11 Processo administrativo. 11.1 Lei nº 9.784/1999'
+                        ] },
+                    { name: 'Direito Constitucional',
+                        lessons: ['Aula 00 - Princípios fundamentais. Aplicabilidade das normas constitucionais',
+                            'Aula 01 - Teoria Geral dos Direitos Fundamentais',
+                            'Aula 02 - Direitos e deveres individuais e coletivos - Parte I',
+                            'Aula 03 - Direitos e deveres individuais e coletivos - Parte II',
+                            'Aula 04 - Direitos sociais', 'Aula 06 - Direitos políticos',
+                            'Aula 07 - Partidos políticos',
+                            'Aula 08 - Organização político-administrativa do Estado. Estado federal brasileiro',
+                            'Aula 09 - Administração Pública. Disposições gerais. Servidores públicos',
+                            'Aula 10 - Poder legislativo. Estrutura. Funcionamento e atribuições',
+                            'Aula 11 - Processo legislativo. Reforma constitucional',
+                            'Aula 12 - Poder executivo. Atribuições e responsabilidades do Presidente da República',
+                            'Aula 13 - Poder judiciário. Disposições gerais. Órgãos do poder judiciário'
+                        ] },
+                    { name: 'Finanças Públicas',
+                        lessons: ['Aula 00 - 1 Objetivos, metas, abrangência e definição. 2 Funções do Estado...',
+                            'Aula 01 - 13 Conceito de déficit público... 14 Resultado Fiscal do Governo',
+                            'Aula 02 - 5 Tributação: tipos de tributos; progressividade...'
+                        ] },
+                    { name: 'Finanças Públicas II',
+                        lessons: ['Aula 00 - 7 Orçamento público no Brasil (PPA, LDO, LOA)',
+                            'Aula 01 - Princípios orçamentários',
+                            'Aula 02 - 3 Leis de Créditos Adicionais',
+                            'Aula 03 - 11 Ciclo orçamentário e planejamento (PPA, LDO)',
+                            'Aula 05 - 10.2 Classificação da receita pública',
+                            'Aula 06 - 10.1 Classificação da despesa pública',
+                            'Aula 07 - 10.1 Classificação da despesa pública (Cont.)',
+                            'Aula 08 - 11.1 Execução orçamentária e financeira (Estágios)',
+                            'Aula 09 - Restos a pagar e Despesas de exercícios anteriores. Suprimento de fundos'
+                        ] },
+                    { name: 'Fundamentos de Auditoria Governamental',
+                        lessons: [
+                            'Aula 00 - 10 Sistema de Controle Interno do Poder Executivo Federal (Lei nº 10.180/2001 e Decreto nº 3.591/2000)'
+                        ] },
+                    { name: 'Noções de Direito Administrativo (Prof. Antonio Daud)',
+                        lessons: [
+                            'Aula 00 - Apresentação do curso. 4 Princípios da Administração Pública',
+                            'Aula 01 - 1 Estado, governo e Administração Pública. 1.1 Conceitos. 1.2 Elementos',
+                            'Aula 02 - 5 Poderes da Administração Pública',
+                            'Aula 03 - 3 Ato administrativo. 3.1 Conceito, requisitos, atributos, classificação',
+                            'Aula 04 - 3 Ato administrativo, espécies. 3.2 Extinção do ato administrativo',
+                            'Aula 05 - 9 Organização administrativa. 9.1 Centralização, descentralização... 9.4 Empresas estatais',
+                            'Aula 06 - Lei nº 13.303/2016 e Decreto nº 8.945/2016',
+                            'Aula 07 - 4 Agentes públicos. 4.1 Conceito. 4.2 Espécies... 4.8 Direitos e deveres',
+                            'Aula 08 - 4.11 Lei nº 8.112/1990. 4.4 Provimento. 4.5 Vacância. 4.9 Responsabilidade. 4.10 PAD',
+                            'Aula 09 - Licitações à luz da lei 14.133/2021 - parte I',
+                            'Aula 10 - Licitações à luz da lei 14.133/2021 - parte II',
+                            'Aula 11 - Contrato administrativo à luz da lei 14.133/2021',
+                            'Aula 12 - Formas de prestação e meios de execução. 8.4 Delegação',
+                            'Aula 14 - 11 Processo administrativo. 11.1 Lei nº 9.784/1999',
+                            'Aula 15 - 7 Responsabilidade civil do Estado',
+                            'Aula 16 - 10 Controle da Administração Pública'
+                        ] },
+                    { name: 'Português',
+                        lessons: ['Aula 00 - Ortografia. Acentuação gráfica',
+                            'Aula 01 - Morfologia: reconhecimento, emprego e sentido das classes gramaticais I',
+                            'Aula 02 - Morfologia: reconhecimento, emprego e sentido das classes gramaticais II',
+                            'Aula 03 - Morfologia: reconhecimento, emprego e sentido das classes gramaticais III',
+                            'Aula 05 - Morfologia: correção e vozes verbais',
+                            'Aula 06 - Morfologia: processos de formação de palavras', 'Aula 09 - Pontuação',
+                            'Aula 10 - Concordância nominal e verbal',
+                            'Aula 14 - Elementos de construção do texto e seu sentido: gênero do texto'
+                        ] }
+                ]
+            }];
+
+            const DEFAULT_LEIS = [
+                'Decreto nº 10.160/2019', 'Decreto nº 10.332/2020', 'Decreto nº 9.203/2017',
+                'Constituição Federal/88', 'Lei nº 8.112/1990',
+                'Lei nº 13.460/2018', 'Lei nº 13.303/2016', 'Decreto nº 8.945/2016', 'Lei nº 8.429/1992',
+                'Lei nº 9.784/1999',
+                'Lei nº 14.133/2021', 'Decreto nº 1.171/1994', 'Decreto nº 6.029/2007', 'Lei nº 12.813/2013',
+                'Lei nº 12.527/2011',
+                'Decreto nº 7.724/2012', 'Decreto nº 8.777/2016', 'Lei nº 10.180/2001', 'Decreto nº 3.591/2000',
+                'MOT 2017',
+                'Lei nº 4.320/1964', 'LC nº 101/2000', 'NBC TSP', 'Portaria STN nº 518/2018',
+                'Decreto nº 9.834/2019'
+            ];
+
+            const CONFIG = {
+                estrategias: {
+                    cobertura: { label: 'Cobertura Máxima', prioridadeBloco1: 0.5 },
+                    nota: { label: 'Maior Nota Esperada', prioridadeBloco1: 0.3 },
+                    recuperacao: { label: 'Recuperação', prioridadeBloco1: 0.7 },
+                    retafinal: { label: 'Reta Final', prioridadeBloco1: 0.1 },
+                    manutencao: { label: 'Manutenção', prioridadeBloco1: 0.2 }
+                },
+                diasProva: new Date(2026, 9, 1)
+            };
+
+            let AppState = {
+                checks: {},
+                quizData: {},
+                diario: [],
+                sessoes: [],
+                simulados: [],
+                leis: [],
+                anotacoes: {},
+                expanded: {},
+                tempoEstudoHoje: 0,
+                aulaAtiva: null,
+                aulaPausada: false,
+                revisaoDatas: {},
+                revisaoNotas: {},
+                questoesPorAula: {},
+                pulosHoje: [],
+                student: {
+                    digitalTwin: {},
+                    config: { estrategia: 'cobertura', horasPorDia: 4, apiKey: '', metaSemanalAulas: 14,
+                        metaSemanalHoras: 20 },
+                    arquivos: [],
+                    gamificacao: { xp: 0, nivel: 1, streak: 0, ultimaAtividade: null, conquistas: [] }
+                },
+                ciclo: { moduloAtual: 'bloco1' },
+                arquiteto: { historico: [], notificacoes: [], policy: 'manual', conversas: [] },
+                data: JSON.parse(JSON.stringify(DEFAULT_DATA)),
+                flashcards: [],
+                metasSemanais: { aulas: 14, horas: 20, aulasFeitas: 0, horasFeitas: 0, semana: '' }
+            };
+
+            const STORAGE_KEY = 'studyos_pro_data';
+
+            const saveState = () => {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) {
+                    console.warn('Erro ao salvar:', e);
+                    alert('Aviso: Não foi possível salvar. Verifique o espaço de armazenamento.');
+                }
+            };
+
+            const loadState = () => {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        AppState = deepMerge(AppState, parsed);
+                        if (!AppState.data?.length) AppState.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                        if (!AppState.leis?.length) AppState.leis = DEFAULT_LEIS.map(n => ({ nome: n,
+                            totalPaginas: 30, paginaAtual: 0, status: 'pendente', ultimaLeitura: null,
+                            anotacoes: '', artigoAtual: '', concluidoHoje: false }));
+                        if (!AppState.flashcards) AppState.flashcards = [];
+                        if (!AppState.student?.gamificacao) AppState.student.gamificacao = { xp: 0, nivel: 1,
+                            streak: 0, ultimaAtividade: null, conquistas: [] };
+                        if (!AppState.metasSemanais) AppState.metasSemanais = { aulas: 14, horas: 20, aulasFeitas: 0,
+                            horasFeitas: 0, semana: '' };
+                        if (!AppState.questoesPorAula) AppState.questoesPorAula = {};
+                        if (!AppState.pulosHoje) AppState.pulosHoje = [];
+                        const hojeStr = hoje();
+                        if (AppState.pulosHoje._data !== hojeStr) {
+                            AppState.pulosHoje = { _data: hojeStr, keys: [] };
+                        }
+                        if (!AppState.pulosHoje._data) AppState.pulosHoje = { _data: hojeStr, keys: [] };
+                        AppState.leis.forEach(l => {
+                            if (l.concluidoHoje === undefined) l.concluidoHoje = false;
+                            if (l.artigoAtual === undefined) l.artigoAtual = '';
+                            if (l.anotacoes === undefined) l.anotacoes = '';
+                        });
+                        atualizarStreakEGamificacao();
+                        return true;
+                    }
+                } catch (e) { console.warn('Estado corrompido, resetando...'); }
+                resetState();
+                return false;
+            };
+
+            const resetState = () => {
+                const hojeStr = hoje();
+                AppState = {
+                    checks: {},
+                    quizData: {},
+                    diario: [],
+                    sessoes: [],
+                    simulados: [],
+                    leis: DEFAULT_LEIS.map(n => ({ nome: n, totalPaginas: 30, paginaAtual: 0, status: 'pendente',
+                        ultimaLeitura: null, anotacoes: '', artigoAtual: '', concluidoHoje: false })),
+                    anotacoes: {},
+                    expanded: {},
+                    tempoEstudoHoje: 0,
+                    aulaAtiva: null,
+                    aulaPausada: false,
+                    revisaoDatas: {},
+                    revisaoNotas: {},
+                    questoesPorAula: {},
+                    pulosHoje: { _data: hojeStr, keys: [] },
+                    student: {
+                        digitalTwin: {},
+                        config: { estrategia: 'cobertura', horasPorDia: 4, apiKey: '', metaSemanalAulas: 14,
+                            metaSemanalHoras: 20 },
+                        arquivos: [],
+                        gamificacao: { xp: 0, nivel: 1, streak: 0, ultimaAtividade: null, conquistas: [] }
+                    },
+                    ciclo: { moduloAtual: 'bloco1' },
+                    arquiteto: { historico: [], notificacoes: [], policy: 'manual', conversas: [] },
+                    data: JSON.parse(JSON.stringify(DEFAULT_DATA)),
+                    flashcards: [],
+                    metasSemanais: { aulas: 14, horas: 20, aulasFeitas: 0, horasFeitas: 0, semana: '' }
+                };
+                saveState();
+            };
+
+            const deepMerge = (target, source) => {
+                const output = { ...target };
+                for (let key in source) {
+                    if (source[key] instanceof Array) output[key] = source[key];
+                    else if (source[key] instanceof Object && key in target) output[key] = deepMerge(target[key],
+                        source[key]);
+                    else output[key] = source[key];
+                }
+                return output;
+            };
+
+            const hoje = () => new Date().toISOString().slice(0, 10);
+            const diasAte = data => Math.ceil((new Date(data) - new Date()) / (1000 * 60 * 60 * 24));
+            const calcularXP = (nivel) => Math.floor(100 * Math.pow(1.5, nivel - 1));
+
+            const getAllLessonsFlat = () => {
+                const result = [];
+                AppState.data.forEach((block, bi) => {
+                    block.disciplines.forEach((disc, di) => {
+                        disc.lessons.forEach((title, li) => {
+                            result.push({
+                                blockIdx: bi,
+                                discIdx: di,
+                                lessonIdx: li,
+                                blockId: block.id,
+                                disciplineName: disc.name,
+                                title,
+                                key: `${block.id}|${di}|${li}`
+                            });
+                        });
+                    });
+                });
+                return result;
+            };
+
+            const atualizarStreakEGamificacao = () => {
+                const hojeStr = hoje();
+                const gam = AppState.student.gamificacao;
+                if (gam.ultimaAtividade === hojeStr) return;
+                const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+                if (gam.ultimaAtividade === ontem) {
+                    gam.streak = (gam.streak || 0) + 1;
+                } else if (gam.ultimaAtividade && gam.ultimaAtividade !== hojeStr) {
+                    gam.streak = 1;
+                } else if (!gam.ultimaAtividade) {
+                    gam.streak = 1;
+                }
+                gam.ultimaAtividade = hojeStr;
+                if (gam.streak === 7 && !gam.conquistas.includes('streak7')) {
+                    gam.conquistas.push('streak7');
+                    gam.xp += 200;
+                }
+                if (gam.streak === 30 && !gam.conquistas.includes('streak30')) {
+                    gam.conquistas.push('streak30');
+                    gam.xp += 1000;
+                }
+                const totalConcluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]).length;
+                if (totalConcluidas >= 50 && !gam.conquistas.includes('50aulas')) {
+                    gam.conquistas.push('50aulas');
+                    gam.xp += 500;
+                }
+                if (totalConcluidas >= 100 && !gam.conquistas.includes('100aulas')) {
+                    gam.conquistas.push('100aulas');
+                    gam.xp += 1000;
+                }
+                const xpParaNivel = calcularXP(gam.nivel);
+                if (gam.xp >= xpParaNivel) {
+                    gam.xp -= xpParaNivel;
+                    gam.nivel += 1;
+                }
+                verificarMetasSemanais();
+                saveState();
+            };
+
+            const verificarMetasSemanais = () => {
+                const inicioSemana = new Date();
+                inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+                const inicioSemanaStr = inicioSemana.toISOString().slice(0, 10);
+                if (AppState.metasSemanais.semana !== inicioSemanaStr) {
+                    AppState.metasSemanais = { ...AppState.metasSemanais, aulasFeitas: 0, horasFeitas: 0,
+                        semana: inicioSemanaStr };
+                }
+            };
+
+            const registrarAtividade = (tipo, minutos = 0) => {
+                const gam = AppState.student.gamificacao;
+                gam.xp += tipo === 'aula' ? 50 : tipo === 'revisao' ? 30 : tipo === 'flashcard' ? 10 : 5;
+                if (minutos > 0) AppState.metasSemanais.horasFeitas += minutos / 60;
+                atualizarStreakEGamificacao();
+                saveState();
+            };
+
+            const DecisionEngine = {
+                _diasSemEstudo(aula) {
+                    const entry = AppState.diario.filter(e => e.aula === aula.title && e.disciplina === aula
+                        .disciplineName).pop();
+                    return entry ? Math.min(30, (new Date() - new Date(entry.data + 'T' + (entry.hora || '00:00'))) / (
+                        1000 * 60 * 60 * 24)) : 30;
+                },
+                _obterDominio(aula) {
+                    const twin = AppState.student.digitalTwin;
+                    const disc = aula.disciplineName;
+                    const assunto = aula.title.split(' - ')[0] || aula.title;
+                    const sub = aula.title;
+                    return (twin[disc]?.[assunto]?.[sub]?.dominio) || 0.5;
+                },
+                escolherMissao() {
+                    if (AppState.aulaAtiva) {
+                        if (AppState.aulaAtiva.modulo === 'leis') {
+                            const lei = AppState.leis[AppState.aulaAtiva.leiIdx];
+                            if (lei) return { blockIdx: -1, discIdx: -1, lessonIdx: -1, blockId: 'leis',
+                                disciplineName: 'Leis', title: lei.nome, key: `lei_${lei.nome}`, modulo: 'leis',
+                                tipo: 'Leis', dados: lei, isAtiva: true, leiIdx: AppState.aulaAtiva.leiIdx };
+                            AppState.aulaAtiva = null;
+                            saveState();
+                        } else {
+                            const found = getAllLessonsFlat().find(i => i.key ===
+                                `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`
+                                );
+                            if (found) return { ...found, disciplina: found.disciplineName, assunto: found.title.split(
+                                    ' - ')[0], sub: found.title, isAtiva: true };
+                            AppState.aulaAtiva = null;
+                            saveState();
+                        }
+                    }
+                    const ordem = ['bloco1', 'bloco2', 'revisao', 'leis'];
+                    let idx = ordem.indexOf(AppState.ciclo.moduloAtual || 'bloco1');
+                    for (let t = 0; t < 4; t++) {
+                        const modulo = ordem[idx];
+                        let sugestao = null;
+                        if (modulo === 'bloco1') sugestao = this._escolherBloco(0);
+                        else if (modulo === 'bloco2') sugestao = this._escolherBloco(1);
+                        else if (modulo === 'revisao') sugestao = this._escolherRevisao();
+                        else if (modulo === 'leis') sugestao = this._escolherLei();
+                        if (sugestao) {
+                            AppState.ciclo.moduloAtual = ordem[(idx + 1) % 4];
+                            saveState();
+                            return sugestao;
+                        }
+                        idx = (idx + 1) % 4;
+                    }
+                    return null;
+                },
+               _escolherBloco(blockIdx) {
+    const all = getAllLessonsFlat();
+    const hojeStr = hoje();
+    if (!AppState.pulosHoje._data || AppState.pulosHoje._data !== hojeStr) {
+        AppState.pulosHoje = { _data: hojeStr, keys: [] };
+    }
+    const pulosSet = new Set(AppState.pulosHoje.keys || []);
+    const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks[i.key] && !pulosSet.has(i.key));
+    if (!pendentes.length) return null;
+    
+    // FÓRMULA EQUILIBRADA: O peso define a base, mas o tempo sem ver faz as outras subirem
+    pendentes.sort((a, b) => {
+        const diasA = this._diasSemEstudo(a);
+        const diasB = this._diasSemEstudo(b);
+        const pesoA = getPesoDisciplina(a.disciplineName);
+        const pesoB = getPesoDisciplina(b.disciplineName);
+        
+        // Multiplicador linear inteligente: 
+        // O peso atua como o multiplicador base principal. 
+        // Adicionamos a urgência dos dias (ex: 5% a mais de score por dia sem ver) 
+        // para que matérias de peso menor, se ficarem muito tempo paradas, consigam vez.
+        const scoreA = pesoA * (1 + (diasA * 0.05)) * (1 + Math.random() * 0.15);
+        const scoreB = pesoB * (1 + (diasB * 0.05)) * (1 + Math.random() * 0.15);
+        
+        return scoreB - scoreA;
+    });
+    
+    const escolhido = pendentes[0];
+    return { ...escolhido, disciplina: escolhido.disciplineName, assunto: escolhido.title.split(' - ')[0], sub: escolhido.title };
+},
+                _escolherRevisao() {
+                    const concluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]);
+                    if (!concluidas.length) return null;
+                    concluidas.sort((a, b) => this._diasSemRevisao(b.key) - this._diasSemRevisao(a.key));
+                    const melhor = concluidas[0];
+                    return { ...melhor, disciplina: melhor.disciplineName, assunto: melhor.title.split(' - ')[0],
+                        sub: melhor.title, diasSemRev: this._diasSemRevisao(melhor.key), modulo: 'revisao' };
+                },
+                _diasSemRevisao(key) {
+                    const datas = AppState.revisaoDatas[key];
+                    if (!datas) return 999;
+                    let ultima = null;
+                    for (let rev of ['rev1', 'rev2', 'rev3', 'rev4']) {
+                        if (datas[rev]) {
+                            const d = new Date(datas[rev]);
+                            if (!ultima || d > ultima) ultima = d;
+                        }
+                    }
+                    return ultima ? Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)) : 999;
+                },
+                _escolherLei() {
+                    const hojeStr = hoje();
+                    const pendentes = AppState.leis.filter(l => l.status !== 'concluido' && !l.concluidoHoje);
+                    if (!pendentes.length) {
+                        const todasPendentes = AppState.leis.filter(l => l.status !== 'concluido');
+                        if (!todasPendentes.length) return null;
+                        todasPendentes.sort((a, b) => (a.ultimaLeitura || '2020-01-01').localeCompare(b.ultimaLeitura ||
+                            '2020-01-01'));
+                        const escolhida = todasPendentes[0];
+                        return { blockIdx: -1, discIdx: -1, lessonIdx: -1, blockId: 'leis',
+                            disciplineName: 'Leis', title: escolhida.nome, key: `lei_${escolhida.nome}`, modulo: 'leis',
+                            tipo: 'Leis', dados: escolhida, leiIdx: AppState.leis.indexOf(escolhida) };
+                    }
+                    pendentes.sort((a, b) => (a.ultimaLeitura || '2020-01-01').localeCompare(b.ultimaLeitura ||
+                        '2020-01-01'));
+                    const escolhida = pendentes[0];
+                    return { blockIdx: -1, discIdx: -1, lessonIdx: -1, blockId: 'leis', disciplineName: 'Leis',
+                        title: escolhida.nome, key: `lei_${escolhida.nome}`, modulo: 'leis', tipo: 'Leis',
+                        dados: escolhida, leiIdx: AppState.leis.indexOf(escolhida) };
+                },
+                gerarJustificativa(aula) {
+                    if (aula.modulo === 'leis') {
+                        const diasSem = aula.dados?.ultimaLeitura ? Math.floor((new Date() - new Date(aula.dados
+                            .ultimaLeitura)) / (1000 * 60 * 60 * 24)) : 999;
+                        return `📜 Lei: ${aula.title}. ${diasSem < 999 ? `Última leitura há ${diasSem} dias.` : 'Nunca lida.'} Páginas lidas: ${aula.dados?.paginaAtual || 0}/${aula.dados?.totalPaginas || 30}`;
+                    }
+                    const diasSem = this._diasSemEstudo(aula);
+                    const dominio = this._obterDominio(aula);
+                    const peso = getPesoDisciplina(aula.disciplineName || aula.disciplina || '');
+                    const fatores = [];
+                    if (diasSem > 7) fatores.push(
+                        `${Math.round(diasSem/30*100)}%: ${diasSem} dias sem contato`);
+                    if (dominio < 0.6) fatores.push(
+                        `${Math.round((1-dominio)*100)}%: baixo domínio (${Math.round(dominio*100)}%)`);
+                    fatores.push(`Peso da disciplina: ${peso}/100`);
+                    return fatores.join('; ') || 'Nenhum motivo específico.';
+                },
+                preverConclusaoBloco1() {
+                    const all = getAllLessonsFlat();
+                    const bloco1 = all.filter(i => i.blockIdx === 0);
+                    const total = bloco1.length;
+                    const concluidos = bloco1.filter(i => AppState.checks[i.key]).length;
+                    const restantes = total - concluidos;
+                    if (restantes === 0) return { data: 'Concluído', atraso: 0, restantes, total };
+                    const horasPorDia = AppState.student.config.horasPorDia || 4;
+                    const tempoMedio = 2.5;
+                    const diasNecessarios = Math.ceil((restantes * tempoMedio) / horasPorDia);
+                    const dataPrevista = new Date(Date.now() + diasNecessarios * 86400000);
+                    const atraso = Math.ceil((dataPrevista - CONFIG.diasProva) / 86400000);
+                    return { data: dataPrevista.toLocaleDateString('pt-BR'), atraso, restantes, total };
+                },
+                detectarFadiga() {
+                    const horasRecentes = AppState.sessoes.slice(-7).reduce((s, e) => s + e.duracao, 0) / 60;
+                    return horasRecentes > 25 ? 'Alta' : horasRecentes > 15 ? 'Média' : 'Baixa';
+                },
+                consistenciaSemanal() {
+                    const ultimos7 = [];
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date(Date.now() - i * 86400000).toLocaleDateString('pt-BR');
+                        ultimos7.push(AppState.sessoes.some(s => s.data === d));
+                    }
+                    return Math.round((ultimos7.filter(Boolean).length / 7) * 100);
+                }
+            };
+
+            let aulaTimerInterval = null;
+            let aulaStartTime = 0;
+
+const iniciarAula = () => {
+    // Em vez de chamar o motor do zero (o que mudaria o ciclo e o sorteio),
+    // reutilizamos a mesma lógica de escolha que acabou de desenhar a tela:
+    const missao = DecisionEngine.escolherMissao();
+    if (!missao) {
+        alert('Nenhuma aula pendente!');
+        return;
+    }
+    if (AppState.aulaAtiva) {
+        if (!confirm('Há uma aula em andamento. Deseja interrompê-la?')) return;
+        pararAula(true);
+    }
+
+    // CORREÇÃO: Guardamos a referência exata da missão gerada
+    if (missao.modulo === 'leis') {
+        AppState.aulaAtiva = {
+            blockId: 'leis',
+            discIdx: -1,
+            lessonIdx: -1,
+            leiIdx: missao.leiIdx,
+            inicio: Date.now(),
+            modulo: 'leis'
+        };
+    } else {
+        AppState.aulaAtiva = {
+            blockId: missao.blockId,
+            discIdx: missao.discIdx,
+            lessonIdx: missao.lessonIdx,
+            inicio: Date.now(),
+            modulo: missao.modulo || (missao.blockIdx === 0 ? 'bloco1' : 'bloco2')
+        };
+    }
+
+    AppState.aulaPausada = false;
+    aulaStartTime = Date.now();
+    document.getElementById('startLessonBtn').disabled = true;
+    document.getElementById('pauseLessonBtn').disabled = false;
+    document.getElementById('stopLessonBtn').disabled = false;
+    document.getElementById('skipLessonBtn').disabled = false;
+    document.getElementById('pauseLessonBtn').textContent = '⏸ Pausar';
+    
+    if (aulaTimerInterval) clearInterval(aulaTimerInterval);
+    aulaTimerInterval = setInterval(() => {
+        if (!AppState.aulaPausada) {
+            AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000);
+            saveState();
+            updateDashboard();
+        }
+    }, 10000);
+    
+    registrarAtividade(missao.modulo === 'leis' ? 'leitura' : 'aula');
+    saveState();
+    updateDashboard();
+    renderHome();
+};
+            const pausarAula = () => {
+                if (!AppState.aulaAtiva) return;
+                AppState.aulaPausada = !AppState.aulaPausada;
+                const btn = document.getElementById('pauseLessonBtn');
+                if (AppState.aulaPausada) {
+                    btn.textContent = '▶ Continuar';
+                    document.getElementById('missionTitle').textContent = '⏸ Pausado';
+                } else {
+                    btn.textContent = '⏸ Pausar';
+                    aulaStartTime = Date.now();
+                }
+                saveState();
+            };
+
+            const abrirModalConclusao = () => {
+                if (!AppState.aulaAtiva) return;
+                let titulo = '';
+                if (AppState.aulaAtiva.modulo === 'leis') {
+                    const lei = AppState.leis[AppState.aulaAtiva.leiIdx];
+                    titulo = lei ? `📜 ${lei.nome}` : 'Lei';
+                } else {
+                    const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
+                    if (block) {
+                        const disc = block.disciplines[AppState.aulaAtiva.discIdx];
+                        const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
+                        titulo = `${disc.name} - ${aulaTitle}`;
+                    }
+                }
+                document.getElementById('modalConclusaoAula').textContent = titulo;
+                document.getElementById('questoesResolvidas').value = '0';
+                document.getElementById('questoesAcertos').value = '0';
+                document.getElementById('modalConclusao').classList.add('active');
+            };
+
+            const concluirAulaComQuestoes = () => {
+                const resolvidas = parseInt(document.getElementById('questoesResolvidas').value) || 0;
+                const acertos = parseInt(document.getElementById('questoesAcertos').value) || 0;
+                document.getElementById('modalConclusao').classList.remove('active');
+                finalizarAula(false, resolvidas, acertos);
+            };
+
+            const concluirAulaSemQuestoes = () => {
+                document.getElementById('modalConclusao').classList.remove('active');
+                finalizarAula(false, 0, 0);
+            };
+
+            const finalizarAula = (semSalvar, resolvidas, acertos) => {
+                if (!AppState.aulaAtiva) return;
+                if (aulaTimerInterval) { clearInterval(aulaTimerInterval);
+                    aulaTimerInterval = null; }
+                if (!semSalvar) {
+                    const minutos = Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000);
+                    if (AppState.aulaAtiva.modulo === 'leis') {
+                        const lei = AppState.leis[AppState.aulaAtiva.leiIdx];
+                        if (lei) {
+                            lei.paginaAtual = Math.min(lei.totalPaginas, lei.paginaAtual + 5);
+                            lei.ultimaLeitura = new Date().toISOString();
+                            lei.status = lei.paginaAtual >= lei.totalPaginas ? 'concluido' : 'andamento';
+                            lei.concluidoHoje = true;
+                            if (resolvidas > 0) {
+                                const keyLei = `lei_${lei.nome}`;
+                                if (!AppState.questoesPorAula[keyLei]) AppState.questoesPorAula[keyLei] = {
+                                    resolvidas: 0,
+                                    acertos: 0 };
+                                AppState.questoesPorAula[keyLei].resolvidas += resolvidas;
+                                AppState.questoesPorAula[keyLei].acertos += acertos;
+                            }
+                        }
+                        if (minutos > 0) {
+                            AppState.sessoes.push({
+                                data: new Date().toLocaleDateString('pt-BR'),
+                                inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit',
+                                    minute: '2-digit' }),
+                                duracao: minutos
+                            });
+                            registrarAtividade('leitura', minutos);
+                            AppState.metasSemanais.aulasFeitas += 1;
+                        }
+                    } else {
+                        const key =
+                            `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
+                        toggleLesson(key, true);
+                        if (resolvidas > 0) {
+                            if (!AppState.questoesPorAula[key]) AppState.questoesPorAula[key] = { resolvidas: 0,
+                                acertos: 0 };
+                            AppState.questoesPorAula[key].resolvidas += resolvidas;
+                            AppState.questoesPorAula[key].acertos += acertos;
+                        }
+                        if (minutos > 0) {
+                            AppState.sessoes.push({
+                                data: new Date().toLocaleDateString('pt-BR'),
+                                inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit',
+                                    minute: '2-digit' }),
+                                duracao: minutos
+                            });
+                            registrarAtividade('aula', minutos);
+                            AppState.metasSemanais.aulasFeitas += 1;
+                            saveState();
+                        }
+                    }
+                }
+                AppState.aulaAtiva = null;
+                AppState.aulaPausada = false;
+                AppState.tempoEstudoHoje = 0;
+                document.getElementById('startLessonBtn').disabled = false;
+                document.getElementById('pauseLessonBtn').disabled = true;
+                document.getElementById('stopLessonBtn').disabled = true;
+                document.getElementById('skipLessonBtn').disabled = false;
+                saveState();
+                updateDashboard();
+                renderAll();
+            };
+
+            const pularMissao = () => {
+                const hojeStr = hoje();
+                if (!AppState.pulosHoje._data || AppState.pulosHoje._data !== hojeStr) {
+                    AppState.pulosHoje = { _data: hojeStr, keys: [] };
+                }
+                if (AppState.aulaAtiva) {
+                    if (AppState.aulaAtiva.modulo === 'leis') {
+                        const lei = AppState.leis[AppState.aulaAtiva.leiIdx];
+                        if (lei) {
+                            lei.concluidoHoje = true;
+                            AppState.pulosHoje.keys.push(`lei_${lei.nome}`);
+                        }
+                    } else {
+                        const key =
+                            `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
+                        AppState.pulosHoje.keys.push(key);
+                    }
+                    if (aulaTimerInterval) { clearInterval(aulaTimerInterval);
+                        aulaTimerInterval = null; }
+                    AppState.aulaAtiva = null;
+                    AppState.aulaPausada = false;
+                    AppState.tempoEstudoHoje = 0;
+                } else {
+                    const missao = DecisionEngine.escolherMissao();
+                    if (missao) {
+                        AppState.pulosHoje.keys.push(missao.key);
+                    }
+                }
+                document.getElementById('startLessonBtn').disabled = false;
+                document.getElementById('pauseLessonBtn').disabled = true;
+                document.getElementById('stopLessonBtn').disabled = true;
+                document.getElementById('skipLessonBtn').disabled = false;
+                saveState();
+                updateDashboard();
+                renderAll();
+            };
+
+            const pararAula = (semSalvar = false) => {
+                if (!semSalvar && AppState.aulaAtiva) {
+                    abrirModalConclusao();
+                    return;
+                }
+                finalizarAula(semSalvar, 0, 0);
+            };
+
+            const toggleLesson = (key, checked) => {
+                AppState.checks[key] = checked;
+                if (checked) {
+                    const parts = key.split('|');
+                    const blockId = parts[0],
+                        discIdx = parseInt(parts[1]),
+                        lessonIdx = parseInt(parts[2]);
+                    const block = AppState.data.find(b => b.id === blockId);
+                    if (block) {
+                        const disc = block.disciplines[discIdx];
+                        const aula = disc.lessons[lessonIdx];
+                        AppState.diario.push({
+                            data: new Date().toLocaleDateString('pt-BR'),
+                            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                            bloco: block.name,
+                            disciplina: disc.name,
+                            aula: aula
+                        });
+                    }
+                }
+                saveState();
+                renderAll();
+            };
+
+            const renderHome = () => {
+                const missao = DecisionEngine.escolherMissao();
+                const titleEl = document.getElementById('missionTitle');
+                const subEl = document.getElementById('missionSub');
+                const timeEl = document.getElementById('missionTime');
+                const justifyEl = document.getElementById('justifyBox');
+                const startBtn = document.getElementById('startLessonBtn');
+                const pauseBtn = document.getElementById('pauseLessonBtn');
+                const stopBtn = document.getElementById('stopLessonBtn');
+                const skipBtn = document.getElementById('skipLessonBtn');
+
+                if (AppState.aulaAtiva) {
+                    if (AppState.aulaAtiva.modulo === 'leis') {
+                        const lei = AppState.leis[AppState.aulaAtiva.leiIdx];
+                        if (lei) {
+                            titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: 📜 ${lei.nome}` :
+                                `⏳ Lendo: 📜 ${lei.nome}`;
+                            subEl.textContent =
+                                `Leis · Pág. ${lei.paginaAtual}/${lei.totalPaginas} (${Math.round(lei.paginaAtual/lei.totalPaginas*100)}%)`;
+                        }
+                    } else {
+                        const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
+                        if (block) {
+                            const disc = block.disciplines[AppState.aulaAtiva.discIdx];
+                            const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
+                            titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` :
+                                `⏳ Estudando: ${aulaTitle}`;
+                            subEl.textContent = `${disc.name} · ${block.name}`;
+                        }
+                    }
+                    timeEl.textContent =
+                        `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = false;
+                    stopBtn.disabled = false;
+                    skipBtn.disabled = false;
+                    pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
+                    justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
+                    updateIndicators();
+                    return;
+                }
+
+                if (!missao) {
+                    titleEl.textContent = '🎉 Parabéns! Todas as aulas concluídas!';
+                    subEl.textContent = 'Continue revisando e praticando.';
+                    timeEl.textContent = '';
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    skipBtn.disabled = true;
+                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo do edital.</strong>';
+                } else {
+                    const label = missao.modulo === 'revisao' ? '🔄 Revisão' : missao.modulo === 'leis' ? '📜 Leis' :
+                        missao.blockIdx === 0 ? '📚 Teoria' : '📝 Questões';
+                    titleEl.textContent = `${label}: ${missao.sub || missao.title}`;
+                    subEl.textContent = `${missao.disciplineName || missao.disciplina} · ${missao.assunto || ''}`;
+                    timeEl.textContent = missao.modulo === 'leis' ? '⏱️ Tempo estimado: ~30min' :
+                        '⏱️ Tempo estimado: ~2h30';
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    skipBtn.disabled = false;
+                    const just = DecisionEngine.gerarJustificativa(missao);
+                    justifyEl.innerHTML = `💡 <strong>Por que esta aula?</strong> ${just}`;
+                }
+                updateIndicators();
+                renderWeeklyGoals();
+            };
+
+            const updateIndicators = () => {
+                const all = getAllLessonsFlat();
+                const done = all.filter(i => AppState.checks[i.key]).length;
+                document.getElementById('indDominio').textContent = Math.round((done / all.length) * 100) + '%';
+                document.getElementById('indHorasEstudadas').textContent = Math.round(AppState.sessoes.reduce((s, e) => s +
+                    e.duracao, 0) / 60) + 'h';
+                const previsao = DecisionEngine.preverConclusaoBloco1();
+                document.getElementById('indPrevisao').textContent = previsao.data;
+                document.getElementById('indRiscoAtraso').textContent = previsao.atraso > 0 ? `🔴 ${previsao.atraso}d` :
+                    '✅ OK';
+                document.getElementById('indConsistencia').textContent = DecisionEngine.consistenciaSemanal() + '%';
+                document.getElementById('indFadiga').textContent = DecisionEngine.detectarFadiga();
+                document.getElementById('indStreak').textContent = AppState.student.gamificacao.streak || 0;
+                document.getElementById('indNivel').textContent = AppState.student.gamificacao.nivel || 1;
+            };
+
+            const renderWeeklyGoals = () => {
+                const container = document.getElementById('weeklyGoalsContainer');
+                if (!container) return;
+                const metas = AppState.metasSemanais;
+                const pctAulas = metas.aulas > 0 ? Math.min(100, Math.round((metas.aulasFeitas / metas.aulas) * 100)) : 0;
+                const pctHoras = metas.horas > 0 ? Math.min(100, Math.round((metas.horasFeitas / metas.horas) * 100)) : 0;
+                container.innerHTML = `
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <span>📚 Aulas: ${metas.aulasFeitas}/${metas.aulas}</span>
+                    <div class="goal-progress"><div class="goal-progress-fill" style="width:${pctAulas}%"></div></div>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <span>⏱️ Horas: ${metas.horasFeitas.toFixed(1)}/${metas.horas}h</span>
+                    <div class="goal-progress"><div class="goal-progress-fill" style="width:${pctHoras}%"></div></div>
+                </div>
+            </div>
+            ${AppState.student.gamificacao.conquistas.length ? `<div style="margin-top:12px;">🏆 Conquistas: ${AppState.student.gamificacao.conquistas.map(c => `<span class="tema">${c}</span>`).join(' ')}</div>` : ''}
+        `;
+            };
+
+            const renderBlock = (blockIdx, containerId, filtro = '') => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                const block = AppState.data[blockIdx];
+                let html =
+                    `<div class="block"><div class="card-header"><h3>${block.name}</h3></div>`;
+                block.disciplines.forEach((disc, di) => {
+                    const expandKey = `${blockIdx}|${di}`;
+                    const isOpen = AppState.expanded[expandKey] || false;
+                    const filteredLessons = filtro ? disc.lessons.filter(t => t.toLowerCase().includes(filtro
+                        .toLowerCase())) : disc.lessons;
+                    if (filtro && !filteredLessons.length && !disc.name.toLowerCase().includes(filtro
+                            .toLowerCase())) return;
+                    html += `<div class="discipline">
+                <div class="discipline-header" onclick="window.toggleDiscipline('${expandKey}')">
+                    <span class="disc-name">${disc.name} <span style="font-size:0.7rem;color:#64748b;">(peso ${getPesoDisciplina(disc.name)})</span></span>
+                    <span class="disc-stats">${disc.lessons.filter((_,li) => AppState.checks[`${block.id}|${di}|${li}`]).length}/${disc.lessons.length}</span>
+                </div>
+                <div class="discipline-body ${isOpen ? 'open' : ''}">`;
+                    filteredLessons.forEach((title, li) => {
+                        const originalLi = disc.lessons.indexOf(title);
+                        const key = `${block.id}|${di}|${originalLi}`;
+                        const checked = !!AppState.checks[key];
+                        const forget = DecisionEngine._diasSemEstudo({ key, title,
+                            disciplineName: disc.name });
+                        const forgetLabel = forget > 20 ? '🔴' : forget > 10 ? '🟡' : '🟢';
+                        const forgetClass = forget > 20 ? 'low' : forget > 10 ? 'medium' : 'high';
+                        const qData = AppState.questoesPorAula[key];
+                        const qInfo = qData && qData.resolvidas > 0 ?
+                            `<span class="questoes-badge">📝 ${qData.acertos}/${qData.resolvidas} (${Math.round(qData.acertos/Math.max(1,qData.resolvidas)*100)}%)</span>` :
+                            '';
+                        html += `<div class="lesson-item ${checked ? 'done' : ''}">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onchange="window.toggleLessonDirect('${key}', this.checked)" />
+                    <span class="lesson-title">${title}</span>${qInfo}
+                    <span class="forget-indicator ${forgetClass}">${forgetLabel} ${Math.round(forget)}d</span>
+                    <button class="btn-anotacoes" onclick="window.abrirModalAnotacoes('${key}','${title.replace(/'/g, "\\'")}','${disc.name.replace(/'/g, "\\'")}')">📝</button>
+                </div>`;
+                    });
+                    html += `</div></div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            };
+
+            window.toggleDiscipline = (key) => {
+                AppState.expanded[key] = !AppState.expanded[key];
+                saveState();
+                renderAll();
+            };
+
+            window.toggleLessonDirect = (key, checked) => {
+                toggleLesson(key, checked);
+            };
+
+            window.filtrarBloco = (blockIdx, termo) => {
+                renderBlock(blockIdx, blockIdx === 0 ? 'bloco1Container' : 'bloco2Container', termo);
+            };
+
+            const renderRevisao = () => {
+                const container = document.getElementById('revisaoContainer');
+                if (!container) return;
+                const concluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]);
+                if (!concluidas.length) {
+                    container.innerHTML =
+                        '<div class="card"><p class="text-muted">Nenhuma aula concluída para revisar.</p></div>';
+                    return;
+                }
+                let html = '<div class="card"><h3>🔄 Revisões Inteligentes (Algoritmo SM-2)</h3>';
+                concluidas.sort((a, b) => DecisionEngine._diasSemRevisao(b.key) - DecisionEngine._diasSemRevisao(a
+                .key));
+                concluidas.slice(0, 20).forEach(item => {
+                    const dias = DecisionEngine._diasSemRevisao(item.key);
+                    const dominio = DecisionEngine._obterDominio(item);
+                    const classe = dias > 30 ? 'low' : dias > 15 ? 'medium' : 'high';
+                    html += `<div class="lesson-item">
+                <span class="lesson-title">${item.title}</span>
+                <span class="forget-indicator ${classe}">${Math.round(dias)}d</span>
+                <span>Domínio: ${Math.round(dominio*100)}%</span>
+                <button class="btn-anotacoes" onclick="window.iniciarRevisaoManual('${item.key}')">▶ Revisar</button>
+            </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            };
+
+            window.iniciarRevisaoManual = (key) => {
+                const aula = getAllLessonsFlat().find(i => i.key === key);
+                if (aula) {
+                    const missao = { ...aula, modulo: 'revisao', disciplina: aula.disciplineName, assunto: aula.title
+                            .split(' - ')[0], sub: aula.title };
+                    AppState.aulaAtiva = {
+                        blockId: missao.blockId,
+                        discIdx: missao.discIdx,
+                        lessonIdx: missao.lessonIdx,
+                        inicio: Date.now(),
+                        modulo: 'revisao'
+                    };
+                    AppState.aulaPausada = false;
+                    aulaStartTime = Date.now();
+                    document.getElementById('startLessonBtn').disabled = true;
+                    document.getElementById('pauseLessonBtn').disabled = false;
+                    document.getElementById('stopLessonBtn').disabled = false;
+                    document.getElementById('skipLessonBtn').disabled = false;
+                    if (aulaTimerInterval) clearInterval(aulaTimerInterval);
+                    aulaTimerInterval = setInterval(() => {
+                        if (!AppState.aulaPausada) {
+                            AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000);
+                            saveState();
+                            updateDashboard();
+                        }
+                    }, 10000);
+                    registrarAtividade('revisao');
+                    saveState();
+                    updateDashboard();
+                    renderHome();
+                    document.querySelector('#navList li[data-page="page-home"]').click();
+                }
+            };
+
+            const renderLeis = () => {
+                const container = document.getElementById('leisContainer');
+                if (!container) return;
+                let html = '<div style="margin-bottom:12px;"><button class="btn-glass primary" onclick="window.resetarConcluidoHojeLeis()">🔄 Resetar "concluído hoje"</button></div>';
+                AppState.leis.forEach((lei, idx) => {
+                    const pct = lei.totalPaginas > 0 ? Math.round((lei.paginaAtual / lei.totalPaginas) * 100) : 0;
+                    const qData = AppState.questoesPorAula[`lei_${lei.nome}`];
+                    const qInfo = qData && qData.resolvidas > 0 ?
+                        ` <span class="questoes-badge">📝 ${qData.acertos}/${qData.resolvidas}</span>` : '';
+                    html += `<div class="lei-detalhe">
+                <span class="lesson-title" style="min-width:180px;">${lei.nome}${qInfo}</span>
+                <span>📄 ${lei.paginaAtual}/${lei.totalPaginas} (${pct}%)</span>
+                <span>${lei.status === 'concluido' ? '✅' : lei.status === 'andamento' ? '⏳' : lei.concluidoHoje ? '🔒' : '⏹'}</span>
+                <input type="text" value="${lei.artigoAtual || ''}" placeholder="Art./Pág." onchange="window.atualizarArtigoLei(${idx}, this.value)" style="width:80px;" />
+                <button class="btn-anotacoes" onclick="window.marcarLeituraLei(${idx})">+5 pág</button>
+                <button class="btn-anotacoes" onclick="window.marcarConcluidaLei(${idx})">✓ Concluir</button>
+                <button class="btn-anotacoes" onclick="window.concluirLeiPorHoje(${idx})">🔒 Hoje</button>
+                <button class="btn-anotacoes" onclick="window.abrirAnotacaoLei(${idx})">📝 Notas</button>
+            </div>`;
+                });
+                container.innerHTML = html || '<p class="text-muted">Nenhuma lei cadastrada.</p>';
+            };
+
+            window.atualizarArtigoLei = (idx, valor) => {
+                AppState.leis[idx].artigoAtual = valor;
+                saveState();
+            };
+
+            window.concluirLeiPorHoje = (idx) => {
+                AppState.leis[idx].concluidoHoje = true;
+                if (AppState.leis[idx].status === 'pendente') AppState.leis[idx].status = 'andamento';
+                registrarAtividade('leitura', 15);
+                saveState();
+                renderLeis();
+                updateDashboard();
+            };
+
+            window.resetarConcluidoHojeLeis = () => {
+                AppState.leis.forEach(l => l.concluidoHoje = false);
+                saveState();
+                renderLeis();
+                renderHome();
+            };
+
+            window.abrirAnotacaoLei = (idx) => {
+                const lei = AppState.leis[idx];
+                document.getElementById('modalLeiNome').textContent = lei.nome;
+                document.getElementById('leiPaginaAtualInput').value = lei.artigoAtual || '';
+                document.getElementById('leiAnotacaoTexto').value = lei.anotacoes || '';
+                document.getElementById('modalLeiAnotacao').classList.add('active');
+                window._anotacaoLeiIdx = idx;
+            };
+
+            document.getElementById('closeModalLeiAnotacao')?.addEventListener('click', () => {
+                document.getElementById('modalLeiAnotacao').classList.remove('active');
+            });
+
+            document.getElementById('salvarLeiAnotacaoBtn')?.addEventListener('click', () => {
+                if (window._anotacaoLeiIdx === undefined) return;
+                const idx = window._anotacaoLeiIdx;
+                AppState.leis[idx].artigoAtual = document.getElementById('leiPaginaAtualInput').value;
+                AppState.leis[idx].anotacoes = document.getElementById('leiAnotacaoTexto').value;
+                saveState();
+                document.getElementById('modalLeiAnotacao').classList.remove('active');
+                renderLeis();
+            });
+
+            window.marcarLeituraLei = (idx) => {
+                const lei = AppState.leis[idx];
+                lei.paginaAtual = Math.min(lei.totalPaginas, lei.paginaAtual + 5);
+                lei.ultimaLeitura = new Date().toISOString();
+                lei.status = lei.paginaAtual >= lei.totalPaginas ? 'concluido' : 'andamento';
+                registrarAtividade('leitura', 10);
+                saveState();
+                renderLeis();
+                updateDashboard();
+            };
+
+            window.marcarConcluidaLei = (idx) => {
+                AppState.leis[idx].status = 'concluido';
+                AppState.leis[idx].paginaAtual = AppState.leis[idx].totalPaginas;
+                AppState.leis[idx].concluidoHoje = true;
+                registrarAtividade('leitura', 30);
+                saveState();
+                renderLeis();
+                updateDashboard();
+            };
+
+            const renderProgresso = () => {
+                const container = document.getElementById('progressoContainer');
+                if (!container) return;
+                const all = getAllLessonsFlat();
+                const total = all.length;
+                const done = all.filter(i => AppState.checks[i.key]).length;
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                const previsao = DecisionEngine.preverConclusaoBloco1();
+                const horasTotal = Math.round(AppState.sessoes.reduce((s, e) => s + e.duracao, 0) / 60);
+                const totalQuestoes = Object.values(AppState.questoesPorAula).reduce((s, q) => s + (q.resolvidas || 0), 0);
+                const totalAcertos = Object.values(AppState.questoesPorAula).reduce((s, q) => s + (q.acertos || 0), 0);
+                const aproveitamento = totalQuestoes > 0 ? Math.round((totalAcertos / totalQuestoes) * 100) : 0;
+                const diasRestantes = diasAte(CONFIG.diasProva);
+                const probAprovacao = Math.min(98, Math.round(pct * 0.7 + aproveitamento * 0.3 + Math.min(30, DecisionEngine
+                    .consistenciaSemanal() * 0.2)));
+
+                let html = `
+            <div class="card"><h3>📊 Progresso Geral</h3>
+            <div class="progresso-grid-estatisticas">
+                <div class="indicator-card"><div class="number">${pct}%</div><div class="label">Edital concluído</div></div>
+                <div class="indicator-card"><div class="number">${horasTotal}h</div><div class="label">Horas totais</div></div>
+                <div class="indicator-card"><div class="number">${previsao.data}</div><div class="label">Previsão conclusão</div></div>
+                <div class="indicator-card"><div class="number">${DecisionEngine.consistenciaSemanal()}%</div><div class="label">Consistência 7d</div></div>
+                <div class="indicator-card"><div class="number">${AppState.student.gamificacao.nivel}</div><div class="label">Nível</div></div>
+                <div class="indicator-card"><div class="number">${AppState.student.gamificacao.xp} XP</div><div class="label">Experiência</div></div>
+                <div class="indicator-card"><div class="number">${aproveitamento}%</div><div class="label">Aproveitamento questões</div></div>
+                <div class="indicator-card"><div class="number">${totalQuestoes}</div><div class="label">Total questões</div></div>
+                <div class="indicator-card"><div class="number">${probAprovacao}%</div><div class="label">Prob. aprovação</div></div>
+                <div class="indicator-card"><div class="number">${diasRestantes > 0 ? diasRestantes+'d' : '0d'}</div><div class="label">Dias até prova</div></div>
+                <div class="indicator-card"><div class="number">${AppState.sessoes.length}</div><div class="label">Sessões estudo</div></div>
+                <div class="indicator-card"><div class="number">${AppState.flashcards.length}</div><div class="label">Flashcards</div></div>
+                <div class="indicator-card"><div class="number">${AppState.student.gamificacao.streak || 0}</div><div class="label">🔥 Streak</div></div>
+                <div class="indicator-card"><div class="number">${DecisionEngine.detectarFadiga()}</div><div class="label">Fadiga</div></div>
+                <div class="indicator-card"><div class="number">${AppState.leis.filter(l=>l.status==='concluido').length}/${AppState.leis.length}</div><div class="label">Leis concluídas</div></div>
+                <div class="indicator-card"><div class="number">${Math.round(horasTotal/Math.max(1,AppState.sessoes.length)*60)}min</div><div class="label">Média/sessão</div></div>
+            </div>
+            ${previsao.atraso > 0 ? `<div style="color:#f87171; margin:8px 0;">⚠️ Atraso de ${previsao.atraso} dias em relação à prova.</div>` : '<div style="color:#4ade80; margin:8px 0;">✅ Dentro do prazo.</div>'}
+            </div>
+
+            <div class="progresso-grid-graficos">
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">📊 Progresso por Disciplina (Bloco 1)</h4><canvas id="chartDisciplinas"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">📈 Horas Estudadas (7 dias)</h4><canvas id="chartHorasSemana"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">🥧 Distribuição Bloco 1 vs Bloco 2</h4><canvas id="chartPizzaBlocos"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">🎯 Aproveitamento em Questões</h4><canvas id="chartAproveitamento"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">📉 Curva de Retenção (Esquecimento)</h4><canvas id="chartCurvaEsquecimento"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">🏆 Desempenho por Peso</h4><canvas id="chartDesempenhoPeso"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">📅 Sessões por Dia da Semana</h4><canvas id="chartSessoesSemana"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">⚡ Ritmo de Estudo (aulas/dia)</h4><canvas id="chartRitmo"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">📜 Progresso das Leis</h4><canvas id="chartLeis"></canvas></div>
+                <div class="chart-container"><h4 style="font-size:.9rem; color:#94a3b8; margin-bottom:8px;">🔮 Projeção de Nota</h4><canvas id="chartProjecaoNota"></canvas></div>
+            </div>`;
+                container.innerHTML = html;
+
+                setTimeout(() => {
+                    const disciplinas = AppState.data[0].disciplines;
+                    const nomesDisc = disciplinas.map(d => d.name.length > 25 ? d.name.slice(0, 22) + '...' : d
+                        .name);
+                    const concluidasDisc = disciplinas.map((d, di) => d.lessons.filter((_, i) => AppState.checks[
+                        `bloco1|${di}|${i}`]).length);
+                    const totaisDisc = disciplinas.map(d => d.lessons.length);
+
+                    const ctx1 = document.getElementById('chartDisciplinas')?.getContext('2d');
+                    if (ctx1) new Chart(ctx1, { type: 'bar', data: { labels: nomesDisc, datasets: [
+                            { label: 'Concluídas', data: concluidasDisc,
+                                backgroundColor: '#8b5cf6' },
+                            { label: 'Restantes', data: totaisDisc.map((t, i) => t -
+                                    concluidasDisc[i]), backgroundColor: 'rgba(255,255,255,0.1)' }
+                        ] }, options: { responsive: true, maintainAspectRatio: true,
+                            plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { color: '#94a3b8' },
+                                    stacked: true }, x: { ticks: { color: '#94a3b8',
+                                maxRotation: 60, font: { size: 9 } }, stacked: true } } }
+                    });
+
+                    const ctx2 = document.getElementById('chartHorasSemana')?.getContext('2d');
+                    if (ctx2) {
+                        const ultimos7dias = [];
+                        const horasPorDia = [];
+                        for (let i = 6; i >= 0; i--) {
+                            const d = new Date(Date.now() - i * 86400000).toLocaleDateString('pt-BR');
+                            ultimos7dias.push(d.slice(0, 5));
+                            horasPorDia.push(AppState.sessoes.filter(s => s.data === d).reduce((a, s) => a + s
+                                .duracao, 0) / 60);
+                        }
+                        new Chart(ctx2, { type: 'line', data: { labels: ultimos7dias, datasets: [{ label: 'Horas/dia',
+                                    data: horasPorDia, borderColor: '#60a5fa',
+                                    backgroundColor: 'rgba(96,165,250,0.1)', fill: true,
+                                    tension: 0.4
+                                }] }, options: { responsive: true,
+                                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
+
+                    const ctx3 = document.getElementById('chartPizzaBlocos')?.getContext('2d');
+                    if (ctx3) {
+                        const b1Done = getAllLessonsFlat().filter(i => i.blockIdx === 0 && AppState.checks[i.key])
+                            .length;
+                        const b2Done = getAllLessonsFlat().filter(i => i.blockIdx === 1 && AppState.checks[i.key])
+                            .length;
+                        new Chart(ctx3, { type: 'doughnut', data: { labels: ['Bloco 1', 'Bloco 2', 'Pendentes'],
+                                datasets: [{ data: [b1Done, b2Done, total - b1Done - b2Done],
+                                    backgroundColor: ['#8b5cf6', '#60a5fa',
+                                        'rgba(255,255,255,0.08)'
+                                    ], borderWidth: 0 }] },
+                            options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } } }
+                        });
+                    }
+
+                    const ctx4 = document.getElementById('chartAproveitamento')?.getContext('2d');
+                    if (ctx4) {
+                        const labelsAp = [];
+                        const dataAp = [];
+                        Object.entries(AppState.questoesPorAula).slice(0, 15).forEach(([key, q]) => {
+                            if (q.resolvidas > 0) {
+                                labelsAp.push(key.replace('bloco1|', 'B1-').replace('bloco2|', 'B2-').replace(
+                                    'lei_', '📜').slice(0, 20));
+                                dataAp.push(Math.round((q.acertos / q.resolvidas) * 100));
+                            }
+                        });
+                        if (labelsAp.length === 0) { labelsAp.push('Sem dados');
+                            dataAp.push(0); }
+                        new Chart(ctx4, { type: 'bar', data: { labels: labelsAp, datasets: [{ label: '% Acertos',
+                                    data: dataAp, backgroundColor: '#4ade80' }] },
+                            options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { y: { max: 100, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8',
+                                            maxRotation: 60, font: { size: 8 } } } } } });
+                    }
+
+                    const ctx5 = document.getElementById('chartCurvaEsquecimento')?.getContext('2d');
+                    if (ctx5) {
+                        const dias = [0, 1, 3, 7, 15, 30, 60, 120];
+                        const retencao = [100, 90, 70, 50, 30, 15, 8, 3];
+                        new Chart(ctx5, { type: 'line', data: { labels: dias.map(d => d + 'd'), datasets: [{
+                                    label: 'Retenção típica', data: retencao,
+                                    borderColor: '#f87171',
+                                    backgroundColor: 'rgba(248,113,113,0.1)', fill: true,
+                                    tension: 0.4
+                                }] }, options: { responsive: true,
+                                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { y: { max: 100, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
+
+                    const ctx6 = document.getElementById('chartDesempenhoPeso')?.getContext('2d');
+                    if (ctx6) {
+                        const discSet = new Set();
+                        AppState.data.forEach(b => b.disciplines.forEach(d => discSet.add(d.name)));
+                        const discArr = Array.from(discSet);
+                        const pctPorDisc = discArr.map(d => {
+                            const aulas = getAllLessonsFlat().filter(i => i.disciplineName === d);
+                            const done = aulas.filter(i => AppState.checks[i.key]).length;
+                            return aulas.length > 0 ? Math.round((done / aulas.length) * 100) : 0;
+                        });
+                        const pesos = discArr.map(d => getPesoDisciplina(d));
+                        new Chart(ctx6, { type: 'scatter', data: { datasets: [{ label: 'Desempenho vs Peso',
+                                    data: discArr.map((d, i) => ({ x: pesos[i], y: pctPorDisc[
+                                        i] })),
+                                    backgroundColor: '#a78bfa', pointRadius: 6 }] },
+                            options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } },
+                                    tooltip: { callbacks: { label: ctx => `${discArr[ctx.dataIndex]}: ${ctx.raw.y}%` } } },
+                                scales: { x: { title: { text: 'Peso', color: '#94a3b8' },
+                                        ticks: { color: '#94a3b8' } }, y: { title: { text: '% Concluído',
+                                            color: '#94a3b8' }, max: 100, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
+
+                    const ctx7 = document.getElementById('chartSessoesSemana')?.getContext('2d');
+                    if (ctx7) {
+                        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                        const sessoesPorDia = [0, 0, 0, 0, 0, 0, 0];
+                        AppState.sessoes.forEach(s => {
+                            const partes = s.data.split('/');
+                            if (partes.length === 3) {
+                                const d = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(
+                                    partes[0]));
+                                if (!isNaN(d.getTime())) sessoesPorDia[d.getDay()]++;
+                            }
+                        });
+                        new Chart(ctx7, { type: 'bar', data: { labels: diasSemana, datasets: [{ label: 'Sessões',
+                                    data: sessoesPorDia, backgroundColor: '#fbbf24' }] },
+                            options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
+
+                    const ctx8 = document.getElementById('chartRitmo')?.getContext('2d');
+                    if (ctx8) {
+                        const ultimos30dias = [];
+                        const aulasPorDia = [];
+                        for (let i = 29; i >= 0; i--) {
+                            const d = new Date(Date.now() - i * 86400000).toLocaleDateString('pt-BR');
+                            ultimos30dias.push(d.slice(0, 5));
+                            aulasPorDia.push(AppState.diario.filter(e => e.data === d).length);
+                        }
+                        new Chart(ctx8, { type: 'bar', data: { labels: ultimos30dias, datasets: [{ label: 'Aulas/dia',
+                                    data: aulasPorDia, backgroundColor: 'rgba(139,92,246,0.5)',
+                                    borderRadius: 4 }] }, options: { responsive: true,
+                                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8',
+                                            maxRotation: 60, font: { size: 7 }, maxTicksLimit: 15 } } } }
+                        });
+                    }
+
+                    const ctx9 = document.getElementById('chartLeis')?.getContext('2d');
+                    if (ctx9 && AppState.leis.length > 0) {
+                        const nomesLeis = AppState.leis.map(l => l.nome.length > 20 ? l.nome.slice(0, 18) + '...' :
+                            l.nome);
+                        const pctsLeis = AppState.leis.map(l => l.totalPaginas > 0 ? Math.round((l.paginaAtual / l
+                            .totalPaginas) * 100) : 0);
+                        new Chart(ctx9, { type: 'bar', data: { labels: nomesLeis, datasets: [{ label: '% Lido',
+                                    data: pctsLeis, backgroundColor: '#34d399' }] },
+                            options: { indexAxis: 'y', responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { x: { max: 100, ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8',
+                                            font: { size: 8 } } } } } });
+                    }
+
+                    const ctx10 = document.getElementById('chartProjecaoNota')?.getContext('2d');
+                    if (ctx10) {
+                        const semanasRestantes = Math.max(1, Math.ceil(diasRestantes / 7));
+                        const projecao = [];
+                        const labelsProj = [];
+                        let notaAtual = Math.min(85, pct * 0.6 + aproveitamento * 0.4);
+                        for (let i = 0; i <= semanasRestantes && i < 20; i++) {
+                            labelsProj.push(`Sem ${i}`);
+                            projecao.push(Math.min(95, Math.round(notaAtual + i * ((90 - notaAtual) / Math.max(1,
+                                semanasRestantes)))));
+                        }
+                        new Chart(ctx10, { type: 'line', data: { labels: labelsProj, datasets: [{ label: 'Nota projetada',
+                                    data: projecao, borderColor: '#a78bfa',
+                                    backgroundColor: 'rgba(167,139,250,0.1)', fill: true,
+                                    tension: 0.4 }] }, options: { responsive: true,
+                                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                                scales: { y: { max: 100, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
+                }, 300);
+            };
+
+            const renderDiario = () => {
+                const list = document.getElementById('diarioList');
+                if (!list) return;
+                const sorted = [...AppState.diario].reverse().slice(0, 30);
+                let html = '<div class="card"><h3>📖 Últimas atividades</h3>';
+                sorted.forEach(e => html +=
+                    `<div class="lesson-item"><span>${e.data}</span> ${e.aula} <span class="text-muted">(${e.disciplina})</span></div>`
+                    );
+                html += '</div>';
+                list.innerHTML = html || '<p class="text-muted">Nenhum registro.</p>';
+            };
+
+            const renderSimulados = () => {
+                const container = document.getElementById('simuladosContainer');
+                if (!container) return;
+                let html = `<div class="card"><h3>📋 Simulados</h3>
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+            <input type="text" id="simTema" placeholder="Tema" style="flex:1; min-width:120px; padding:6px; border-radius:30px; background:rgba(0,0,0,0.2); border:var(--border-light); color:#fff;" />
+            <input type="number" id="simTotal" placeholder="Total" style="width:70px; padding:6px; border-radius:30px; background:rgba(0,0,0,0.2); border:var(--border-light); color:#fff;" />
+            <input type="number" id="simAcertos" placeholder="Acertos" style="width:70px; padding:6px; border-radius:30px; background:rgba(0,0,0,0.2); border:var(--border-light); color:#fff;" />
+            <button class="btn-glass primary" onclick="window.salvarSimulado()">Salvar</button>
+        </div>`;
+                AppState.simulados.slice().reverse().forEach(s => {
+                    const pct = s.total > 0 ? Math.round((s.acertos / s.total) * 100) : 0;
+                    const cor = pct >= 70 ? 'success' : pct >= 50 ? 'warning' : 'danger';
+                    html +=
+                        `<div class="lesson-item"><span>${s.tema}</span> <span class="value ${cor}">${s.acertos}/${s.total} (${pct}%)</span> <span class="text-muted">${s.data || ''}</span></div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            };
+
+            window.salvarSimulado = () => {
+                const tema = document.getElementById('simTema')?.value.trim() || 'Simulado';
+                const total = parseInt(document.getElementById('simTotal')?.value) || 0;
+                const acertos = parseInt(document.getElementById('simAcertos')?.value) || 0;
+                if (total <= 0) return alert('Total inválido.');
+                AppState.simulados.push({ tema, total, acertos, data: new Date().toLocaleDateString('pt-BR') });
+                registrarAtividade('simulado');
+                saveState();
+                renderSimulados();
+                updateDashboard();
+            };
+
+            let flashcardRevisaoAtual = null;
+
+            const renderFlashcards = () => {
+                const list = document.getElementById('flashcardsList');
+                const filtroSelect = document.getElementById('flashcardDisciplinaFiltro');
+                if (!list || !filtroSelect) return;
+                const disciplinas = [...new Set(AppState.flashcards.map(f => f.disciplina))].filter(Boolean);
+                filtroSelect.innerHTML = '<option value="">Todas disciplinas</option>' + disciplinas.map(d =>
+                    `<option value="${d}">${d}</option>`).join('');
+                const filtro = filtroSelect.value;
+                const filtrados = filtro ? AppState.flashcards.filter(f => f.disciplina === filtro) : AppState.flashcards;
+                const pendentes = filtrados.filter(f => {
+                    if (!f.proximaRevisao) return true;
+                    return new Date(f.proximaRevisao) <= new Date();
+                });
+                let html =
+                    `<p>Total: ${AppState.flashcards.length} | Pendentes para revisão: <strong>${pendentes.length}</strong></p>`;
+                filtrados.slice(0, 50).forEach((f, i) => {
+                    const globalIdx = AppState.flashcards.indexOf(f);
+                    const status = f.proximaRevisao && new Date(f.proximaRevisao) > new Date() ? '⏳' : '📌';
+                    html += `<div class="lesson-item">
+                <span>${status} ${f.frente?.slice(0, 60)}...</span>
+                <span class="text-muted">Nível: ${f.nivel || 0} | Próx: ${f.proximaRevisao ? new Date(f.proximaRevisao).toLocaleDateString('pt-BR') : 'Agora'}</span>
+                <button class="btn-anotacoes" onclick="window.editarFlashcard(${globalIdx})">✏️</button>
+                <button class="btn-anotacoes danger" onclick="window.excluirFlashcard(${globalIdx})">🗑</button>
+            </div>`;
+                });
+                list.innerHTML = html || '<p class="text-muted">Nenhum flashcard criado.</p>';
+            };
+
+            const iniciarRevisaoFlashcards = () => {
+                const pendentes = AppState.flashcards.filter(f => !f.proximaRevisao || new Date(f.proximaRevisao) <=
+                    new Date());
+                if (!pendentes.length) {
+                    alert('Nenhum flashcard pendente para revisão!');
+                    return;
+                }
+                const embaralhados = [...pendentes].sort(() => Math.random() - 0.5);
+                flashcardRevisaoAtual = embaralhados;
+                document.getElementById('flashcardReviewArea').style.display = 'block';
+                mostrarProximoFlashcard();
+            };
+
+            const mostrarProximoFlashcard = () => {
+                if (!flashcardRevisaoAtual?.length) {
+                    document.getElementById('flashcardReviewArea').style.display = 'none';
+                    alert('Revisão concluída!');
+                    flashcardRevisaoAtual = null;
+                    renderFlashcards();
+                    return;
+                }
+                const f = flashcardRevisaoAtual[0];
+                document.getElementById('flashcardFront').textContent = f.frente;
+                document.getElementById('flashcardBack').textContent = f.verso;
+                document.getElementById('flashcardElement').classList.remove('flipped');
+            };
+
+            window.flipFlashcard = () => {
+                document.getElementById('flashcardElement').classList.toggle('flipped');
+            };
+
+            window.avaliarFlashcard = (nota) => {
+                if (!flashcardRevisaoAtual?.length) return;
+                const f = flashcardRevisaoAtual.shift();
+                f.nivel = (f.nivel || 0) + (nota >= 3 ? 1 : -1);
+                if (f.nivel < 0) f.nivel = 0;
+                const intervalos = [1, 3, 7, 15, 30, 60, 120];
+                const intervalo = intervalos[Math.min(f.nivel, intervalos.length - 1)] * (nota >= 4 ? 1 : nota >= 3 ? 0.8 :
+                    0.5);
+                f.proximaRevisao = new Date(Date.now() + intervalo * 86400000).toISOString();
+                registrarAtividade('flashcard');
+                saveState();
+                mostrarProximoFlashcard();
+                renderFlashcards();
+            };
+
+            window.novoFlashcard = () => {
+                const select = document.getElementById('flashcardDisciplina');
+                select.innerHTML = '';
+                const disciplinas = new Set();
+                AppState.data.forEach(b => b.disciplines.forEach(d => disciplinas.add(d.name)));
+                disciplinas.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    select.appendChild(opt);
+                });
+                document.getElementById('flashcardFrente').value = '';
+                document.getElementById('flashcardVerso').value = '';
+                document.getElementById('modalFlashcard').classList.add('active');
+            };
+
+            document.getElementById('salvarFlashcardBtn')?.addEventListener('click', () => {
+                const disciplina = document.getElementById('flashcardDisciplina')?.value || '';
+                const frente = document.getElementById('flashcardFrente')?.value.trim();
+                const verso = document.getElementById('flashcardVerso')?.value.trim();
+                if (!frente || !verso) return alert('Preencha frente e verso.');
+                AppState.flashcards.push({ disciplina, frente, verso, nivel: 0, proximaRevisao: null,
+                    criadoEm: new Date().toISOString() });
+                saveState();
+                document.getElementById('modalFlashcard').classList.remove('active');
+                renderFlashcards();
+            });
+
+            window.editarFlashcard = (idx) => {
+                const f = AppState.flashcards[idx];
+                if (!f) return;
+                document.getElementById('flashcardDisciplina').value = f.disciplina || '';
+                document.getElementById('flashcardFrente').value = f.frente || '';
+                document.getElementById('flashcardVerso').value = f.verso || '';
+                document.getElementById('modalFlashcard').classList.add('active');
+                window._editandoFlashcard = idx;
+            };
+
+            window.excluirFlashcard = (idx) => {
+                if (confirm('Excluir este flashcard?')) {
+                    AppState.flashcards.splice(idx, 1);
+                    saveState();
+                    renderFlashcards();
+                }
+            };
+
+            document.getElementById('closeModalFlashcard')?.addEventListener('click', () => {
+                document.getElementById('modalFlashcard').classList.remove('active');
+                if (window._editandoFlashcard !== undefined) {
+                    const f = AppState.flashcards[window._editandoFlashcard];
+                    if (f) {
+                        f.disciplina = document.getElementById('flashcardDisciplina')?.value || '';
+                        f.frente = document.getElementById('flashcardFrente')?.value.trim();
+                        f.verso = document.getElementById('flashcardVerso')?.value.trim();
+                        saveState();
+                        renderFlashcards();
+                    }
+                    window._editandoFlashcard = undefined;
+                }
+            });
+
+            const enviarChat = async () => {
+                const input = document.getElementById('chatInput');
+                const msg = input.value.trim();
+                if (!msg) return;
+                input.value = '';
+                const container = document.getElementById('chatMessages');
+                container.innerHTML += `<div class="msg user">${msg}</div>`;
+                const key = AppState.student.config.apiKey;
+                if (key) {
+                    try {
+                        const progresso = Math.round(getAllLessonsFlat().filter(i => AppState.checks[i.key]).length /
+                            getAllLessonsFlat().length * 100);
+                        const resp = await fetch(
+                            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+                            {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contents: [{ parts: [{ text: `Você é um tutor especializado em concursos para CGU. Progresso do aluno: ${progresso}%. Responda de forma clara e didática: ${msg}` }] }] })
+                            });
+                        const data = await resp.json();
+                        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Não entendi.';
+                        container.innerHTML += `<div class="msg bot">${reply}</div>`;
+                    } catch (e) {
+                        container.innerHTML += `<div class="msg bot">Erro na IA: ${e.message}</div>`;
+                    }
+                } else {
+                    container.innerHTML +=
+                        `<div class="msg bot">Configure a chave API Gemini nas Configurações.</div>`;
+                }
+                container.scrollTop = container.scrollHeight;
+            };
+
+            window.abrirModalAnotacoes = (key, aula, disciplina) => {
+                document.getElementById('modalAnotacoesAula').value = `${disciplina} - ${aula}`;
+                document.getElementById('modalAnotacoesTitulo').textContent = `📝 ${aula}`;
+                const dados = AppState.anotacoes[key] || { texto: '', imagens: [] };
+                document.getElementById('modalAnotacoesTexto').value = dados.texto || '';
+                const preview = document.getElementById('modalAnotacoesImagens');
+                preview.innerHTML = '';
+                (dados.imagens || []).forEach((img, i) => {
+                    const div = document.createElement('div');
+                    div.style.display = 'inline-block';
+                    div.style.margin = '4px';
+                    div.innerHTML =
+                        `<img src="${img}" style="max-width:100px;"/> <button onclick="window.removerImagem('${key}',${i})" style="background:rgba(239,68,68,0.2); border:none; color:#f87171; border-radius:50%; cursor:pointer;">x</button>`;
+                    preview.appendChild(div);
+                });
+                document.getElementById('modalAnotacoes').classList.add('active');
+                window._anotacaoKey = key;
+            };
+
+            window.removerImagem = (key, idx) => {
+                if (AppState.anotacoes[key]?.imagens) {
+                    AppState.anotacoes[key].imagens.splice(idx, 1);
+                    saveState();
+                    const aula = document.getElementById('modalAnotacoesAula')?.value || '';
+                    const parts = aula.split(' - ');
+                    window.abrirModalAnotacoes(key, parts.slice(1).join(' - '), parts[0]);
+                }
+            };
+
+            document.getElementById('closeModalAnotacoes')?.addEventListener('click', () => document.getElementById(
+                'modalAnotacoes').classList.remove('active'));
+            document.getElementById('salvarAnotacoesBtn')?.addEventListener('click', () => {
+                if (!window._anotacaoKey) return;
+                const texto = document.getElementById('modalAnotacoesTexto').value;
+                if (!AppState.anotacoes[window._anotacaoKey]) AppState.anotacoes[window._anotacaoKey] = { texto: '',
+                    imagens: [] };
+                AppState.anotacoes[window._anotacaoKey].texto = texto;
+                saveState();
+                document.getElementById('modalAnotacoes').classList.remove('active');
+            });
+
+            document.getElementById('uploadImagem')?.addEventListener('change', function(e) {
+                if (!window._anotacaoKey) return;
+                const files = Array.from(e.target.files);
+                if (!files.length) return;
+                if (!AppState.anotacoes[window._anotacaoKey]) AppState.anotacoes[window._anotacaoKey] = { texto: '',
+                    imagens: [] };
+                Promise.all(files.map(f => new Promise(res => {
+                    const reader = new FileReader();
+                    reader.onload = ev => res(ev.target.result);
+                    reader.readAsDataURL(f);
+                }))).then(results => {
+                    AppState.anotacoes[window._anotacaoKey].imagens.push(...results);
+                    saveState();
+                    const aula = document.getElementById('modalAnotacoesAula')?.value || '';
+                    const parts = aula.split(' - ');
+                    window.abrirModalAnotacoes(window._anotacaoKey, parts.slice(1).join(' - '), parts[0]);
+                });
+            });
+
+            document.getElementById('resumirIABtn')?.addEventListener('click', async () => {
+                if (!window._anotacaoKey) return;
+                const texto = document.getElementById('modalAnotacoesTexto').value;
+                if (!texto) return alert('Sem texto para resumir.');
+                const key = AppState.student.config.apiKey;
+                let resumo = '';
+                if (key) {
+                    try {
+                        const resp = await fetch(
+                            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+                            {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contents: [{ parts: [{ text: `Resuma em tópicos: ${texto}` }] }] })
+                            });
+                        const data = await resp.json();
+                        resumo = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Erro no resumo.';
+                    } catch (e) { resumo = 'Erro na IA: ' + e.message; }
+                } else {
+                    resumo = texto.slice(0, 300) + '...';
+                }
+                document.getElementById('modalResumoBox').style.display = 'block';
+                document.getElementById('modalResumoTexto').textContent = resumo;
+            });
+
+            const enviarArquiteto = async () => {
+                const input = document.getElementById('arquitetoInput');
+                const msg = input.value.trim();
+                if (!msg) return;
+                input.value = '';
+                const container = document.getElementById('arquitetoMessages');
+                container.innerHTML += `<div class="msg user">${msg}</div>`;
+                const key = AppState.student.config.apiKey;
+                if (!key) {
+                    container.innerHTML +=
+                        `<div class="msg bot">Configure a chave API Gemini nas Configurações.</div>`;
+                    return;
+                }
+                try {
+                    const contexto =
+                        `Sistema StudyOS v2.0. Progresso: ${Math.round(getAllLessonsFlat().filter(i=>AppState.checks[i.key]).length/getAllLessonsFlat().length*100)}%. Flashcards: ${AppState.flashcards.length}. Simulados: ${AppState.simulados.length}. Pedido: ${msg}`;
+                    const resp = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: contexto }] }] })
+                        });
+                    const data = await resp.json();
+                    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta.';
+                    container.innerHTML += `<div class="msg bot">${reply}</div>`;
+                    AppState.arquiteto.historico.push({ data: new Date().toISOString(), pergunta: msg,
+                        resposta: reply });
+                    AppState.arquiteto.notificacoes.push({ texto: reply.slice(0, 100) + '...', data: new Date()
+                            .toLocaleString('pt-BR') });
+                    if (AppState.arquiteto.notificacoes.length > 10) AppState.arquiteto.notificacoes.shift();
+                    saveState();
+                    renderArquitetoSide();
+                } catch (e) {
+                    container.innerHTML += `<div class="msg bot">Erro: ${e.message}</div>`;
+                }
+                container.scrollTop = container.scrollHeight;
+            };
+
+            const renderArquitetoSide = () => {
+                const insightsEl = document.getElementById('arquitetoInsights');
+                const notifEl = document.getElementById('arquitetoNotificacoes');
+                const histEl = document.getElementById('arquitetoHistorico');
+                if (insightsEl) insightsEl.innerHTML =
+                    `<p>📊 ${getAllLessonsFlat().filter(i=>AppState.checks[i.key]).length} aulas concluídas</p><p>🃏 ${AppState.flashcards.length} flashcards</p><p>📋 ${AppState.simulados.length} simulados</p>`;
+                if (notifEl) notifEl.innerHTML = AppState.arquiteto.notificacoes.slice(-5).map(n =>
+                    `<div class="notif-item">${n.texto}</div>`).join('') ||
+                    '<p class="text-muted">Nenhuma notificação.</p>';
+                if (histEl) histEl.innerHTML = AppState.arquiteto.historico.slice(-5).map(h =>
+                    `<div class="historico-item"><strong>${h.pergunta.slice(0,50)}...</strong><br><small>${h.resposta.slice(0,80)}...</small></div>`
+                    ).join('') || '<p class="text-muted">Nenhum histórico.</p>';
+            };
+
+            const mostrarGerenciador = (tipo) => {
+                const div = document.getElementById('gerenciarConteudo');
+                if (!div) return;
+                if (tipo === 'aulas') {
+                    let html = '<h4>📚 Disciplinas e Aulas</h4>';
+                    AppState.data.forEach((bloco, bi) => {
+                        html += `<h5>${bloco.name}</h5>`;
+                        bloco.disciplines.forEach((disc, di) => {
+                            html +=
+                                `<div><strong>${disc.name}</strong> <button onclick="window.removerDisciplina(${bi},${di})" class="btn-glass danger">Remover</button>`;
+                            html +=
+                                `<ul>${disc.lessons.map((l,li) => `<li>${l} <button onclick="window.removerAula(${bi},${di},${li})" class="btn-glass">x</button></li>`).join('')}</ul>`;
+                            html +=
+                                `<button onclick="window.adicionarAula(${bi},${di})" class="btn-glass">+ Aula</button></div>`;
+                        });
+                        html +=
+                            `<button onclick="window.adicionarDisciplina(${bi})" class="btn-glass primary">+ Disciplina</button>`;
+                    });
+                    div.innerHTML = html;
+                } else if (tipo === 'leis') {
+                    let html = '<h4>📜 Leis</h4>';
+                    AppState.leis.forEach((l, i) => {
+                        html +=
+                            `<div>${l.nome} (${l.paginaAtual}/${l.totalPaginas}) <button onclick="window.removerLei(${i})" class="btn-glass danger">x</button></div>`;
+                    });
+                    html +=
+                        '<input type="text" id="novaLei" placeholder="Nova lei" style="margin-top:8px;"/><button onclick="window.adicionarLei()" class="btn-glass primary">Adicionar</button>';
+                    div.innerHTML = html;
+                } else if (tipo === 'questoes') {
+                    div.innerHTML = `<h4>📝 Registrar Questões</h4>
+            <input type="text" id="questTema" placeholder="Tema" style="margin:4px;" /><input type="number" id="questTotal" placeholder="Total" style="margin:4px;" /><input type="number" id="questAcertos" placeholder="Acertos" style="margin:4px;" />
+            <button onclick="window.adicionarQuestaoManual()" class="btn-glass primary">Salvar</button>
+            <div>${AppState.simulados.slice(-10).map(s => `<p>${s.tema}: ${s.acertos}/${s.total} (${s.data || ''})</p>`).join('')}</div>`;
+                } else if (tipo === 'arquivos') {
+                    let html =
+                        '<h4>📎 Arquivos</h4><input type="file" id="arquivoUpload" /><button onclick="window.uploadArquivo()" class="btn-glass primary">Enviar</button>';
+                    AppState.student.arquivos.forEach((a, i) => {
+                        html +=
+                            `<div>${a.nome} (${a.data}) <a href="${a.base64}" download="${a.nome}">Baixar</a> <button onclick="window.removerArquivo(${i})" class="btn-glass danger">x</button></div>`;
+                    });
+                    div.innerHTML = html;
+                }
+            };
+
+            window.removerDisciplina = (bi, di) => { AppState.data[bi].disciplines.splice(di, 1);
+                saveState();
+                mostrarGerenciador('aulas'); };
+            window.removerAula = (bi, di, li) => { AppState.data[bi].disciplines[di].lessons.splice(li, 1);
+                saveState();
+                mostrarGerenciador('aulas'); };
+            window.adicionarAula = (bi, di) => {
+                const nome = prompt('Nome da aula:');
+                if (nome) { AppState.data[bi].disciplines[di].lessons.push(nome);
+                    saveState();
+                    mostrarGerenciador('aulas'); }
+            };
+            window.adicionarDisciplina = (bi) => {
+                const nome = prompt('Nome da disciplina:');
+                if (nome) { AppState.data[bi].disciplines.push({ name: nome, lessons: [] });
+                    saveState();
+                    mostrarGerenciador('aulas'); }
+            };
+            window.removerLei = (i) => { AppState.leis.splice(i, 1);
+                saveState();
+                mostrarGerenciador('leis'); };
+            window.adicionarLei = () => {
+                const nome = document.getElementById('novaLei')?.value.trim();
+                if (nome) { AppState.leis.push({ nome, totalPaginas: 30, paginaAtual: 0, status: 'pendente',
+                        ultimaLeitura: null, artigoAtual: '', anotacoes: '', concluidoHoje: false });
+                    saveState();
+                    mostrarGerenciador('leis'); }
+            };
+            window.adicionarQuestaoManual = () => {
+                const tema = document.getElementById('questTema')?.value || 'Questão';
+                const total = parseInt(document.getElementById('questTotal')?.value) || 0;
+                const acertos = parseInt(document.getElementById('questAcertos')?.value) || 0;
+                if (total > 0) { AppState.simulados.push({ tema, total, acertos, data: hoje() });
+                    registrarAtividade('simulado');
+                    saveState();
+                    mostrarGerenciador('questoes'); }
+            };
+            window.uploadArquivo = () => {
+                const file = document.getElementById('arquivoUpload')?.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    AppState.student.arquivos.push({ nome: file.name, data: hoje(), base64: reader.result });
+                    saveState();
+                    mostrarGerenciador('arquivos');
+                };
+                reader.readAsDataURL(file);
+            };
+            window.removerArquivo = (i) => { AppState.student.arquivos.splice(i, 1);
+                saveState();
+                mostrarGerenciador('arquivos'); };
+
+            const updateDashboard = () => {
+                const segs = AppState.tempoEstudoHoje || 0;
+                const h = String(Math.floor(segs / 3600)).padStart(2, '0');
+                const m = String(Math.floor((segs % 3600) / 60)).padStart(2, '0');
+                const s = String(segs % 60).padStart(2, '0');
+                document.getElementById('clockTime').textContent = `${h}:${m}:${s}`;
+                const dias = diasAte(CONFIG.diasProva);
+                document.getElementById('diasProvaTop').textContent = dias > 0 ? dias + 'd' : '0d';
+                const all = getAllLessonsFlat();
+                const done = all.filter(i => AppState.checks[i.key]).length;
+                document.getElementById('tarefasPendentesTop').textContent = all.length - done;
+                const pct = all.length ? Math.round((done / all.length) * 100) : 0;
+                const ring = document.getElementById('progressRing');
+                if (ring) { ring.style.setProperty('--pct', pct + '%');
+                    ring.setAttribute('data-label', `${pct}%`); }
+                document.getElementById('streakTop').textContent = AppState.student.gamificacao.streak || 0;
+                document.getElementById('xpTop').textContent = AppState.student.gamificacao.xp + ' XP';
+            };
+
+            const renderAll = () => {
+                renderHome();
+                renderBlock(0, 'bloco1Container');
+                renderBlock(1, 'bloco2Container');
+                renderRevisao();
+                renderLeis();
+                renderProgresso();
+                renderDiario();
+                renderSimulados();
+                renderFlashcards();
+                renderArquitetoSide();
+                updateDashboard();
+            };
+
+            document.getElementById('configSaveBtn')?.addEventListener('click', () => {
+                AppState.student.config.estrategia = document.getElementById('configStrategy').value;
+                AppState.student.config.horasPorDia = parseFloat(document.getElementById('configHoursPerDay')
+                    .value) || 4;
+                AppState.student.config.metaSemanalAulas = parseInt(document.getElementById('configMetaSemanal')
+                    ?.value) || 14;
+                AppState.metasSemanais.aulas = AppState.student.config.metaSemanalAulas;
+                saveState();
+                document.getElementById('configStatus').textContent = '✅ Configurações salvas!';
+                renderAll();
+            });
+            document.getElementById('configSaveApiKeyBtn')?.addEventListener('click', () => {
+                AppState.student.config.apiKey = document.getElementById('configApiKey').value.trim();
+                saveState();
+                document.getElementById('configApiFeedback').textContent = '✅ Chave salva!';
+            });
+
+            document.getElementById('definirMetaBtn')?.addEventListener('click', () => {
+                document.getElementById('metaAulas').value = AppState.metasSemanais.aulas;
+                document.getElementById('metaHoras').value = AppState.metasSemanais.horas;
+                document.getElementById('modalMetas').classList.add('active');
+            });
+            document.getElementById('closeModalMetas')?.addEventListener('click', () => document.getElementById(
+                'modalMetas').classList.remove('active'));
+            document.getElementById('salvarMetasBtn')?.addEventListener('click', () => {
+                AppState.metasSemanais.aulas = parseInt(document.getElementById('metaAulas')?.value) || 14;
+                AppState.metasSemanais.horas = parseFloat(document.getElementById('metaHoras')?.value) || 20;
+                saveState();
+                document.getElementById('modalMetas').classList.remove('active');
+                renderHome();
+            });
+
+            document.getElementById('closeModalConclusao')?.addEventListener('click', () => {
+                document.getElementById('modalConclusao').classList.remove('active');
+            });
+            document.getElementById('concluirSemQuestoes')?.addEventListener('click', concluirAulaSemQuestoes);
+            document.getElementById('concluirComQuestoes')?.addEventListener('click', concluirAulaComQuestoes);
+
+            const initEvents = () => {
+                document.getElementById('menuToggle').onclick = () => {
+                    document.getElementById('sidebar').classList.add('open');
+                    document.getElementById('overlay').classList.add('active');
+                };
+                document.getElementById('closeSidebar').onclick = () => {
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('overlay').classList.remove('active');
+                };
+                document.getElementById('overlay').onclick = () => {
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('overlay').classList.remove('active');
+                };
+                document.querySelectorAll('#navList li').forEach(li => {
+                    li.addEventListener('click', function() {
+                        document.querySelectorAll('#navList li').forEach(l => l.classList.remove(
+                            'active'));
+                        this.classList.add('active');
+                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                        const pageEl = document.getElementById(this.dataset.page);
+                        if (pageEl) pageEl.classList.add('active');
+                        document.getElementById('sidebar').classList.remove('open');
+                        document.getElementById('overlay').classList.remove('active');
+                        if (this.dataset.page === 'page-gerenciar') mostrarGerenciador('aulas');
+                        if (this.dataset.page === 'page-flashcards') renderFlashcards();
+                        if (this.dataset.page === 'page-progresso') renderProgresso();
+                    });
+                });
+                document.getElementById('startLessonBtn').onclick = iniciarAula;
+                document.getElementById('pauseLessonBtn').onclick = pausarAula;
+                document.getElementById('stopLessonBtn').onclick = () => pararAula(false);
+                document.getElementById('skipLessonBtn').onclick = pularMissao;
+                document.getElementById('chatSendBtn').onclick = enviarChat;
+                document.getElementById('chatInput').onkeydown = e => { if (e.key === 'Enter') enviarChat(); };
+                document.getElementById('arquitetoSendBtn').onclick = enviarArquiteto;
+                document.getElementById('arquitetoInput').onkeydown = e => { if (e.key === 'Enter')
+                    enviarArquiteto(); };
+                document.getElementById('exportBtn').onclick = () => {
+                    const blob = new Blob([JSON.stringify(AppState, null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `studyos_backup_${hoje()}.json`;
+                    a.click();
+                };
+                document.getElementById('importBtn').onclick = () => document.getElementById('fileInput').click();
+                document.getElementById('fileInput').onchange = function(e) {
+                    if (!this.files.length) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if (confirm(
+                                    'Substituir progresso atual? Esta ação não pode ser desfeita.')) {
+                                AppState = deepMerge(AppState, data);
+                                saveState();
+                                location.reload();
+                            }
+                        } catch (ex) { alert('Arquivo inválido ou corrompido.'); }
+                    };
+                    reader.readAsText(this.files[0]);
+                };
+                document.getElementById('resetAllBtn').onclick = () => {
+                    if (confirm('⚠️ Resetar TODO o progresso? Esta ação é irreversível!')) { resetState();
+                        location.reload(); }
+                };
+                document.getElementById('gerenciarAulasBtn')?.addEventListener('click', () => mostrarGerenciador(
+                    'aulas'));
+                document.getElementById('gerenciarLeisBtn')?.addEventListener('click', () => mostrarGerenciador(
+                    'leis'));
+                document.getElementById('gerenciarQuestoesBtn')?.addEventListener('click', () => mostrarGerenciador(
+                    'questoes'));
+                document.getElementById('gerenciarArquivosBtn')?.addEventListener('click', () => mostrarGerenciador(
+                    'arquivos'));
+                document.getElementById('novoFlashcardBtn')?.addEventListener('click', window.novoFlashcard);
+                document.getElementById('revisarFlashcardsBtn')?.addEventListener('click',
+                iniciarRevisaoFlashcards);
+                document.getElementById('flashcardDisciplinaFiltro')?.addEventListener('change', renderFlashcards);
+            };
+
+            loadState();
+            const hojeStr = hoje();
+            if (!AppState.pulosHoje._data || AppState.pulosHoje._data !== hojeStr) {
+                AppState.pulosHoje = { _data: hojeStr, keys: [] };
+            }
+            if (!AppState.questoesPorAula) AppState.questoesPorAula = {};
+            AppState.leis.forEach(l => {
+                if (l.concluidoHoje === undefined) l.concluidoHoje = false;
+                if (l.artigoAtual === undefined) l.artigoAtual = '';
+                if (l.anotacoes === undefined) l.anotacoes = '';
+            });
+            document.getElementById('configStrategy').value = AppState.student.config.estrategia;
+            document.getElementById('configHoursPerDay').value = AppState.student.config.horasPorDia;
+            document.getElementById('configApiKey').value = AppState.student.config.apiKey || '';
+            if (document.getElementById('configMetaSemanal')) document.getElementById('configMetaSemanal').value =
+                AppState.student.config.metaSemanalAulas || 14;
+            verificarMetasSemanais();
+            renderAll();
+            initEvents();
+            if (AppState.aulaAtiva && !AppState.aulaPausada) {
+                aulaStartTime = AppState.aulaAtiva.inicio;
+                aulaTimerInterval = setInterval(() => {
+                    if (!AppState.aulaPausada) {
+                        AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000);
+                        saveState();
+                        updateDashboard();
+                    }
+                }, 10000);
+            }
+            setInterval(updateDashboard, 30000);
+            console.log('✅ StudyOS Pro v2.1 inicializado com sucesso.');
+        })();
+    </script>
+</body>
+</html>
