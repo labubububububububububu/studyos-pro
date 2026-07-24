@@ -1,531 +1,1023 @@
 (function() {
     'use strict';
 
+    setTimeout(initStudyOSAnalytics, 3000);
+
     // =========================================================================
-    // 🧠 STUDY OS - ADVANCED ANALYTICS & NEUROSCIENCE TRACKER (v2.1 FIX)
+    // 📚 TAXONOMIA DE ESTUDOS (EDITAL / CONTEÚDO PROGRAMÁTICO)
     // =========================================================================
+    const taxonomiaEstudo = {
+        "CONHECIMENTOS BÁSICOS": {
+            "LÍNGUA PORTUGUESA": [
+                "Interpretação de texto: decodificação de mensagens",
+                "Compreensão de texto: significados textuais",
+                "Características básicas da textualidade",
+                "Estruturas linguísticas e classes de palavras",
+                "Pragmática na linguagem e significado contextual",
+                "Semântica vocabular (sinônimos, antônimos, homônimos)",
+                "Modos de organização discursiva",
+                "Organização das frases nas situações comunicativas",
+                "Linguagem lógica e figurada",
+                "Diversos níveis de linguagem",
+                "Tipos de discurso (direto, indireto, livre)",
+                "Funções da linguagem"
+            ],
+            "LÍNGUA INGLESA": [
+                "Estratégias de leitura em língua inglesa",
+                "Aspectos sintático-gramaticais e tempos verbais"
+            ],
+            "POLÍTICAS PÚBLICAS E GESTÃO": [
+                "Políticas públicas e ciclo de políticas",
+                "Processos participativos de gestão pública",
+                "Governo Aberto (Decreto nº 10.160/2019)",
+                "Governo Digital (Decreto nº 10.332/2020)",
+                "Planejamento nas organizações públicas e PDCA",
+                "Gestão por resultados na produção de serviços",
+                "Princípios de governabilidade e governança",
+                "Corrupção e fatores nas políticas públicas",
+                "Papel das instituições e indicadores"
+            ]
+        },
+        "CONHECIMENTOS ESPECÍFICOS": {
+            "DIREITO CONSTITUCIONAL": [
+                "Constituição Federal de 1988 e Princípios fundamentais",
+                "Aplicabilidade das normas constitucionais",
+                "Direitos e garantias fundamentais",
+                "Organização político-administrativa do Estado",
+                "Administração Pública e servidores",
+                "Poder Executivo: atribuições e responsabilidades",
+                "Poder Legislativo: estrutura e processo legislativo",
+                "Poder Judiciário e Conselho Nacional de Justiça",
+                "Funções essenciais à justiça",
+                "Ordem Econômica e Financeira"
+            ],
+            "DIREITO ADMINISTRATIVO": [
+                "Estado, governo e Administração Pública",
+                "Direito administrativo: conceito e fontes",
+                "Ato administrativo: requisitos, espécies e extinção",
+                "Agentes públicos e Lei nº 8.112/1990",
+                "Poderes da Administração Pública",
+                "Princípios expressos e implícitos",
+                "Responsabilidade civil do Estado",
+                "Serviços públicos e Lei nº 13.460/2018",
+                "Organização administrativa (Direta, Indireta, Estatais)",
+                "Controle da Administração Pública e Improbidade (Lei nº 8.429/1992)",
+                "Processo administrativo (Lei nº 9.784/1999)",
+                "Licitações e contratos (Lei nº 8.666/1993 e Lei nº 14.133/2021)",
+                "Ética Pública (Decretos nº 1.171/1994, 6.029/2007 e Lei nº 12.813/2013)",
+                "LINDB (Decreto-Lei nº 4.657/1942 e Decreto nº 9.830/2019)",
+                "Acesso à informação (LAI) e Tratamento de dados (LGPD)"
+            ],
+            "ADMINISTRAÇÃO FINANCEIRA E ORÇAMENTÁRIA": [
+                "Orçamento Público: conceitos e princípios",
+                "Orçamento na CF/88 (PPA, LDO, LOA)",
+                "Lei de Responsabilidade Fiscal - LRF",
+                "Classificação econômica da Receita e da Despesa",
+                "Conceito e estágios da Receita e da Despesa",
+                "Gestão organizacional das finanças (Lei nº 10.180/2001)"
+            ],
+            "FUNDAMENTOS DE AUDITORIA GOVERNAMENTAL": [
+                "Sistema de Controle Interno do Executivo Federal",
+                "Manual de Orientações Técnicas (MOT 2017)",
+                "Instrução Normativa SFC nº 3/2017"
+            ],
+            "CONTROLADORIA-GERAL DA UNIÃO": [
+                "Estrutura e competência da CGU (Leis e Decretos)",
+                "Sistemas estruturantes (Controle, Correição, Ouvidorias, Integridade)"
+            ]
+        },
+        "CONHECIMENTOS ESPECIALIZADOS (AUDITORIA E FISCALIZAÇÃO)": {
+            "AUDITORIA GOVERNAMENTAL E CONTROLE INTERNO": [
+                "Controle Interno Federal, MOT 2017 e IN SFC nº 3/2019",
+                "Orientações Práticas: Relatório de Auditoria e Contas",
+                "NBC TA Estrutura Conceitual para Trabalhos de Asseguração",
+                "IPPF/IIA e Gestão de Riscos (Modelo de Três Linhas)"
+            ],
+            "CONTABILIDADE APLICADA AO SETOR PÚBLICO": [
+                "NBC TSP Estrutura Conceitual e Demonstrações Contábeis",
+                "Lei nº 4.320/1964, NBC TSP 11 e MCASP (9ª Edição)",
+                "Plano de Contas Aplicado ao Setor Público (PCASP)",
+                "Tópicos da Lei Complementar nº 101/2000 na Contabilidade",
+                "Procedimentos contábeis orçamentários e patrimoniais",
+                "Sistema de Informações de Custos (NBC T 16.11)"
+            ],
+            "AVALIAÇÃO DE POLÍTICAS PÚBLICAS": [
+                "Análise Ex Ante (Guia Prático Casa Civil/IPEA)",
+                "Análise Ex Post (Guia Prático Casa Civil)",
+                "Conselho de Monitoramento e Avaliação - CMAP"
+            ],
+            "FINANÇAS PÚBLICAS": [
+                "Funções do Estado e financiamento dos gastos públicos",
+                "Tributação, equidade e federalismo fiscal",
+                "Orçamento público no Brasil e Créditos Adicionais",
+                "Plano Proritário (PPA) e Lei de Diretrizes Orçamentárias",
+                "Classificações e Ciclo Orçamentário",
+                "Déficit público, sustentabilidade e Resultados Fiscais (NFSP)",
+                "Gestão fiscal responsável (LC nº 101/2000)"
+            ]
+        }
+    };
 
-    const STATE_KEY = 'studyos_pro_data_v2';
-    const CROSS_TAB_KEY = 'studyos_cross_tab_event';
+    function obterBlocoDaDisciplina(disciplina) {
+        for (const [bloco, discObj] of Object.entries(taxonomiaEstudo)) {
+            if (discObj[disciplina]) return bloco;
+        }
+        return "OUTROS";
+    }
 
-    // Inicializa mais rápido (1.5s)
-    setTimeout(initAdvancedAnalytics, 1500);
-
-    function initAdvancedAnalytics() {
-        console.log("📊 Inicializando StudyOS Brain Center...");
-        
+    function initStudyOSAnalytics() {
+        console.log("🧠 StudyOS Brain Center inicializado com Nomenclatura Personalizada de Backup.");
         verificarSetupAnalitico();
         injectAnalyticsStyles();
         injectAnalyticsUI();
-        setupCrossTabListener();
+        
+        if (!window.Chart) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            document.head.appendChild(script);
+        }
 
-        // Carrega os gráficos em segundo plano sem travar a interface
-        loadChartJS().then(() => {
-            if (document.getElementById('page-advanced-analytics')?.style.display === 'block') {
-                window.StudyOS.renderDashboard();
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'studyos_cross_tab_event' && e.newValue) {
+                try {
+                    const dados = JSON.parse(e.newValue);
+                    registrarSessaoPendenteAutomatica(dados.origem, dados.topico);
+                } catch(err) { console.error("StudyOS Error", err); }
             }
-        }).catch(err => console.error("Aviso: Chart.js não carregou. Gráficos desabilitados.", err));
+        });
     }
 
     // =========================================================================
-    // 💾 GERENCIAMENTO DE ESTADO E PERSISTÊNCIA (DATA ENGINE)
+    // 💾 DADOS, PERSISTÊNCIA, EXPORTAÇÃO E IMPORTAÇÃO DE BACKUP
     // =========================================================================
-    
     function getState() {
         try {
-            const data = localStorage.getItem(STATE_KEY);
+            const data = localStorage.getItem('studyos_pro_data_v6');
             return data ? JSON.parse(data) : null;
-        } catch(e) {
-            console.error("Erro ao ler dados:", e);
-            return null;
-        }
+        } catch(e) { return null; }
     }
 
     function saveState(state) {
-        localStorage.setItem(STATE_KEY, JSON.stringify(state));
-        if(document.getElementById('page-advanced-analytics')?.style.display === 'block'){
-            window.StudyOS.renderDashboard(); 
-        }
+        try { localStorage.setItem('studyos_pro_data_v6', JSON.stringify(state)); } 
+        catch(e) { alert("⚠️ Erro ao salvar dados."); }
     }
 
     function verificarSetupAnalitico() {
         let s = getState();
         if (!s || !s.analyticsEngine) {
-            s = {
-                analyticsEngine: {
-                    sessoesDetalhadas: [],
-                    leisProgresso: {},
-                    auditoriaErros: [],
-                }
-            };
+            s = { analyticsEngine: { sessoesDetalhadas: [] } };
             saveState(s);
         }
     }
 
-    function exportarDados() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getState()));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "StudyOS_Backup_" + new Date().toLocaleDateString('pt-BR').replace(/\//g, '-') + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-        alert("✅ Backup dos seus dados realizado com sucesso! Guarde este arquivo.");
-    }
+    window.exportarBackupStudyOS = function() {
+        const dadosAtuais = getState();
+        if (!dadosAtuais) {
+            alert("⚠️ Nenhum dado encontrado para exportar.");
+            return;
+        }
+        
+        const agora = new Date();
+        const dia = String(agora.getDate()).padStart(2, '0');
+        const mes = String(agora.getMonth() + 1).padStart(2, '0');
+        const ano = agora.getFullYear();
+        const hora = String(agora.getHours()).padStart(2, '0');
+        const minuto = String(agora.getMinutes()).padStart(2, '0');
+        const nomeArquivo = `registrogranular_${dia}-${mes}-${ano}_${hora}-${minuto}.json`;
 
-    // =========================================================================
-    // 📡 INTEGRAÇÃO ENTRE ABAS
-    // =========================================================================
-    
-    function setupCrossTabListener() {
-        window.addEventListener('storage', (event) => {
-            if (event.key === CROSS_TAB_KEY && event.newValue) {
-                const aulaConcluida = JSON.parse(event.newValue);
-                registrarSessaoAutomatica(aulaConcluida);
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dadosAtuais, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", nomeArquivo);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    };
+
+    window.importarBackupStudyOS = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const dadosImportados = JSON.parse(e.target.result);
+                if (dadosImportados && dadosImportados.analyticsEngine) {
+                    if (confirm("⚠️ Importar este backup substituirá os dados atuais do subsistema. Deseja continuar?")) {
+                        saveState(dadosImportados);
+                        alert("✅ Backup importado com sucesso!");
+                        window.renderAnalyticsDashboard();
+                    }
+                } else {
+                    alert("⚠️ O arquivo selecionado não é um backup válido do StudyOS.");
+                }
+            } catch(err) {
+                alert("⚠️ Erro ao processar o arquivo JSON de backup.");
+                console.error(err);
             }
-        });
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    };
+
+    // =========================================================================
+    // 🧠 METRICS E NEUROCIÊNCIA
+    // =========================================================================
+    function calcularNeuroMetricas(foco, fadiga, carga) {
+        let retencao = 85 + (foco * 5) - (fadiga * 4) - (Math.abs(carga - 3) * 2);
+        retencao = Math.max(10, Math.min(100, retencao)); 
+        let diasParaRevisao = (carga >= 4) ? 1 : ((carga === 3 || foco <= 2) ? 3 : 7);
+        const dataRevisao = new Date();
+        dataRevisao.setDate(dataRevisao.getDate() + diasParaRevisao);
+        return { retencao: retencao.toFixed(1) + '%', revisao: dataRevisao.toLocaleDateString('pt-BR') };
     }
 
-    function registrarSessaoAutomatica(dados) {
+    function parseDataBR(dataStr) {
+        const [d, m, y] = dataStr.split('/');
+        return new Date(y, m - 1, d).getTime();
+    }
+
+    function registrarSessaoPendenteAutomatica(origem, topico) {
         const s = getState();
         s.analyticsEngine.sessoesDetalhadas.push({
             id: Date.now(),
             data: new Date().toLocaleDateString('pt-BR'),
-            topico: `${dados.origem} - ${dados.topico}`,
-            tempo: 0, tecnica: 'Indefinida', foco: 3, fadiga: 3, cargaCognitiva: 3,
+            topico: `${origem} - ${topico}`,
+            tempo: 0, tecnica: 'Indefinida', foco: 3, fadiga: 3, carga: 3,
             paginas: 0, questoes: "", obs: "", status: 'pendente'
         });
         saveState(s);
+        const page = document.getElementById('page-advanced-analytics');
+        if (page && page.classList.contains('active')) window.renderAnalyticsDashboard();
     }
 
-    // =========================================================================
-    // 🧠 NEUROCIÊNCIA (METRICS ENGINE)
-    // =========================================================================
-
-    function calcularMetricasNeuro(foco, fadiga, carga) {
-        let retencao = 85 + (foco * 5) - (fadiga * 4) - (Math.abs(carga - 3) * 2);
-        retencao = Math.max(10, Math.min(100, retencao)); 
-
-        let diasParaRevisao = 7;
-        if (carga >= 4) diasParaRevisao = 1;
-        else if (carga === 3 || foco <= 2) diasParaRevisao = 3;
-
-        const dataRevisao = new Date();
-        dataRevisao.setDate(dataRevisao.getDate() + diasParaRevisao);
-
-        return {
-            retencaoEstimada: retencao.toFixed(1) + '%',
-            proximaRevisao: dataRevisao.toLocaleDateString('pt-BR')
-        };
-    }
-
-    // =========================================================================
-    // 🎨 UI / UX & ESTILOS GLOBAIS
-    // =========================================================================
-
-    function loadChartJS() {
-        return new Promise((resolve, reject) => {
-            if (window.Chart) return resolve();
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
+    function gerarInsightsAcionaveis(sessoes) {
+        if (sessoes.length < 3) return `<p style="color:#94a3b8;">Registre mais sessões para gerar insights precisos de tendência por matéria.</p>`;
+        
+        let insights = [];
+        const materias = {};
+        
+        sessoes.forEach(s => {
+            const mat = s.topico.split('-')[0].trim();
+            if(!materias[mat]) materias[mat] = { fadiga:0, carga:0, foco:0, count:0 };
+            materias[mat].fadiga += s.fadiga;
+            materias[mat].carga += s.carga;
+            materias[mat].foco += s.foco;
+            materias[mat].count++;
         });
+
+        for (const [mat, dados] of Object.entries(materias)) {
+            const medFadiga = dados.fadiga / dados.count;
+            const medCarga = dados.carga / dados.count;
+            const medFoco = dados.foco / dados.count;
+
+            if (medFadiga >= 3.5) insights.push({ tipo: 'danger', texto: `🚨 <strong>Fadiga Crítica em ${mat}:</strong> Nível de exaustão alto detectado nesta disciplina. Considere estudá-la em horários de maior energia ou usar o método Pomodoro.` });
+            if (medCarga >= 4.0) insights.push({ tipo: 'warning', texto: `⚠️ <strong>Carga Cognitiva Alta em ${mat}:</strong> A dificuldade do conteúdo está no limite. Considere alternar a técnica (ex: teoria para flashcards ou questões) para absorção.` });
+            if (medFoco <= 2.5) insights.push({ tipo: 'info', texto: `📉 <strong>Baixo Foco em ${mat}:</strong> Atenção dispersa neste conteúdo. Intercalar com resolução de questões comentadas pode estimular o estudo ativo.` });
+        }
+
+        if (insights.length === 0) insights.push({ tipo: 'success', texto: `✅ <strong>Ritmo Ideal:</strong> Seus estudos do edital estão balanceados! Carga e Foco dentro da zona de desempenho desejável.` });
+
+        return insights.map(i => {
+            const colors = { 'danger': '#f87171', 'warning': '#fbbf24', 'info': '#38bdf8', 'success': '#34d399' };
+            const bg = { 'danger': 'rgba(248,113,113,0.1)', 'warning': 'rgba(251,191,36,0.1)', 'info': 'rgba(56,189,248,0.1)', 'success': 'rgba(52,211,153,0.1)' };
+            return `<div style="background:${bg[i.tipo]}; border-left:4px solid ${colors[i.tipo]}; padding:15px; margin-bottom:15px; border-radius:6px; color:#f8fafc; font-size:0.95rem;">${i.texto}</div>`;
+        }).join('');
     }
 
+    // =========================================================================
+    // 🎨 UI E ESTILOS
+    // =========================================================================
     function injectAnalyticsStyles() {
+        if(document.getElementById('studyos-brain-styles')) return;
         const style = document.createElement('style');
+        style.id = 'studyos-brain-styles';
         style.innerHTML = `
-            .ana-container { background: #0f172a; padding: 25px; border-radius: 12px; color: #f8fafc; font-family: 'Inter', 'Segoe UI', sans-serif; margin-bottom: 25px; border: 1px solid #1e293b; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
-            .ana-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; }
-            .ana-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-            .ana-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; padding: 20px; border-radius: 12px; position: relative; overflow: hidden; }
-            .ana-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #38bdf8; }
-            .ana-card.warning::before { background: #fbbf24; }
-            .ana-card.danger::before { background: #f87171; }
-            .ana-title { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px; }
-            .ana-value { font-size: 2.2rem; font-weight: 800; color: #f1f5f9; line-height: 1; }
+            .studyos-container { width: 100%; max-width: 100%; margin: 0 auto; padding: 15px; box-sizing: border-box; }
+            .sub-nav { display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px; overflow-x: auto; width: 100%; }
+            .sub-tab-btn { background: transparent; border: none; color: #94a3b8; font-size: 1rem; font-weight: bold; cursor: pointer; padding: 10px 15px; border-bottom: 3px solid transparent; transition: 0.3s; white-space: nowrap; }
+            .sub-tab-btn:hover { color: #f8fafc; }
+            .sub-tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+            .sub-tab-content { display: none; animation: fadeIn 0.4s ease; width: 100%; box-sizing: border-box; }
+            .sub-tab-content.active { display: block; }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+            .brain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; width: 100%; box-sizing: border-box; }
+            .brain-card { background: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 8px; border-left: 4px solid #38bdf8; box-sizing: border-box; }
+            .brain-card.warning { border-left-color: #fbbf24; }
+            .brain-card.danger { border-left-color: #f87171; }
+            .brain-title { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; }
+            .brain-value { font-size: 2rem; font-weight: 800; color: #f8fafc; }
             
-            .ana-btn { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; font-size: 0.8rem; }
-            .ana-btn:hover { background: #1d4ed8; }
-            .ana-btn-success { background: #10b981; } .ana-btn-success:hover { background: #059669; }
-            .ana-btn-outline { background: transparent; border: 1px solid #475569; } .ana-btn-outline:hover { background: #1e293b; }
+            .brain-filter { background: #1e293b; color: #f8fafc; border: 1px solid #475569; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
+            .brain-btn { background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
+            .brain-btn:hover { background: #1d4ed8; }
             
-            .ana-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-            .ana-table th { background: #1e293b; color: #94a3b8; font-weight: 600; padding: 12px; text-align: left; border-bottom: 2px solid #334155; }
-            .ana-table td { padding: 14px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
-            .ana-table tr:hover { background: rgba(30, 41, 59, 0.5); }
-            .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-            .badge-pendente { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #fbbf24; cursor: pointer; }
-            .badge-ok { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+            .brain-table-container { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; overflow-x: auto; width: 100%; box-sizing: border-box; }
+            .brain-table { width: 100%; border-collapse: collapse; color: #cbd5e1; font-size: 0.85rem; }
+            .brain-table th { text-align: left; padding: 12px; border-bottom: 2px solid #334155; color: #fbbf24; }
+            .brain-table td { padding: 12px; border-bottom: 1px solid #1e293b; vertical-align: top;}
+            .brain-table tr:hover { background: #1e293b; }
             
-            .ana-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.9); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-            .ana-modal-content { background: #0f172a; border: 1px solid #334155; padding: 30px; border-radius: 16px; width: 95%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
-            .ana-form-group { margin-bottom: 18px; }
-            .ana-form-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600; }
-            .ana-form-group input, .ana-form-group select, .ana-form-group textarea { width: 100%; padding: 12px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f1f5f9; box-sizing: border-box; }
+            .chart-box { background: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+            .chart-container-fluid { position: relative; width: 100%; height: 350px; box-sizing: border-box; }
             
-            .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
-            @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
-            .chart-container { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+            .brain-form-group { margin-bottom: 15px; }
+            .brain-form-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; font-weight: bold; }
+            .brain-form-group input, .brain-form-group select, .brain-form-group textarea { width: 100%; padding: 10px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; color: #fff; box-sizing: border-box; font-size:0.95rem; }
         `;
         document.head.appendChild(style);
     }
 
     function injectAnalyticsUI() {
         const navList = document.getElementById('navList') || document.querySelector('ul');
-        const mainContent = document.querySelector('.main-content') || document.body;
-
         if (navList) {
             const li = document.createElement('li');
             li.dataset.page = 'page-advanced-analytics';
-            li.innerHTML = '<span class="icon" style="color:#38bdf8;">🧠</span> Analytics & Neuro';
+            li.innerHTML = '<span class="icon" style="color:#38bdf8;">🧠</span> Analytics & Dados';
             li.style.borderLeft = '3px solid #38bdf8';
             li.style.background = 'rgba(56, 189, 248, 0.1)';
-            li.style.cursor = 'pointer';
             navList.appendChild(li);
 
-            // CORREÇÃO CRUCIAL NO CLIQUE DO MENU
             li.addEventListener('click', function() {
-                // Remove active de todos os menus
                 document.querySelectorAll('#navList li, ul li').forEach(l => l.classList.remove('active'));
                 this.classList.add('active');
-                
-                // Oculta forçadamente todas as páginas
-                document.querySelectorAll('.page').forEach(p => {
-                    p.classList.remove('active');
-                    p.style.display = 'none';
-                });
-                
-                // Exibe forçadamente a nossa aba
-                let page = document.getElementById('page-advanced-analytics');
-                if(page) {
-                    page.classList.add('active');
-                    page.style.display = 'block';
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                const myPage = document.getElementById('page-advanced-analytics');
+                if (myPage) {
+                    myPage.classList.add('active');
+                    window.renderAnalyticsDashboard(); 
                 }
-                
-                window.StudyOS.renderDashboard();
             });
         }
 
         const page = document.createElement('div');
         page.id = 'page-advanced-analytics';
-        page.className = 'page';
-        page.style.display = 'none'; // Inicialmente oculta, mas será mostrada no clique
-        
+        page.className = 'page'; 
+
         page.innerHTML = `
-            <div style="max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 100px;">
-                <div class="ana-header-flex">
+            <div class="studyos-container">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom: 20px; width:100%;">
                     <div>
-                        <h1 style="color:#f8fafc; margin:0; font-size:2rem; font-weight:800;">StudyOS Brain Center</h1>
-                        <p style="color:#94a3b8; margin:5px 0 0 0; font-size:1rem;">Metacognição, Retenção e Dados Granulares.</p>
+                        <h1 style="color:#f8fafc; margin:0; font-size:2rem;">StudyOS Painel de Dados</h1>
+                        <p style="color:#94a3b8; margin:5px 0 0 0;">Matriz Analítica & Subsistema de BI Adaptativo.</p>
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <button class="ana-btn ana-btn-outline" onclick="window.StudyOS.exportData()">💾 Backup de Dados</button>
-                        <button class="ana-btn ana-btn-success" onclick="window.StudyOS.openModal()">+ Registrar Sessão</button>
-                    </div>
-                </div>
-
-                <!-- CARDS DE RESUMO -->
-                <div class="ana-grid">
-                    <div class="ana-card">
-                        <div class="ana-title">Horas Líquidas Totais</div>
-                        <div class="ana-value" id="valHorasLiq">0.0h</div>
-                    </div>
-                    <div class="ana-card warning">
-                        <div class="ana-title">Retenção Média Estimada</div>
-                        <div class="ana-value" id="valRetencao">0%</div>
-                    </div>
-                    <div class="ana-card danger">
-                        <div class="ana-title">Carga Cognitiva (Média)</div>
-                        <div class="ana-value" id="valCarga">0.0</div>
-                    </div>
-                    <div class="ana-card">
-                        <div class="ana-title">Sessões Pendentes</div>
-                        <div class="ana-value" id="valPendentes" style="color:#fbbf24;">0</div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <select id="filtroData" class="brain-filter" onchange="window.renderAnalyticsDashboard()">
+                            <option value="7">Últimos 7 Dias</option>
+                            <option value="30" selected>Últimos 30 Dias</option>
+                            <option value="all">Todo o Período</option>
+                        </select>
+                        <input type="file" id="studyosImportInput" accept=".json" style="display:none;" onchange="window.importarBackupStudyOS(event)">
+                        <button class="brain-btn" style="background:#475569;" onclick="document.getElementById('studyosImportInput').click()">📤 Importar Backup</button>
+                        <button class="brain-btn" style="background:#475569;" onclick="window.exportarBackupStudyOS()">📥 Exportar Backup</button>
+                        <button class="brain-btn" style="background:#10b981;" onclick="window.abrirFormularioRegistro()">+ Registrar Aula</button>
                     </div>
                 </div>
 
-                <!-- GRÁFICOS (CHART.JS) -->
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h3 style="margin-top:0; color:#cbd5e1; font-size:1rem;">Volume de Estudo (Últimos 7 dias)</h3>
-                        <canvas id="chartEvolucao" height="100"></canvas>
+                <!-- SUB NAVEGAÇÃO COM ABA FIXA DE REGISTRO -->
+                <div class="sub-nav">
+                    <button class="sub-tab-btn active" onclick="window.changeSubTab('tab-resumo', this)">Visão Geral & Histórico</button>
+                    <button class="sub-tab-btn" onclick="window.changeSubTab('tab-registro', this)">Novo Registro Granular ✍️</button>
+                    <button class="sub-tab-btn" onclick="window.changeSubTab('tab-bi', this)">Matriz BI Dinâmica 📊</button>
+                    <button class="sub-tab-btn" onclick="window.changeSubTab('tab-decisao', this)">Central de Tendências 🧠</button>
+                </div>
+
+                <!-- ABA 1: RESUMO -->
+                <div id="tab-resumo" class="sub-tab-content active">
+                    <div class="brain-grid">
+                        <div class="brain-card"><div class="brain-title">Horas Estudadas</div><div class="brain-value" id="valHorasLiq">0h</div></div>
+                        <div class="brain-card warning"><div class="brain-title">Retenção Estimada</div><div class="brain-value" id="valRetencao">0%</div></div>
+                        <div class="brain-card danger"><div class="brain-title">Carga Cognitiva</div><div class="brain-value" id="valCargaCognitiva">0.0</div></div>
+                        <div class="brain-card"><div class="brain-title">Aulas Pendentes</div><div class="brain-value" id="valPendentes" style="color:#fbbf24;">0</div></div>
                     </div>
-                    <div class="chart-container">
-                        <h3 style="margin-top:0; color:#cbd5e1; font-size:1rem;">Técnicas Utilizadas</h3>
-                        <canvas id="chartTecnicas" height="200"></canvas>
+                    <div class="brain-table-container">
+                        <h2 style="color:#f8fafc; margin-top:0;">Histórico Detalhado (Filtrado)</h2>
+                        <div id="tableContainer"></div>
                     </div>
                 </div>
 
-                <!-- TABELA DE SESSÕES -->
-                <div class="ana-container">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <h2 style="color:#f8fafc; font-size:1.3rem; margin:0;">Histórico e Revisões Agendadas</h2>
-                    </div>
-                    <div id="granularTableContainer" style="overflow-x:auto;"></div>
-                </div>
-            </div>
-
-            <!-- MODAL DE FORMULÁRIO -->
-            <div id="granularSessionModal" class="ana-modal">
-                <div class="ana-modal-content">
-                    <h2 id="modalTitle" style="color:#f8fafc; margin-top:0; border-bottom:1px solid #334155; padding-bottom:15px;">Registrar / Editar Sessão</h2>
-                    <form id="formSessao" onsubmit="window.StudyOS.saveSession(event)">
-                        <input type="hidden" id="gsId">
-                        
-                        <div class="ana-form-group">
-                            <label>Disciplina / Tópico Estudado</label>
-                            <input type="text" id="gsTopico" required placeholder="Ex: Direito Administrativo - Atos">
-                        </div>
-                        
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                            <div class="ana-form-group">
-                                <label>Tempo Líquido (Minutos)</label>
-                                <input type="number" id="gsTempo" required min="1" value="50">
+                <!-- ABA 2: NOVO REGISTRO GRANULAR (EM ABA FIXA) -->
+                <div id="tab-registro" class="sub-tab-content">
+                    <div style="background:#1e293b; border:1px solid #334155; padding:30px; border-radius:12px; width:100%; box-sizing:border-box;">
+                        <h2 style="color:#fbbf24; margin-top:0; border-bottom: 1px solid #334155; padding-bottom: 10px;" id="gsFormTitle">Novo Registro Granular de Sessão</h2>
+                        <form onsubmit="window.saveGranularSession(event)">
+                            <input type="hidden" id="gsId">
+                            
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%; box-sizing:border-box; margin-bottom:15px;">
+                                <div class="brain-form-group" style="margin:0;">
+                                    <label>Bloco / Categoria</label>
+                                    <select id="gsBloco" required onchange="window.atualizarDisciplinasModal()">
+                                        <option value="">Selecione o Bloco...</option>
+                                    </select>
+                                </div>
+                                <div class="brain-form-group" style="margin:0;">
+                                    <label>Disciplina do Edital</label>
+                                    <select id="gsDisciplina" required onchange="window.atualizarSubtopicosModal()">
+                                        <option value="">Selecione a Disciplina...</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="ana-form-group">
-                                <label>Método / Técnica</label>
-                                <select id="gsTecnica">
-                                    <option value="PDF">Leitura PDF / Doutrina</option>
-                                    <option value="Video">Vídeo-aula</option>
-                                    <option value="LeiSeca">Lei Seca (Artigos)</option>
-                                    <option value="Questoes">Resolução de Questões</option>
-                                    <option value="Flashcards">Flashcards / Anki</option>
-                                    <option value="MapaMental">Criação de Mapas Mentais</option>
+
+                            <div class="brain-form-group">
+                                <label>Tópico Específico</label>
+                                <select id="gsSubtopico" required>
+                                    <option value="">Selecione o Tópico...</option>
+                                </select>
+                            </div>
+                            
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%; box-sizing:border-box;">
+                                <div class="brain-form-group">
+                                    <label>Tempo Líquido (Minutos)</label>
+                                    <input type="number" id="gsTempo" required min="1" value="50">
+                                </div>
+                                <div class="brain-form-group">
+                                    <label>Técnica Utilizada</label>
+                                    <select id="gsTecnica">
+                                        <option value="PDF">PDF / Teoria</option>
+                                        <option value="Video">Vídeo-aula</option>
+                                        <option value="LeiSeca">Lei Seca</option>
+                                        <option value="Questoes">Resolução de Questões</option>
+                                        <option value="Flashcards">Flashcards / Revisão</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- MÉTRICAS DE NEUROCIÊNCIA -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; background:#0f172a; padding:15px; border-radius:6px; margin-bottom:15px; border: 1px solid #334155; width:100%; box-sizing:border-box;">
+                                <div class="brain-form-group" style="margin:0;">
+                                    <label style="color:#38bdf8;">Nível de Foco (1-5)</label>
+                                    <select id="gsFoco"><option value="5">5 - Extremo</option><option value="4" selected>4 - Bom</option><option value="3">3 - Moderado</option><option value="2">2 - Distraído</option><option value="1">1 - Improdutivo</option></select>
+                                </div>
+                                <div class="brain-form-group" style="margin:0;">
+                                    <label style="color:#f87171;">Nível de Fadiga (1-5)</label>
+                                    <select id="gsFadiga"><option value="1">1 - Descansado</option><option value="2" selected>2 - Normal</option><option value="3">3 - Cansado</option><option value="4">4 - Exausto</option><option value="5">5 - Esgotado</option></select>
+                                </div>
+                                <div class="brain-form-group" style="margin:0;">
+                                    <label style="color:#fbbf24;">Carga Cognitiva (1-5)</label>
+                                    <select id="gsCarga"><option value="1">1 - Muito Fácil</option><option value="2">2 - Fácil</option><option value="3" selected>3 - Médio</option><option value="4">4 - Difícil</option><option value="5">5 - Complexo</option></select>
+                                </div>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%; box-sizing:border-box;">
+                                <div class="brain-form-group">
+                                    <label>Páginas Lidas</label>
+                                    <input type="number" id="gsPaginas" value="0">
+                                </div>
+                                <div class="brain-form-group">
+                                    <label>Questões Feitas / Acertos</label>
+                                    <input type="text" id="gsQuestoes" placeholder="Ex: 20/18">
+                                </div>
+                            </div>
+
+                            <div class="brain-form-group">
+                                <label>Dificuldade Específica / Observações</label>
+                                <textarea id="gsObs" rows="3" placeholder="Onde tive mais dificuldade, dúvidas pendentes..."></textarea>
+                            </div>
+
+                            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                                <button type="button" class="brain-btn" style="background:transparent; border:1px solid #475569;" onclick="window.changeSubTab('tab-resumo', document.querySelector('.sub-tab-btn'))">Cancelar</button>
+                                <button type="submit" class="brain-btn" style="background:#10b981;">Salvar Registro</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ABA 3: MATRIZ BI DINÂMICA (SUBSISTEMA) -->
+                <div id="tab-bi" class="sub-tab-content">
+                    <div style="background:#1e293b; padding:20px; border-radius:8px; border:1px solid #334155; margin-bottom:20px; width:100%; box-sizing:border-box;">
+                        <h3 style="color:#38bdf8; margin-top:0;">Filtros e Variáveis do Subsistema de BI</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:15px; margin-bottom:15px; width:100%; box-sizing:border-box;">
+                            <div>
+                                <label style="color:#94a3b8; font-size:0.8rem; font-weight:bold;">Filtrar Bloco</label>
+                                <select id="biBloco" class="brain-filter" style="width:100%;" onchange="window.atualizarBiDisciplinas()">
+                                    <option value="all">Todos os Blocos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color:#94a3b8; font-size:0.8rem; font-weight:bold;">Filtrar Disciplina</label>
+                                <select id="biDisciplina" class="brain-filter" style="width:100%;" onchange="window.atualizarBiAssuntos()">
+                                    <option value="all">Todas as Disciplinas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color:#94a3b8; font-size:0.8rem; font-weight:bold;">Filtrar Assunto/Tópico</label>
+                                <select id="biAssunto" class="brain-filter" style="width:100%;">
+                                    <option value="all">Todos os Assuntos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color:#94a3b8; font-size:0.8rem; font-weight:bold;">Perspectiva de Análise</label>
+                                <select id="biTipoAnalise" class="brain-filter" style="width:100%;" onchange="window.renderBiDashboard()">
+                                    <option value="geral">Visão Geral & KPIs Estatísticos</option>
+                                    <option value="carga_fadiga">Correlação: Carga Cognitiva vs. Fadiga</option>
+                                    <option value="retencao">Probabilidade de Retenção & Curva</option>
+                                    <option value="questoes">Aproveitamento e Erros em Questões</option>
+                                    <option value="tecnicas">Eficiência Comparativa por Técnica</option>
+                                    <option value="radar_gargalos">Matriz Radar de Gargalos</option>
                                 </select>
                             </div>
                         </div>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; background:#1e293b; padding:15px; border-radius:8px; margin-bottom:15px;">
-                            <div class="ana-form-group" style="margin:0;">
-                                <label style="color:#38bdf8;">🎯 Nível de Foco</label>
-                                <select id="gsFoco">
-                                    <option value="5">5 - Flow / Imersão</option>
-                                    <option value="4" selected>4 - Alto / Bom</option>
-                                    <option value="3">3 - Intermitente</option>
-                                    <option value="2">2 - Distraído</option>
-                                    <option value="1">1 - Não rendeu</option>
-                                </select>
-                            </div>
-                            <div class="ana-form-group" style="margin:0;">
-                                <label style="color:#f87171;">🔋 Fadiga Mental</label>
-                                <select id="gsFadiga">
-                                    <option value="1">1 - Mente Fresca</option>
-                                    <option value="2" selected>2 - Normal</option>
-                                    <option value="3">3 - Cansado</option>
-                                    <option value="4">4 - Névoa Mental</option>
-                                    <option value="5">5 - Esgotamento</option>
-                                </select>
-                            </div>
-                            <div class="ana-form-group" style="margin:0;">
-                                <label style="color:#fbbf24;">🧠 Carga Cognitiva</label>
-                                <select id="gsCarga">
-                                    <option value="1">1 - Muito Fácil (Revisão)</option>
-                                    <option value="2">2 - Fácil de entender</option>
-                                    <option value="3" selected>3 - Desafiador, mas fluiu</option>
-                                    <option value="4">4 - Difícil / Denso</option>
-                                    <option value="5">5 - Complexidade Extrema</option>
-                                </select>
-                            </div>
+                        <div style="display:flex; justify-content:flex-end;">
+                            <button class="brain-btn" style="background:#2563eb;" onclick="window.renderBiDashboard()">⚡ Executar Análise Dinâmica</button>
                         </div>
+                    </div>
 
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                            <div class="ana-form-group">
-                                <label>Páginas / Artigos</label>
-                                <input type="number" id="gsPaginas" value="0">
-                            </div>
-                            <div class="ana-form-group">
-                                <label>Questões (Feitas/Acertos)</label>
-                                <input type="text" id="gsQuestoes" placeholder="Ex: 30/25">
-                            </div>
-                        </div>
+                    <div class="brain-grid" id="biKpisGrid"></div>
 
-                        <div class="ana-form-group">
-                            <label>⚠️ Pontos de Dificuldade / Dúvidas / Observações</label>
-                            <textarea id="gsObs" rows="3" placeholder="Ex: Tive dificuldade em entender o conceito de imperatividade. Revisar prazo prescricional."></textarea>
+                    <div class="chart-box" style="margin-top:20px;">
+                        <h3 style="color:#f8fafc; margin-top:0;" id="biChartTitle">Visualização Gráfica Dinâmica</h3>
+                        <div class="chart-container-fluid">
+                            <canvas id="chartBiDynamic"></canvas>
                         </div>
+                    </div>
 
-                        <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:25px;">
-                            <button type="button" class="ana-btn ana-btn-outline" onclick="window.StudyOS.closeModal()">Cancelar</button>
-                            <button type="submit" class="ana-btn ana-btn-success">💾 Salvar Registro Granular</button>
-                        </div>
-                    </form>
+                    <div id="biReportContainer" style="margin-top:20px; background:#1e293b; padding:20px; border-radius:8px; border:1px solid #334155; color:#cbd5e1; width:100%; box-sizing:border-box;"></div>
                 </div>
+
+                <!-- ABA 4: DECISÃO (IA LOCAL) -->
+                <div id="tab-decisao" class="sub-tab-content">
+                    <div style="background:#1e293b; padding:25px; border-radius:12px; border:1px solid #334155; width:100%; box-sizing:border-box;">
+                        <h2 style="color:#38bdf8; margin-top:0;">Análise de Padrões e Sugestões</h2>
+                        <p style="color:#94a3b8; margin-bottom:25px;">O sistema cruza dados de Carga, Foco e Fadiga por disciplina do edital para apontar onde estão seus gargalos de aprendizado.</p>
+                        <div id="insightsContainer"></div>
+                    </div>
+                </div>
+
             </div>
         `;
-        mainContent.appendChild(page);
+        
+        document.querySelector('.main-content').appendChild(page);
+        inicializarOpcoesBlocos();
+        inicializarFiltrosBi();
     }
 
     // =========================================================================
-    // ⚙️ API GLOBAL
+    // ⚙️ LÓGICA DE CASCATA PARA OS SELETORES DO EDITAL & BI
     // =========================================================================
-    
-    let chartInstanciaEvolucao = null;
-    let chartInstanciaTecnicas = null;
+    function inicializarOpcoesBlocos() {
+        const blocoSelect = document.getElementById('gsBloco');
+        if(!blocoSelect) return;
+        blocoSelect.innerHTML = '<option value="">Selecione o Bloco...</option>';
+        Object.keys(taxonomiaEstudo).forEach(bloco => {
+            const opt = document.createElement('option');
+            opt.value = bloco;
+            opt.textContent = bloco;
+            blocoSelect.appendChild(opt);
+        });
+    }
 
-    window.StudyOS = {
-        exportData: exportarDados,
-        renderDashboard: renderAnalyticsDashboard,
+    function inicializarFiltrosBi() {
+        const blocoSelect = document.getElementById('biBloco');
+        if(!blocoSelect) return;
+        blocoSelect.innerHTML = '<option value="all">Todos os Blocos</option>';
+        Object.keys(taxonomiaEstudo).forEach(bloco => {
+            const opt = document.createElement('option');
+            opt.value = bloco;
+            opt.textContent = bloco;
+            blocoSelect.appendChild(opt);
+        });
+        window.atualizarBiDisciplinas();
+    }
+
+    window.atualizarBiDisciplinas = function() {
+        const bloco = document.getElementById('biBloco').value;
+        const discSelect = document.getElementById('biDisciplina');
+        const subSelect = document.getElementById('biAssunto');
         
-        openModal: function(id = null) {
-            document.getElementById('formSessao').reset();
-            document.getElementById('gsId').value = '';
-            document.getElementById('modalTitle').innerText = 'Nova Sessão Granular';
+        discSelect.innerHTML = '<option value="all">Todas as Disciplinas</option>';
+        subSelect.innerHTML = '<option value="all">Todos os Assuntos</option>';
 
-            if (id) {
-                const s = getState();
-                const sessao = s.analyticsEngine.sessoesDetalhadas.find(x => x.id === id);
-                if (sessao) {
-                    document.getElementById('modalTitle').innerText = 'Completar/Editar Registro';
-                    document.getElementById('gsId').value = sessao.id;
-                    document.getElementById('gsTopico').value = sessao.topico;
-                    document.getElementById('gsTempo').value = sessao.tempo || 50;
-                    document.getElementById('gsTecnica').value = sessao.tecnica !== 'Indefinida' ? sessao.tecnica : 'PDF';
-                    document.getElementById('gsFoco').value = sessao.foco || 4;
-                    document.getElementById('gsFadiga').value = sessao.fadiga || 2;
-                    document.getElementById('gsCarga').value = sessao.cargaCognitiva || 3;
-                    document.getElementById('gsPaginas').value = sessao.paginas || 0;
-                    document.getElementById('gsQuestoes').value = sessao.questoes || "";
-                    document.getElementById('gsObs').value = sessao.obs || "";
+        let disciplinas = [];
+        if (bloco === 'all') {
+            Object.values(taxonomiaEstudo).forEach(obj => {
+                disciplinas.push(...Object.keys(obj));
+            });
+        } else if (taxonomiaEstudo[bloco]) {
+            disciplinas = Object.keys(taxonomiaEstudo[bloco]);
+        }
+
+        disciplinas.forEach(disc => {
+            const opt = document.createElement('option');
+            opt.value = disc;
+            opt.textContent = disc;
+            discSelect.appendChild(opt);
+        });
+        window.atualizarBiAssuntos();
+    };
+
+    window.atualizarBiAssuntos = function() {
+        const bloco = document.getElementById('biBloco').value;
+        const disc = document.getElementById('biDisciplina').value;
+        const subSelect = document.getElementById('biAssunto');
+        
+        subSelect.innerHTML = '<option value="all">Todos os Assuntos</option>';
+
+        let assuntos = [];
+        if (disc !== 'all') {
+            for (const [bKey, discObj] of Object.entries(taxonomiaEstudo)) {
+                if (bloco === 'all' || bloco === bKey) {
+                    if (discObj[disc]) {
+                        assuntos.push(...discObj[disc]);
+                    }
                 }
             }
-            document.getElementById('granularSessionModal').style.display = 'flex';
-        },
+        } else if (bloco !== 'all' && taxonomiaEstudo[bloco]) {
+            Object.values(taxonomiaEstudo[bloco]).forEach(arr => assuntos.push(...arr));
+        }
 
-        closeModal: function() {
-            document.getElementById('granularSessionModal').style.display = 'none';
-        },
+        assuntos.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            subSelect.appendChild(opt);
+        });
+    };
 
-        saveSession: function(e) {
-            e.preventDefault();
-            const s = getState();
-            const editId = document.getElementById('gsId').value;
-            
-            const foco = parseInt(document.getElementById('gsFoco').value);
-            const fadiga = parseInt(document.getElementById('gsFadiga').value);
-            const carga = parseInt(document.getElementById('gsCarga').value);
-            
-            const neuroMets = calcularMetricasNeuro(foco, fadiga, carga);
-
-            const dados = {
-                data: new Date().toLocaleDateString('pt-BR'),
-                topico: document.getElementById('gsTopico').value,
-                tempo: parseInt(document.getElementById('gsTempo').value),
-                tecnica: document.getElementById('gsTecnica').value,
-                foco: foco, fadiga: fadiga, cargaCognitiva: carga,
-                paginas: parseInt(document.getElementById('gsPaginas').value),
-                questoes: document.getElementById('gsQuestoes').value,
-                obs: document.getElementById('gsObs').value,
-                retencaoEstimada: neuroMets.retencaoEstimada,
-                proximaRevisao: neuroMets.proximaRevisao,
-                status: 'ok'
-            };
-
-            if (editId) {
-                const index = s.analyticsEngine.sessoesDetalhadas.findIndex(x => x.id == editId);
-                if (index > -1) s.analyticsEngine.sessoesDetalhadas[index] = { ...s.analyticsEngine.sessoesDetalhadas[index], ...dados };
-            } else {
-                dados.id = Date.now();
-                s.analyticsEngine.sessoesDetalhadas.push(dados);
-            }
-
-            saveState(s);
-            window.StudyOS.closeModal();
-            window.StudyOS.renderDashboard();
-        },
+    window.atualizarDisciplinasModal = function() {
+        const bloco = document.getElementById('gsBloco').value;
+        const discSelect = document.getElementById('gsDisciplina');
+        const subSelect = document.getElementById('gsSubtopico');
         
-        deleteSession: function(id) {
-            if(confirm("Deseja realmente apagar este registro?")) {
-                const s = getState();
-                s.analyticsEngine.sessoesDetalhadas = s.analyticsEngine.sessoesDetalhadas.filter(x => x.id !== id);
-                saveState(s);
-            }
+        discSelect.innerHTML = '<option value="">Selecione a Disciplina...</option>';
+        subSelect.innerHTML = '<option value="">Selecione o Tópico...</option>';
+
+        if(bloco && taxonomiaEstudo[bloco]) {
+            Object.keys(taxonomiaEstudo[bloco]).forEach(disc => {
+                const opt = document.createElement('option');
+                opt.value = disc;
+                opt.textContent = disc;
+                discSelect.appendChild(opt);
+            });
+        }
+    };
+
+    window.atualizarSubtopicosModal = function() {
+        const bloco = document.getElementById('gsBloco').value;
+        const disc = document.getElementById('gsDisciplina').value;
+        const subSelect = document.getElementById('gsSubtopico');
+        
+        subSelect.innerHTML = '<option value="">Selecione o Tópico...</option>';
+
+        if(bloco && disc && taxonomiaEstudo[bloco][disc]) {
+            taxonomiaEstudo[bloco][disc].forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+        }
+    };
+
+    window.changeSubTab = function(tabId, btnElement) {
+        document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if(tabId === 'tab-bi') {
+            window.renderBiDashboard();
         }
     };
 
     // =========================================================================
-    // 📊 RENDERIZAÇÃO
+    // ⚙️ LÓGICA DO FORMULÁRIO DE REGISTRO (ABERTO VIA ABA)
     // =========================================================================
+    window.abrirFormularioRegistro = function(id = null) {
+        inicializarOpcoesBlocos();
+        document.getElementById('gsId').value = '';
+        document.getElementById('gsBloco').value = '';
+        document.getElementById('gsDisciplina').innerHTML = '<option value="">Selecione a Disciplina...</option>';
+        document.getElementById('gsSubtopico').innerHTML = '<option value="">Selecione o Tópico...</option>';
+        document.getElementById('gsTempo').value = 50;
+        document.getElementById('gsPaginas').value = 0;
+        document.getElementById('gsQuestoes').value = '';
+        document.getElementById('gsObs').value = '';
+        document.getElementById('gsFormTitle').innerText = 'Novo Registro Granular de Sessão';
 
-    function renderAnalyticsDashboard() {
-        const s = getState();
-        if (!s || !s.analyticsEngine) return;
-        
-        const sessoes = s.analyticsEngine.sessoesDetalhadas || [];
-        const totalMin = sessoes.reduce((acc, curr) => acc + (curr.tempo || 0), 0);
-        document.getElementById('valHorasLiq').innerText = (totalMin / 60).toFixed(1) + 'h';
+        if (id) {
+            const sessao = getState().analyticsEngine.sessoesDetalhadas.find(x => x.id === id);
+            if (sessao) { 
+                document.getElementById('gsFormTitle').innerText = 'Completar / Editar Registro de Sessão';
+                document.getElementById('gsId').value = sessao.id; 
+                if(sessao.tempo) document.getElementById('gsTempo').value = sessao.tempo;
+                if(sessao.tecnica) document.getElementById('gsTecnica').value = sessao.tecnica;
+                if(sessao.paginas !== undefined) document.getElementById('gsPaginas').value = sessao.paginas;
+                if(sessao.questoes) document.getElementById('gsQuestoes').value = sessao.questoes;
+                if(sessao.obs) document.getElementById('gsObs').value = sessao.obs;
 
-        const sessoesOK = sessoes.filter(x => x.status === 'ok');
-        const sessoesPendentes = sessoes.filter(x => x.status === 'pendente');
-        document.getElementById('valPendentes').innerText = sessoesPendentes.length;
+                const partes = sessao.topico.split(' - ');
+                if (partes.length >= 2) {
+                    const disciplinaSalva = partes[0].trim();
+                    const topicoSalvo = partes.slice(1).join(' - ').trim();
 
-        if (sessoesOK.length > 0) {
-            const avgRetencao = sessoesOK.reduce((acc, curr) => acc + parseFloat(curr.retencaoEstimada), 0) / sessoesOK.length;
-            const avgCarga = sessoesOK.reduce((acc, curr) => acc + curr.cargaCognitiva, 0) / sessoesOK.length;
-            document.getElementById('valRetencao').innerText = avgRetencao.toFixed(1) + '%';
-            document.getElementById('valCarga').innerText = avgCarga.toFixed(1);
+                    for (const [blocoKey, discObj] of Object.entries(taxonomiaEstudo)) {
+                        if (discObj[disciplinaSalva]) {
+                            document.getElementById('gsBloco').value = blocoKey;
+                            window.atualizarDisciplinasModal();
+                            document.getElementById('gsDisciplina').value = disciplinaSalva;
+                            window.atualizarSubtopicosModal();
+                            document.getElementById('gsSubtopico').value = topicoSalvo;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
-        const container = document.getElementById('granularTableContainer');
-        if (sessoes.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:30px;">Nenhuma sessão registrada.</p>';
+        const btnTab = document.querySelectorAll('.sub-tab-btn')[1]; // Aba "Novo Registro Granular"
+        window.changeSubTab('tab-registro', btnTab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.saveGranularSession = function(event) {
+        event.preventDefault();
+        const s = getState();
+        const idEdit = document.getElementById('gsId').value;
+        
+        const disciplina = document.getElementById('gsDisciplina').value;
+        const subtopico = document.getElementById('gsSubtopico').value;
+        const topicoFinal = `${disciplina} - ${subtopico}`;
+
+        const foco = parseInt(document.getElementById('gsFoco').value);
+        const fadiga = parseInt(document.getElementById('gsFadiga').value);
+        const carga = parseInt(document.getElementById('gsCarga').value);
+        const metricas = calcularNeuroMetricas(foco, fadiga, carga);
+        
+        const dados = {
+            id: idEdit ? parseInt(idEdit) : Date.now(),
+            data: new Date().toLocaleDateString('pt-BR'),
+            topico: topicoFinal,
+            tempo: parseInt(document.getElementById('gsTempo').value),
+            tecnica: document.getElementById('gsTecnica').value,
+            foco: foco, fadiga: fadiga, carga: carga,
+            paginas: parseInt(document.getElementById('gsPaginas').value || 0),
+            questoes: document.getElementById('gsQuestoes').value || "-",
+            obs: document.getElementById('gsObs').value || "",
+            retencao: metricas.retencao,
+            revisao: metricas.revisao,
+            status: 'ok'
+        };
+
+        if (idEdit) {
+            const index = s.analyticsEngine.sessoesDetalhadas.findIndex(x => x.id == idEdit);
+            if (index > -1) s.analyticsEngine.sessoesDetalhadas[index] = { ...s.analyticsEngine.sessoesDetalhadas[index], ...dados };
         } else {
-            const sortedSessoes = [...sessoes].sort((a,b) => b.id - a.id);
+            s.analyticsEngine.sessoesDetalhadas.push(dados);
+        }
+        
+        saveState(s);
+        
+        const btnResumo = document.querySelectorAll('.sub-tab-btn')[0];
+        window.changeSubTab('tab-resumo', btnResumo);
+        window.renderAnalyticsDashboard();
+    };
+
+    window.excluirSessao = function(id) {
+        if(confirm("Apagar este registro permanentemente?")) {
+            const s = getState();
+            s.analyticsEngine.sessoesDetalhadas = s.analyticsEngine.sessoesDetalhadas.filter(x => x.id !== id);
+            saveState(s); window.renderAnalyticsDashboard();
+        }
+    };
+
+    // =========================================================================
+    // 📊 SUBSISTEMA DE BI DINÂMICO & RENDERIZAÇÃO GERAL RESPONSIVA
+    // =========================================================================
+    let activeCharts = {};
+
+    function destroyChart(key) {
+        if (activeCharts[key]) {
+            activeCharts[key].destroy();
+            activeCharts[key] = null;
+        }
+    }
+
+    window.renderBiDashboard = function() {
+        const s = getState();
+        const allSessoes = s.analyticsEngine?.sessoesDetalhadas || [];
+        
+        const diasFiltro = document.getElementById('filtroData').value;
+        const blocoFiltro = document.getElementById('biBloco').value;
+        const discFiltro = document.getElementById('biDisciplina').value;
+        const assuntoFiltro = document.getElementById('biAssunto').value;
+        const tipoAnalise = document.getElementById('biTipoAnalise').value;
+
+        const agora = Date.now();
+        let sessoesFiltradas = allSessoes.filter(sess => sess.status === 'ok');
+
+        if (diasFiltro !== 'all') {
+            const limiteTempo = parseInt(diasFiltro) * 24 * 60 * 60 * 1000;
+            sessoesFiltradas = sessoesFiltradas.filter(sess => (agora - parseDataBR(sess.data)) <= limiteTempo);
+        }
+
+        sessoesFiltradas = sessoesFiltradas.filter(sess => {
+            const partes = sess.topico.split(' - ');
+            const disc = partes[0] ? partes[0].trim() : "";
+            const ass = partes.slice(1).join(' - ').trim();
+            const blocoDaSessao = obterBlocoDaDisciplina(disc);
+
+            if (blocoFiltro !== 'all' && blocoDaSessao !== blocoFiltro) return false;
+            if (discFiltro !== 'all' && disc !== discFiltro) return false;
+            if (assuntoFiltro !== 'all' && ass !== assuntoFiltro) return false;
+            return true;
+        });
+
+        const totalMin = sessoesFiltradas.reduce((a, b) => a + b.tempo, 0);
+        const totalQuestoesFeitas = sessoesFiltradas.reduce((a, b) => {
+            if(!b.questoes || b.questoes === '-') return a;
+            const parts = b.questoes.split('/');
+            return a + (parseInt(parts[0]) || 0);
+        }, 0);
+        const totalQuestoesAcertos = sessoesFiltradas.reduce((a, b) => {
+            if(!b.questoes || b.questoes === '-') return a;
+            const parts = b.questoes.split('/');
+            return a + (parseInt(parts[1]) || 0);
+        }, 0);
+        const taxaAcerto = totalQuestoesFeitas > 0 ? ((totalQuestoesAcertos / totalQuestoesFeitas) * 100).toFixed(1) + '%' : '0.0%';
+        const mediaFoco = sessoesFiltradas.length > 0 ? (sessoesFiltradas.reduce((a,b)=>a+b.foco,0)/sessoesFiltradas.length).toFixed(1) : '0.0';
+        const mediaCarga = sessoesFiltradas.length > 0 ? (sessoesFiltradas.reduce((a,b)=>a+b.carga,0)/sessoesFiltradas.length).toFixed(1) : '0.0';
+        const mediaFadiga = sessoesFiltradas.length > 0 ? (sessoesFiltradas.reduce((a,b)=>a+b.fadiga,0)/sessoesFiltradas.length).toFixed(1) : '0.0';
+
+        document.getElementById('biKpisGrid').innerHTML = `
+            <div class="brain-card"><div class="brain-title">Volume Filtrado</div><div class="brain-value">${(totalMin/60).toFixed(1)}h</div></div>
+            <div class="brain-card warning"><div class="brain-title">Aproveitamento Questões</div><div class="brain-value">${taxaAcerto}</div></div>
+            <div class="brain-card"><div class="brain-title">Foco Médio (1-5)</div><div class="brain-value" style="color:#34d399;">${mediaFoco}</div></div>
+            <div class="brain-card danger"><div class="brain-title">Fadiga Média (1-5)</div><div class="brain-value">${mediaFadiga}</div></div>
+        `;
+
+        destroyChart('chartBiDynamic');
+        let chartConfig = {};
+        let relatorioHTML = '';
+
+        if (tipoAnalise === 'geral') {
+            document.getElementById('biChartTitle').innerText = 'Evolução do Tempo de Estudo no Filtro Selecionado';
+            const histMap = {};
+            sessoesFiltradas.forEach(s => { histMap[s.data] = (histMap[s.data] || 0) + s.tempo; });
+            
+            chartConfig = {
+                type: 'bar',
+                data: { labels: Object.keys(histMap), datasets: [{ label: 'Minutos', data: Object.values(histMap), backgroundColor: '#38bdf8', borderRadius:4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales: { x:{grid:{display:false}, ticks:{color:'#cbd5e1'}}, y:{grid:{color:'#334155'}, ticks:{color:'#cbd5e1'}} } }
+            };
+            relatorioHTML = `<h4>📋 Relatório Estatístico Geral</h4><p>Total de sessões analisadas: <strong>${sessoesFiltradas.length}</strong>. Carga cognitiva média de <strong>${mediaCarga}</strong>. Total de páginas lidas: <strong>${sessoesFiltradas.reduce((a,b)=>a+(b.paginas||0),0)}</strong>.</p>`;
+
+        } else if (tipoAnalise === 'carga_fadiga') {
+            document.getElementById('biChartTitle').innerText = 'Correlação Estatística: Carga Cognitiva vs. Fadiga Mental';
+            const correlacaoMap = { 'Fácil (1-2)': 0, 'Médio (3)': 0, 'Difícil (4-5)': 0 };
+            sessoesFiltradas.forEach(s => {
+                if (s.carga <= 2) correlacaoMap['Fácil (1-2)'] += s.fadiga;
+                else if (s.carga === 3) correlacaoMap['Médio (3)'] += s.fadiga;
+                else correlacaoMap['Difícil (4-5)'] += s.fadiga;
+            });
+            chartConfig = {
+                type: 'radar',
+                data: {
+                    labels: Object.keys(correlacaoMap),
+                    datasets: [{ label: 'Índice de Fadiga Acumulada', data: Object.values(correlacaoMap), borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.2)' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: {color:'#334155'}, ticks:{display:false} } }, plugins:{legend:{labels:{color:'#fff'}}} }
+            };
+            relatorioHTML = `<h4>🧠 Análise de Exaustão Cognitiva</h4><p>Mostra como o esforço mental se traduz em desgaste para o filtro selecionado.</p>`;
+
+        } else if (tipoAnalise === 'retencao') {
+            document.getElementById('biChartTitle').innerText = 'Probabilidade de Retenção & Curva de Esquecimento Estimada';
+            const retencaoMap = {};
+            sessoesFiltradas.forEach(s => {
+                retencaoMap[s.topico.split('-')[0].trim()] = parseFloat(s.retencao) || 85;
+            });
+            const labels = Object.keys(retencaoMap);
+            chartConfig = {
+                type: 'line',
+                data: { labels: labels, datasets: [{ label: 'Retenção Média %', data: labels.map(l => retencaoMap[l]), borderColor: '#34d399', backgroundColor:'rgba(52,211,153,0.1)', fill:true, tension:0.2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales: { x:{grid:{display:false}, ticks:{color:'#cbd5e1', font:{size:9}}}, y:{grid:{color:'#334155'}, ticks:{color:'#cbd5e1'}, max:100, min:0} } }
+            };
+            relatorioHTML = `<h4>📈 Previsão Probabilística de Retenção</h4><p>Baseada na neurociência do esquecimento (foco e carga).</p>`;
+
+        } else if (tipoAnalise === 'questoes') {
+            document.getElementById('biChartTitle').innerText = 'Desempenho de Questões (Feitas vs Acertos)';
+            const qMap = {};
+            sessoesFiltradas.forEach(s => {
+                if(s.questoes && s.questoes !== '-') {
+                    const mat = s.topico.split('-')[0].trim();
+                    const parts = s.questoes.split('/').map(Number);
+                    if(!qMap[mat]) qMap[mat] = {feitas:0, acertos:0};
+                    qMap[mat].feitas += (parts[0] || 0);
+                    qMap[mat].acertos += (parts[1] || 0);
+                }
+            });
+            const matKeys = Object.keys(qMap);
+            chartConfig = {
+                type: 'bar',
+                data: {
+                    labels: matKeys,
+                    datasets: [
+                        { label: 'Feitas', data: matKeys.map(m => qMap[m].feitas), backgroundColor: '#38bdf8' },
+                        { label: 'Acertos', data: matKeys.map(m => qMap[m].acertos), backgroundColor: '#34d399' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x:{grid:{display:false}, ticks:{color:'#cbd5e1'}}, y:{grid:{color:'#334155'}, ticks:{color:'#cbd5e1'}} }, plugins:{legend:{labels:{color:'#fff'}}} }
+            };
+            relatorioHTML = `<h4>🎯 Auditoria de Resolução de Questões</h4><p>Total geral de questões resolvidas: <strong>${totalQuestoesFeitas}</strong> com taxa de acerto global de <strong>${taxaAcerto}</strong>.</p>`;
+
+        } else if (tipoAnalise === 'tecnicas') {
+            document.getElementById('biChartTitle').innerText = 'Eficiência Comparativa por Técnica de Estudo';
+            const tecMap = {};
+            sessoesFiltradas.forEach(s => {
+                tecMap[s.tecnica] = (tecMap[s.tecnica] || 0) + s.tempo;
+            });
+            chartConfig = {
+                type: 'doughnut',
+                data: { labels: Object.keys(tecMap), datasets: [{ data: Object.values(tecMap), backgroundColor: ['#38bdf8','#fbbf24','#f87171','#34d399','#c084fc'], borderWidth:0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels:{color:'#fff'} } } }
+            };
+            relatorioHTML = `<h4>⚙️ Análise de Métodos</h4><p>Identifica qual abordagem domina o seu tempo de estudo atual.</p>`;
+
+        } else if (tipoAnalise === 'radar_gargalos') {
+            document.getElementById('biChartTitle').innerText = 'Matriz Multidimensional de Gargalos (Dificuldade vs Fadiga)';
+            const radarMap = {};
+            sessoesFiltradas.forEach(s => {
+                const mat = s.topico.split('-')[0].trim();
+                if(!radarMap[mat]) radarMap[mat] = { carga:[], fadiga:[] };
+                radarMap[mat].carga.push(s.carga);
+                radarMap[mat].fadiga.push(s.fadiga);
+            });
+            const rLabels = Object.keys(radarMap);
+            chartConfig = {
+                type: 'radar',
+                data: {
+                    labels: rLabels,
+                    datasets: [
+                        { label: 'Carga Cognitiva', data: rLabels.map(m => (radarMap[m].carga.reduce((a,b)=>a+b,0)/radarMap[m].carga.length).toFixed(1)), borderColor: '#f87171', backgroundColor:'rgba(248,113,113,0.2)' },
+                        { label: 'Fadiga Mental', data: rLabels.map(m => (radarMap[m].fadiga.reduce((a,b)=>a+b,0)/radarMap[m].fadiga.length).toFixed(1)), borderColor: '#fbbf24', backgroundColor:'rgba(251,191,36,0.2)' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { grid: {color:'#334155'}, ticks:{display:false, max:5, min:0} } }, plugins:{legend:{labels:{color:'#fff'}}} }
+            };
+            relatorioHTML = `<h4>🚨 Mapeamento de Pontos Críticos</h4><p>Cruzamento estrito de matérias que apresentam alta exigência mental.</p>`;
+        }
+
+        activeCharts['chartBiDynamic'] = new Chart(document.getElementById('chartBiDynamic'), chartConfig);
+        document.getElementById('biReportContainer').innerHTML = relatorioHTML;
+
+        window.renderAnalyticsDashboardGeneral(sessoesFiltradas);
+    };
+
+    window.renderAnalyticsDashboardGeneral = function(sessoesOk) {
+        const totalMin = sessoesOk.reduce((acc, curr) => acc + curr.tempo, 0);
+        document.getElementById('valHorasLiq').innerText = (totalMin / 60).toFixed(1) + 'h';
+        document.getElementById('valPendentes').innerText = getState().analyticsEngine.sessoesDetalhadas.filter(x => x.status === 'pendente').length;
+
+        if (sessoesOk.length > 0) {
+            document.getElementById('valRetencao').innerText = (sessoesOk.reduce((acc, curr) => acc + parseFloat(curr.retencao), 0) / sessoesOk.length).toFixed(1) + '%';
+            document.getElementById('valCargaCognitiva').innerText = (sessoesOk.reduce((acc, curr) => acc + curr.carga, 0) / sessoesOk.length).toFixed(1);
+        } else {
+            document.getElementById('valRetencao').innerText = '0%'; document.getElementById('valCargaCognitiva').innerText = '0.0';
+        }
+
+        const container = document.getElementById('tableContainer');
+        if (sessoesOk.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">Sem registros no período selecionado.</p>';
+        } else {
             container.innerHTML = `
-                <table class="ana-table">
+                <table class="brain-table">
                     <thead>
                         <tr>
-                            <th>Status</th> <th>Tópico</th> <th>Técnica</th> <th>Tempo</th> <th>Foco / Fadiga</th> <th>Próx. Revisão</th> <th>Ações</th>
+                            <th>Situação</th>
+                            <th>Disciplina / Tópico do Edital</th>
+                            <th>Tempo / Método</th>
+                            <th>Qtd (Págs/Qts)</th>
+                            <th>Foco/Fadiga/Carga</th>
+                            <th>Próx. Revisão</th>
+                            <th>Observações</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${sortedSessoes.map(sess => {
-                            const isPendente = sess.status === 'pendente';
-                            return `
+                        ${sessoesOk.slice().reverse().map(sess => `
                             <tr>
-                                <td>${isPendente ? `<span class="badge badge-pendente" onclick="window.StudyOS.openModal(${sess.id})">⚠️ Completar</span>` : `<span class="badge badge-ok">✓ Detalhado</span>`}</td>
-                                <td style="font-weight:600; color:#f8fafc; max-width:250px;">
-                                    ${sess.topico}
-                                    ${sess.obs ? `<div style="font-size:0.75rem; color:#f87171; font-weight:normal; margin-top:4px;">Obs: ${sess.obs}</div>` : ''}
-                                </td>
-                                <td>${sess.tecnica}</td>
-                                <td><span style="color:#38bdf8;">${sess.tempo}m</span></td>
-                                <td>${isPendente ? '-' : `🎯 ${sess.foco} | 🔋 ${sess.fadiga}`}</td>
-                                <td>${isPendente ? '-' : `<span style="color:#fbbf24;">📅 ${sess.proximaRevisao}</span>`}</td>
+                                <td>${sess.status==='pendente'?`<span style="background:rgba(245,158,11,0.2);color:#fbbf24;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;" onclick="window.abrirFormularioRegistro(${sess.id})">⚠️ Preencher</span>`:`<span style="color:#34d399;font-weight:bold;">✓ Salvo</span>`}</td>
+                                <td style="color:#f8fafc; font-weight:bold;">${sess.topico}</td>
+                                <td>${sess.status==='pendente'?'-':`<span style="color:#38bdf8;">${sess.tempo}m</span><br><small style="color:#94a3b8;">${sess.tecnica}</small>`}</td>
+                                <td>${sess.status==='pendente'?'-':`Págs: ${sess.paginas || 0}<br>Qts: ${sess.questoes || '-'}`}</td>
+                                <td>${sess.status==='pendente'?'-':`🎯 ${sess.foco} <br>🔋 ${sess.fadiga} <br>🧠 ${sess.carga}`}</td>
+                                <td style="color:#fbbf24;">${sess.status==='pendente'?'-':sess.revisao}</td>
+                                <td style="max-width:180px; font-size:0.8rem; color:#94a3b8;">${sess.obs || '-'}</td>
                                 <td>
-                                    <button class="ana-btn ana-btn-outline" style="padding:5px 10px;" onclick="window.StudyOS.openModal(${sess.id})">✏️</button>
-                                    <button class="ana-btn ana-btn-outline" style="padding:5px 10px; color:#f87171; border-color:#f87171;" onclick="window.StudyOS.deleteSession(${sess.id})">🗑️</button>
+                                    <button style="background:transparent; border:none; cursor:pointer;" onclick="window.abrirFormularioRegistro(${sess.id})" title="Editar">✏️</button>
+                                    <button style="background:transparent; border:none; cursor:pointer; color:#f87171;" onclick="window.excluirSessao(${sess.id})" title="Excluir">🗑️</button>
                                 </td>
                             </tr>
-                        `}).join('')}
+                        `).join('')}
                     </tbody>
                 </table>
             `;
         }
-        renderizarGraficos(sessoesOK);
-    }
 
-    function renderizarGraficos(sessoes) {
-        if (!window.Chart) return;
-        const tecnicasMap = {}; sessoes.forEach(s => tecnicasMap[s.tecnica] = (tecnicasMap[s.tecnica] || 0) + 1);
-        const tempoPorData = {}; sessoes.slice().reverse().forEach(s => tempoPorData[s.data] = (tempoPorData[s.data] || 0) + s.tempo);
-        
-        const ctxEvol = document.getElementById('chartEvolucao').getContext('2d');
-        if (chartInstanciaEvolucao) chartInstanciaEvolucao.destroy();
-        chartInstanciaEvolucao = new Chart(ctxEvol, {
-            type: 'line',
-            data: { labels: Object.keys(tempoPorData).slice(-7), datasets: [{ label: 'Minutos Estudados', data: Object.values(tempoPorData).slice(-7), borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.2)', fill: true, tension: 0.4 }] },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
-        });
+        document.getElementById('insightsContainer').innerHTML = gerarInsightsAcionaveis(sessoesOk);
+    };
 
-        const ctxTec = document.getElementById('chartTecnicas').getContext('2d');
-        if (chartInstanciaTecnicas) chartInstanciaTecnicas.destroy();
-        chartInstanciaTecnicas = new Chart(ctxTec, {
-            type: 'doughnut',
-            data: { labels: Object.keys(tecnicasMap), datasets: [{ data: Object.values(tecnicasMap), backgroundColor: ['#38bdf8', '#fbbf24', '#f87171', '#34d399', '#818cf8', '#c084fc'], borderWidth: 0 }] },
-            options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } } }
-        });
-    }
+    window.renderAnalyticsDashboard = function() {
+        window.renderBiDashboard();
+    };
+
 })();
