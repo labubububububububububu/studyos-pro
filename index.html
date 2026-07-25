@@ -1641,55 +1641,107 @@
             window.toggleLessonDirect = (key, checked) => { toggleLesson(key, checked); };
             window.filtrarBloco = (blockIdx, termo) => { renderBlock(blockIdx, blockIdx === 0 ? 'bloco1Container' : 'bloco2Container', termo); };
 
-            const renderRevisao = () => {// =========================================================================
-// BLOCO ÚNICO DE REVISÃO SM-2 (Copie e cole substituindo o renderRevisao antigo)
-// =========================================================================
-
-// 1. Atualiza a inteligência do DecisionEngine automaticamente de fora
-DecisionEngine._diasSemRevisao = function(key) {
-    const datas = AppState.revisaoDatas[key];
-    
-    // Novo sistema
-    if (datas && datas.ultimaRevisao) {
-        const ultima = new Date(datas.ultimaRevisao + 'T12:00:00');
-        return Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)));
-    }
-
-    // Fallback sistema legado
-    if (datas && (datas.rev1 || datas.rev2 || datas.rev3 || datas.rev4)) {
-        let ultima = null;
-        for (let rev of ['rev1', 'rev2', 'rev3', 'rev4']) {
-            if (datas[rev]) {
-                const d = new Date(datas[rev] + 'T12:00:00');
-                if (!ultima || d > ultima) ultima = d;
-            }
-        }
-        if (ultima) return Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)));
-    }
-
-    // Fallback data de conclusão
-    const aula = getAllLessonsFlat().find(i => i.key === key);
-    if (aula) {
-        const entry = AppState.diario.find(e => e.aula === aula.title);
-        if (entry && entry.data) {
-            const [d, m, y] = entry.data.split('/');
-            const dataFeita = new Date(`${y}-${m}-${d}T12:00:00`);
-            return Math.max(0, Math.floor((new Date() - dataFeita) / (1000 * 60 * 60 * 24)));
-        }
-    }
-
-    // Baseline (nunca revisado) -> Conta a partir de 28/08/2026
-    const dataBaseline = new Date('2026-08-28T12:00:00');
-    return Math.max(0, Math.floor((new Date() - dataBaseline) / (1000 * 60 * 60 * 24)));
-};
-
-// 2. Nova interface de Revisão com Botões de Importação/Exportação e Métricas
 const renderRevisao = () => {
     const container = document.getElementById('revisaoContainer');
     if (!container) return;
-    
+
+    // 1. INJETANDO OS BOTÕES NO WINDOW (Para funcionarem no clique do HTML)
+    window.marcarRevisada = (key) => {
+        if (!AppState.revisaoDatas) AppState.revisaoDatas = {};
+        if (!AppState.revisaoDatas[key]) {
+            AppState.revisaoDatas[key] = { totalRevisoes: 0, historico: [] };
+        }
+        
+        const dataHoje = new Date().toISOString().split('T')[0]; 
+        
+        AppState.revisaoDatas[key].ultimaRevisao = dataHoje;
+        AppState.revisaoDatas[key].totalRevisoes = (AppState.revisaoDatas[key].totalRevisoes || 0) + 1;
+        
+        if(!AppState.revisaoDatas[key].historico) AppState.revisaoDatas[key].historico = [];
+        AppState.revisaoDatas[key].historico.push(dataHoje);
+
+        if (typeof registrarAtividade === 'function') registrarAtividade('revisao', 5); 
+        saveState();
+        renderRevisao(); 
+        if (typeof updateDashboard === 'function') updateDashboard();
+    };
+
+    window.exportarRevisoes = () => {
+        const data = AppState.revisaoDatas || {};
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        
+        const agora = new Date();
+        const dia = String(agora.getDate()).padStart(2, '0');
+        const mes = String(agora.getMonth() + 1).padStart(2, '0');
+        const ano = agora.getFullYear();
+        const hora = String(agora.getHours()).padStart(2, '0');
+        const min = String(agora.getMinutes()).padStart(2, '0');
+        
+        a.download = `revisoes_${dia}-${mes}-${ano}_${hora}-${min}.json`;
+        a.click();
+    };
+
+    window.importarRevisoes = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (typeof parsed === 'object') {
+                    AppState.revisaoDatas = { ...(AppState.revisaoDatas || {}), ...parsed };
+                    saveState();
+                    renderRevisao();
+                    alert('✅ Histórico de revisões importado com sucesso!');
+                }
+            } catch (err) {
+                alert('❌ Erro ao ler o arquivo JSON. Certifique-se de que é um arquivo válido.');
+            }
+            event.target.value = ''; 
+        };
+        reader.readAsText(file);
+    };
+
+    // 2. FUNÇÃO LOCAL DE CÁLCULO DE DIAS (Não interfere no resto do seu app)
+    const calcularDiasSemRevisao = (key) => {
+        const datas = AppState.revisaoDatas ? AppState.revisaoDatas[key] : null;
+        
+        if (datas && datas.ultimaRevisao) {
+            const ultima = new Date(datas.ultimaRevisao + 'T12:00:00');
+            return Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)));
+        }
+
+        if (datas && (datas.rev1 || datas.rev2 || datas.rev3 || datas.rev4)) {
+            let ultima = null;
+            for (let rev of ['rev1', 'rev2', 'rev3', 'rev4']) {
+                if (datas[rev]) {
+                    const d = new Date(datas[rev] + 'T12:00:00');
+                    if (!ultima || d > ultima) ultima = d;
+                }
+            }
+            if (ultima) return Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)));
+        }
+
+        const aula = getAllLessonsFlat().find(i => i.key === key);
+        if (aula && AppState.diario) {
+            const entry = AppState.diario.find(e => e.aula === aula.title);
+            if (entry && entry.data) {
+                const [d, m, y] = entry.data.split('/');
+                const dataFeita = new Date(`${y}-${m}-${d}T12:00:00`);
+                return Math.max(0, Math.floor((new Date() - dataFeita) / (1000 * 60 * 60 * 24)));
+            }
+        }
+
+        // Data base solicitada: 28/08/2026
+        const dataBaseline = new Date('2026-08-28T12:00:00');
+        return Math.max(0, Math.floor((new Date() - dataBaseline) / (1000 * 60 * 60 * 24)));
+    };
+
+    // 3. RENDERIZAÇÃO DA INTERFACE
     const concluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]);
-    
+
     let html = `
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
@@ -1707,16 +1759,16 @@ const renderRevisao = () => {
         return; 
     }
 
-    // Ordena do mais atrasado pro menos atrasado
-    concluidas.sort((a, b) => DecisionEngine._diasSemRevisao(b.key) - DecisionEngine._diasSemRevisao(a.key));
-    
+    // Ordena do mais atrasado para o menos atrasado usando a função local
+    concluidas.sort((a, b) => calcularDiasSemRevisao(b.key) - calcularDiasSemRevisao(a.key));
+
     concluidas.slice(0, 20).forEach(item => {
-        const dias = DecisionEngine._diasSemRevisao(item.key);
-        const dominio = DecisionEngine._obterDominio(item);
+        const dias = calcularDiasSemRevisao(item.key);
+        const dominio = (typeof DecisionEngine !== 'undefined' && DecisionEngine._obterDominio) ? DecisionEngine._obterDominio(item) : 0;
         
         const classe = dias > 30 ? 'low' : dias > 15 ? 'medium' : 'high';
         
-        const revData = AppState.revisaoDatas[item.key] || { totalRevisoes: 0 };
+        const revData = (AppState.revisaoDatas && AppState.revisaoDatas[item.key]) || { totalRevisoes: 0 };
         const totalRevisoes = revData.totalRevisoes || 0;
 
         html += `
@@ -1737,69 +1789,9 @@ const renderRevisao = () => {
             </div>
         </div>`;
     });
+    
     html += '</div>';
     container.innerHTML = html;
-};
-
-// 3. Funções Utilitárias exclusivas da Aba de Revisão
-window.marcarRevisada = (key) => {
-    if (!AppState.revisaoDatas) AppState.revisaoDatas = {};
-    if (!AppState.revisaoDatas[key]) {
-        AppState.revisaoDatas[key] = { totalRevisoes: 0, historico: [] };
-    }
-    
-    // Captura a data de hoje no formato YYYY-MM-DD
-    const dataHoje = new Date().toISOString().split('T')[0]; 
-    
-    AppState.revisaoDatas[key].ultimaRevisao = dataHoje;
-    AppState.revisaoDatas[key].totalRevisoes = (AppState.revisaoDatas[key].totalRevisoes || 0) + 1;
-    
-    if(!AppState.revisaoDatas[key].historico) AppState.revisaoDatas[key].historico = [];
-    AppState.revisaoDatas[key].historico.push(dataHoje);
-
-    if (typeof registrarAtividade === 'function') registrarAtividade('revisao', 5); 
-    saveState();
-    renderRevisao(); 
-    if (typeof updateDashboard === 'function') updateDashboard();
-};
-
-window.exportarRevisoes = () => {
-    const data = AppState.revisaoDatas || {};
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    
-    const agora = new Date();
-    const dia = String(agora.getDate()).padStart(2, '0');
-    const mes = String(agora.getMonth() + 1).padStart(2, '0');
-    const ano = agora.getFullYear();
-    const hora = String(agora.getHours()).padStart(2, '0');
-    const min = String(agora.getMinutes()).padStart(2, '0');
-    
-    a.download = `revisões_${dia}-${mes}-${ano}_${hora}-${min}.json`;
-    a.click();
-};
-
-window.importarRevisoes = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const parsed = JSON.parse(e.target.result);
-            if (typeof parsed === 'object') {
-                // Mescla os dados sem perder o que já existe
-                AppState.revisaoDatas = { ...(AppState.revisaoDatas || {}), ...parsed };
-                saveState();
-                renderRevisao();
-                alert('✅ Histórico de revisões importado com sucesso!');
-            }
-        } catch (err) {
-            alert('❌ Erro ao ler o arquivo JSON. Certifique-se de que é um arquivo válido.');
-        }
-        event.target.value = ''; // Limpa o input
-    };
-    reader.readAsText(file);
 };
 
             window.iniciarRevisaoManual = (key) => {
