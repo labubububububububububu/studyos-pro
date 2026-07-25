@@ -1052,6 +1052,25 @@
             };
 
             const DecisionEngine = {
+                // 1. TABELA DE PESOS: Altere os valores conforme a prioridade do seu edital
+                pesos: {
+                    'Administração Financeira e Orçamentária (AFO)': 3,
+                    'Contabilidade Pública': 3,
+                    'Auditoria Governamental e Controle': 3,
+                    'Fundamentos de Auditoria Governamental': 3,
+                    'Direito Administrativo (Prof. Herbert Almeida)': 2,
+                    'Noções de Direito Administrativo (Prof. Antonio Daud)': 2,
+                    'Direito Constitucional': 2,
+                    'Avaliação de Políticas Públicas': 2,
+                    'Políticas Públicas': 2,
+                    'Administração Pública': 2,
+                    'Finanças Públicas': 2,
+                    'Finanças Públicas II': 2,
+                    'Português': 1.5,
+                    'Inglês': 1,
+                    'Ética no Serviço Público': 1,
+                    'Legislação': 1
+                },
                 _diasSemEstudo(aula) {
                     const entry = AppState.diario.filter(e => e.aula === aula.title && e.disciplina === aula.disciplineName).pop();
                     return entry ? Math.min(30, (new Date() - new Date(entry.data + 'T' + (entry.hora || '00:00'))) / (1000 * 60 * 60 * 24)) : 30;
@@ -1118,9 +1137,41 @@
                     const all = getAllLessonsFlat();
                     const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks[i.key]);
                     if (!pendentes.length) return null;
-                    pendentes.sort((a, b) => this._diasSemEstudo(b) - this._diasSemEstudo(a));
-                    const escolhido = pendentes[0];
-                    return { ...escolhido, disciplina: escolhido.disciplineName, assunto: escolhido.title.split(' - ')[0], sub: escolhido.title, modulo: blockIdx === 0 ? 'bloco1' : 'bloco2' };
+
+                    // 1. Agrupar pegando apenas a PRIMEIRA aula pendente de cada disciplina
+                    // (Garante que a ordem lógica da matéria seja respeitada)
+                    const proximasAulas = {};
+                    pendentes.forEach(aula => {
+                        if (!proximasAulas[aula.disciplineName]) {
+                            proximasAulas[aula.disciplineName] = aula;
+                        }
+                    });
+
+                    // 2. Criar sistema de pontuação baseado em Peso + Fome + Variância
+                    const candidatos = Object.values(proximasAulas).map(aula => {
+                        const peso = this.pesos[aula.disciplineName] || 1; // Puxa o peso ou usa 1 como base
+                        const diasSemVer = this._diasSemEstudo(aula);
+                        
+                        // Fator de variação: adiciona até ±20% de aleatoriedade para não ficar repetitivo
+                        const fatorVariacao = 0.8 + (Math.random() * 0.4); 
+
+                        // O Score garante que pesos altos saem mais, mas o tempo sem ver equilibra a balança
+                        const score = peso * (diasSemVer + 1) * fatorVariacao;
+
+                        return { aula, score };
+                    });
+
+                    // 3. Ordena os candidatos do maior score para o menor e puxa o vencedor
+                    candidatos.sort((a, b) => b.score - a.score);
+                    const escolhido = candidatos[0].aula;
+
+                    return { 
+                        ...escolhido, 
+                        disciplina: escolhido.disciplineName, 
+                        assunto: escolhido.title.split(' - ')[0], 
+                        sub: escolhido.title, 
+                        modulo: blockIdx === 0 ? 'bloco1' : 'bloco2' 
+                    };
                 },
                 _escolherRevisao() {
                     const concluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]);
@@ -1149,10 +1200,14 @@
                     if (aula.modulo === 'leis') return 'Leitura pendente há mais tempo.';
                     const diasSem = this._diasSemEstudo(aula);
                     const dominio = this._obterDominio(aula);
+                    const peso = this.pesos[aula.disciplineName] || 1;
+                    
                     const fatores = [];
-                    if (diasSem > 7) fatores.push(`${Math.round(diasSem/30*100)}%: ${diasSem} dias sem contato`);
-                    if (dominio < 0.6) fatores.push(`${Math.round((1-dominio)*100)}%: baixo domínio (${Math.round(dominio*100)}%)`);
-                    return fatores.join('; ') || 'Aula na sequência ideal do ciclo.';
+                    if (peso > 2) fatores.push(`Alta prioridade no edital (Peso ${peso})`);
+                    if (diasSem > 7) fatores.push(`${diasSem} dias sem contato`);
+                    if (dominio < 0.6) fatores.push(`Baixo domínio (${Math.round(dominio*100)}%)`);
+                    
+                    return fatores.join('; ') || 'Sequência equilibrada do ciclo.';
                 },
                 preverConclusaoBloco1() {
                     const all = getAllLessonsFlat();
