@@ -1641,27 +1641,166 @@
             window.toggleLessonDirect = (key, checked) => { toggleLesson(key, checked); };
             window.filtrarBloco = (blockIdx, termo) => { renderBlock(blockIdx, blockIdx === 0 ? 'bloco1Container' : 'bloco2Container', termo); };
 
-            const renderRevisao = () => {
-                const container = document.getElementById('revisaoContainer');
-                if (!container) return;
-                const concluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]);
-                if (!concluidas.length) { container.innerHTML = '<div class="card"><p class="text-muted">Nenhuma aula concluída para revisar.</p></div>'; return; }
-                let html = '<div class="card"><h3>🔄 Revisões Inteligentes (Algoritmo SM-2)</h3>';
-                concluidas.sort((a, b) => DecisionEngine._diasSemRevisao(b.key) - DecisionEngine._diasSemRevisao(a.key));
-                concluidas.slice(0, 20).forEach(item => {
-                    const dias = DecisionEngine._diasSemRevisao(item.key);
-                    const dominio = DecisionEngine._obterDominio(item);
-                    const classe = dias > 30 ? 'low' : dias > 15 ? 'medium' : 'high';
-                    html += `<div class="lesson-item">
-                        <span class="lesson-title">${item.title}</span>
-                        <span class="forget-indicator ${classe}">${Math.round(dias)}d</span>
-                        <span>Domínio: ${Math.round(dominio*100)}%</span>
-                        <button class="btn-anotacoes" onclick="window.iniciarRevisaoManual('${item.key}')">▶ Revisar</button>
-                    </div>`;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            };
+            const renderRevisao = () => {// =========================================================================
+// BLOCO ÚNICO DE REVISÃO SM-2 (Copie e cole substituindo o renderRevisao antigo)
+// =========================================================================
+
+// 1. Atualiza a inteligência do DecisionEngine automaticamente de fora
+DecisionEngine._diasSemRevisao = function(key) {
+    const datas = AppState.revisaoDatas[key];
+    
+    // Novo sistema
+    if (datas && datas.ultimaRevisao) {
+        const ultima = new Date(datas.ultimaRevisao + 'T12:00:00');
+        return Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Fallback sistema legado
+    if (datas && (datas.rev1 || datas.rev2 || datas.rev3 || datas.rev4)) {
+        let ultima = null;
+        for (let rev of ['rev1', 'rev2', 'rev3', 'rev4']) {
+            if (datas[rev]) {
+                const d = new Date(datas[rev] + 'T12:00:00');
+                if (!ultima || d > ultima) ultima = d;
+            }
+        }
+        if (ultima) return Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Fallback data de conclusão
+    const aula = getAllLessonsFlat().find(i => i.key === key);
+    if (aula) {
+        const entry = AppState.diario.find(e => e.aula === aula.title);
+        if (entry && entry.data) {
+            const [d, m, y] = entry.data.split('/');
+            const dataFeita = new Date(`${y}-${m}-${d}T12:00:00`);
+            return Math.max(0, Math.floor((new Date() - dataFeita) / (1000 * 60 * 60 * 24)));
+        }
+    }
+
+    // Baseline (nunca revisado) -> Conta a partir de 28/08/2026
+    const dataBaseline = new Date('2026-08-28T12:00:00');
+    return Math.max(0, Math.floor((new Date() - dataBaseline) / (1000 * 60 * 60 * 24)));
+};
+
+// 2. Nova interface de Revisão com Botões de Importação/Exportação e Métricas
+const renderRevisao = () => {
+    const container = document.getElementById('revisaoContainer');
+    if (!container) return;
+    
+    const concluidas = getAllLessonsFlat().filter(i => AppState.checks[i.key]);
+    
+    let html = `
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+            <h3>🔄 Revisões SM-2</h3>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-glass" onclick="window.exportarRevisoes()">📤 Exportar JSON</button>
+                <button class="btn-glass primary" onclick="document.getElementById('importRevisoesInput').click()">📥 Importar</button>
+                <input type="file" id="importRevisoesInput" accept=".json" style="display:none;" onchange="window.importarRevisoes(event)">
+            </div>
+        </div>
+    `;
+
+    if (!concluidas.length) { 
+        container.innerHTML = html + '<p class="text-muted">Nenhuma aula concluída para revisar.</p></div>'; 
+        return; 
+    }
+
+    // Ordena do mais atrasado pro menos atrasado
+    concluidas.sort((a, b) => DecisionEngine._diasSemRevisao(b.key) - DecisionEngine._diasSemRevisao(a.key));
+    
+    concluidas.slice(0, 20).forEach(item => {
+        const dias = DecisionEngine._diasSemRevisao(item.key);
+        const dominio = DecisionEngine._obterDominio(item);
+        
+        const classe = dias > 30 ? 'low' : dias > 15 ? 'medium' : 'high';
+        
+        const revData = AppState.revisaoDatas[item.key] || { totalRevisoes: 0 };
+        const totalRevisoes = revData.totalRevisoes || 0;
+
+        html += `
+        <div class="lesson-item" style="flex-wrap:wrap; gap:10px; align-items:center; background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+            <span class="lesson-title" style="flex:1; min-width:100%; font-weight:600; color:#d1d5db;">${item.title}</span>
+            
+            <div style="display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap; justify-content: space-between;">
+                <div style="display:flex; gap:12px; align-items:center; font-size:0.8rem;">
+                    <span class="forget-indicator ${classe}" title="Dias desde a última revisão">⏳ ${Math.round(dias)}d sem rever</span>
+                    <span style="color:#a78bfa; background:rgba(124,58,237,0.1); padding:2px 8px; border-radius:20px;" title="Vezes que você revisou esta aula">🔄 ${totalRevisoes} Revisões</span>
+                    <span>🎯 ${Math.round(dominio*100)}% Domínio</span>
+                </div>
+                
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-anotacoes" style="border: 1px solid rgba(74,222,128,0.4); color: #4ade80;" onclick="window.marcarRevisada('${item.key}')">✅ Marcar Revisada</button>
+                    <button class="btn-anotacoes" onclick="window.iniciarRevisaoManual('${item.key}')">▶ Estudar</button>
+                </div>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+};
+
+// 3. Funções Utilitárias exclusivas da Aba de Revisão
+window.marcarRevisada = (key) => {
+    if (!AppState.revisaoDatas) AppState.revisaoDatas = {};
+    if (!AppState.revisaoDatas[key]) {
+        AppState.revisaoDatas[key] = { totalRevisoes: 0, historico: [] };
+    }
+    
+    // Captura a data de hoje no formato YYYY-MM-DD
+    const dataHoje = new Date().toISOString().split('T')[0]; 
+    
+    AppState.revisaoDatas[key].ultimaRevisao = dataHoje;
+    AppState.revisaoDatas[key].totalRevisoes = (AppState.revisaoDatas[key].totalRevisoes || 0) + 1;
+    
+    if(!AppState.revisaoDatas[key].historico) AppState.revisaoDatas[key].historico = [];
+    AppState.revisaoDatas[key].historico.push(dataHoje);
+
+    if (typeof registrarAtividade === 'function') registrarAtividade('revisao', 5); 
+    saveState();
+    renderRevisao(); 
+    if (typeof updateDashboard === 'function') updateDashboard();
+};
+
+window.exportarRevisoes = () => {
+    const data = AppState.revisaoDatas || {};
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    
+    const agora = new Date();
+    const dia = String(agora.getDate()).padStart(2, '0');
+    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    const ano = agora.getFullYear();
+    const hora = String(agora.getHours()).padStart(2, '0');
+    const min = String(agora.getMinutes()).padStart(2, '0');
+    
+    a.download = `revisões_${dia}-${mes}-${ano}_${hora}-${min}.json`;
+    a.click();
+};
+
+window.importarRevisoes = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (typeof parsed === 'object') {
+                // Mescla os dados sem perder o que já existe
+                AppState.revisaoDatas = { ...(AppState.revisaoDatas || {}), ...parsed };
+                saveState();
+                renderRevisao();
+                alert('✅ Histórico de revisões importado com sucesso!');
+            }
+        } catch (err) {
+            alert('❌ Erro ao ler o arquivo JSON. Certifique-se de que é um arquivo válido.');
+        }
+        event.target.value = ''; // Limpa o input
+    };
+    reader.readAsText(file);
+};
 
             window.iniciarRevisaoManual = (key) => {
                 const aula = getAllLessonsFlat().find(i => i.key === key);
