@@ -1139,7 +1139,6 @@
                     if (!pendentes.length) return null;
 
                     // 1. Agrupar pegando apenas a PRIMEIRA aula pendente de cada disciplina
-                    // (Garante que a ordem lógica da matéria seja respeitada)
                     const proximasAulas = {};
                     pendentes.forEach(aula => {
                         if (!proximasAulas[aula.disciplineName]) {
@@ -1149,13 +1148,12 @@
 
                     // 2. Criar sistema de pontuação baseado em Peso + Fome + Variância
                     const candidatos = Object.values(proximasAulas).map(aula => {
-                        const peso = this.pesos[aula.disciplineName] || 1; // Puxa o peso ou usa 1 como base
+                        const peso = this.pesos[aula.disciplineName] || 1;
                         const diasSemVer = this._diasSemEstudo(aula);
                         
-                        // Fator de variação: adiciona até ±20% de aleatoriedade para não ficar repetitivo
+                        // Fator de variação: adiciona até ±20% de aleatoriedade
                         const fatorVariacao = 0.8 + (Math.random() * 0.4); 
 
-                        // O Score garante que pesos altos saem mais, mas o tempo sem ver equilibra a balança
                         const score = peso * (diasSemVer + 1) * fatorVariacao;
 
                         return { aula, score };
@@ -1236,7 +1234,6 @@
                     return Math.round((ultimos7.filter(Boolean).length / 7) * 100);
                 }
             };
-
             let aulaTimerInterval = null;
             let aulaStartTime = 0;
             let pomodoroInterval = null;
