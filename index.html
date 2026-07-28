@@ -1398,28 +1398,29 @@ const DecisionEngine = {
             const diasSemVer = this._diasSemEstudo(aula);
             const dominio = this._obterDominio(aula);
 
-            const recentCount = this._contarEscolhasDisciplinaRecente(disciplina, 12);
-            const totalRecent = this._totalEscolhasRecentes(12);
+            // AUMENTADO DE 12 PARA 30 DIAS: Dá tempo para matérias de peso 1 aparecerem na janela
+            const recentCount = this._contarEscolhasDisciplinaRecente(disciplina, 30);
+            const totalRecent = this._totalEscolhasRecentes(30);
             const recentRate = recentCount / totalRecent;
 
-            // quota-alvo proporcional ao peso
             const targetRate = pesoNorm;
-
-            // bônus de equilíbrio: se a disciplina foi pouco escolhida recentemente, sobe.
             const bonusEquilibrio = this._clamp((targetRate - recentRate) * 2.2, -0.35, 0.35);
 
-            // importância operacional: tempo sem estudar e domínio baixo
             const recencyNeed = this._clamp(diasSemVer / 14, 0, 1);
             const domainNeed = 1 - dominio;
+            
+            // GATILHO DE ESQUECIMENTO ABSOLUTO: Força matérias abandonadas a subirem (mesmo se peso 1)
+            const bonusEsquecimento = diasSemVer > 21 ? 0.50 : 0; 
 
-            // pequena aleatoriedade, apenas para desempate
             const ruido = (Math.random() - 0.5) * 0.08;
 
+            // FÓRMULA REBALANCEADA
             const score =
-                (pesoNorm * 0.25) +
-                (recencyNeed * 0.35) +
-                (domainNeed * 0.30) +
-                (bonusEquilibrio * 0.15) +
+                (pesoNorm * 0.20) +          // Peso do edital (levemente reduzido)
+                (recencyNeed * 0.40) +       // Tempo sem ver (levemente aumentado)
+                (domainNeed * 0.25) +        // Domínio
+                (bonusEquilibrio * 0.15) +   // Busca manter proporção do peso
+                bonusEsquecimento +          // Gatilho de abandono
                 ruido;
 
             return { aula, score };
@@ -1682,6 +1683,7 @@ const DecisionEngine = {
         return Math.round((ultimos7.filter(Boolean).length / 7) * 100);
     }
 };
+            let missaoSugeridaAtual = null; // GUARDA A MISSÃO DA TELA AQUI
             let aulaTimerInterval = null;
             let aulaStartTime = 0;
             let pomodoroInterval = null;
@@ -1745,7 +1747,10 @@ const DecisionEngine = {
                     if (!confirm('Há uma aula em andamento. Deseja interrompê-la?')) return;
                     pararAula(true);
                 }
-                const missao = DecisionEngine.escolherMissao();
+                
+                // CORREÇÃO: Usa a missão que já estava salva na tela em vez de recalcular
+                const missao = missaoSugeridaAtual || DecisionEngine.escolherMissao();
+                
                 if (!missao) { alert('Nenhuma missão pendente!'); return; }
                 if (missao.modulo === 'leis') {
                     if (confirm(`Iniciar leitura da lei "${missao.title}"?`)) {
@@ -1760,6 +1765,7 @@ const DecisionEngine = {
                         salvarAnotacoesMissao(missao.key);
                         salvarQuestoesMissao(missao.key);
                         DecisionEngine.avancarCiclo();
+                        missaoSugeridaAtual = null; // Limpa a missão atual após avançar
                         saveState();
                         updateDashboard();
                         renderAll();
@@ -1786,6 +1792,8 @@ const DecisionEngine = {
                     }
                 }, 10000);
                 registrarAtividade('aula');
+                
+                missaoSugeridaAtual = null; // Limpa para a próxima vez
                 saveState();
                 updateDashboard();
                 renderHome();
@@ -1873,6 +1881,7 @@ const DecisionEngine = {
                     salvarQuestoesMissao(missaoAtual.key);
                 }
                 DecisionEngine.pularMissao();
+				missaoSugeridaAtual = null;
                 limparCamposMissao();
                 document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
                 document.getElementById('startLessonBtn').disabled = false;
@@ -1892,6 +1901,7 @@ const DecisionEngine = {
                     AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
                 }
                 DecisionEngine.voltarMissao();
+				missaoSugeridaAtual = null;
                 limparCamposMissao();
                 document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
                 document.getElementById('startLessonBtn').disabled = false;
@@ -1933,6 +1943,8 @@ const DecisionEngine = {
 
             const renderHome = () => {
                 const missao = DecisionEngine.escolherMissao();
+                missaoSugeridaAtual = missao; // SALVA A MISSÃO CALCULADA NA VARIÁVEL GLOBAL
+
                 const titleEl = document.getElementById('missionTitle');
                 const subEl = document.getElementById('missionSub');
                 const timeEl = document.getElementById('missionTime');
