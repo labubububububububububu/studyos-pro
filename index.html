@@ -905,9 +905,7 @@
                     gamificacao: { xp: 0, nivel: 1, streak: 0, ultimaAtividade: null, conquistas: [] }
                 },
                 ciclo: { moduloAtual: 'bloco1' },
-                missaoSugeridaAtual: null, // <--- ADICIONE ESTA LINHA AQUI
                 arquiteto: { historico: [], notificacoes: [], policy: 'manual', conversas: [] },
-                ...
                 data: JSON.parse(JSON.stringify(DEFAULT_DATA)),
                 flashcards: [],
                 metasSemanais: { aulas: 14, horas: 20, aulasFeitas: 0, horasFeitas: 0, semana: '' },
@@ -1157,88 +1155,61 @@ const DecisionEngine = {
             .filter(e => e.aula === aula.title && e.disciplina === aula.disciplineName)
             .pop();
 
-        if (!entry) return 30; // Se nunca estudou, considera o máximo de 30 dias de atraso
+        if (!entry) return 30;
 
-        let dataFinal;
-        // O JS se perde com datas DD/MM/YYYY, precisamos inverter para YYYY-MM-DD
-        if (entry.data && entry.data.includes('/')) {
-            const partes = entry.data.split('/');
-            dataFinal = new Date(`${partes[2]}-${partes[1]}-${partes[0]}T12:00:00`);
-        } else {
-            dataFinal = new Date(entry.data);
-        }
-
-        const dias = Math.floor((new Date() - dataFinal) / (1000 * 60 * 60 * 24));
-        return isNaN(dias) ? 30 : Math.max(0, Math.min(30, dias));
+        const dataHora = `${entry.data}T${entry.hora || '00:00'}`;
+        return Math.min(30, this._diasEntre(new Date(), new Date(dataHora)));
     },
 
     _diasSemRevisao(key) {
         const datas = AppState.revisaoDatas?.[key];
-        let ultima = null;
-        
-        if (datas && datas.ultimaRevisao) {
-            // Sincroniza com o formato gerado pelo botão da tela
-            ultima = new Date(datas.ultimaRevisao + 'T12:00:00');
-        } else if (datas) {
-            // Fallback de compatibilidade
-            for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
-                if (datas[rev]) {
-                    const d = new Date(datas[rev] + 'T12:00:00');
-                    if (!ultima || d > ultima) ultima = d;
-                }
-            }
-        }
-        
-        // Se ainda não achou, ele puxa do diário (aulas concluídas manualmente entram aqui!)
-        if (!ultima) {
-            const aula = this._resolverAulaPorKey(key);
-            if (aula) {
-                const entry = (AppState.diario || []).find(e => e.aula === aula.title);
-                if (entry && entry.data) {
-                    const partes = entry.data.split('/');
-                    ultima = new Date(`${partes[2]}-${partes[1]}-${partes[0]}T12:00:00`);
-                }
-            }
-        }
+        if (!datas) return 999;
 
-        return ultima ? Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24))) : 999;
+        let ultima = null;
+        for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
+            if (datas[rev]) {
+                const d = new Date(datas[rev]);
+                if (!ultima || d > ultima) ultima = d;
+            }
+        }
+        return ultima ? Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)) : 999;
     },
 
     _contarRevisoesFeitas(key) {
         const datas = AppState.revisaoDatas?.[key];
         if (!datas) return 0;
-        // Compatível com a variável da tela
-        if (datas.totalRevisoes !== undefined) return datas.totalRevisoes; 
-        
-        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5'].filter(rev => !!datas[rev]).length;
+        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']
+            .filter(rev => !!datas[rev]).length;
+    },
+
+    _proximaRevisaoDias(key) {
+        const feitas = this._contarRevisoesFeitas(key);
+        return this.agendaRevisao[Math.min(feitas, this.agendaRevisao.length - 1)];
     },
 
     _revisaoVencida(key) {
-        // Agora calcula até para aulas que você só marcou no checkbox!
+        const datas = AppState.revisaoDatas?.[key];
+        if (!datas) return false;
+
         const feitas = this._contarRevisoesFeitas(key);
-        const alvoDias = this._proximaRevisaoDias(key); 
+        if (feitas === 0) return true;
+
         const ultimaDias = this._diasSemRevisao(key);
-        
-        // Se os dias passados forem maiores ou iguais a meta de espaçamento, está vencida
-        return ultimaDias >= alvoDias;
+        return ultimaDias >= this._proximaRevisaoDias(key);
     },
 
     _atualizarAgendaRevisao(aula) {
         const key = this._chaveAula(aula);
         if (!key) return;
 
-        AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || { totalRevisoes: 0, historico: [] };
-        
-        const dataHoje = new Date().toISOString().split('T')[0]; 
-        
-        AppState.revisaoDatas[key].ultimaRevisao = dataHoje;
-        AppState.revisaoDatas[key].totalRevisoes = (AppState.revisaoDatas[key].totalRevisoes || 0) + 1;
-        
-        if (!AppState.revisaoDatas[key].historico) AppState.revisaoDatas[key].historico = [];
-        AppState.revisaoDatas[key].historico.push(dataHoje);
+        AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || {};
+        const feitas = this._contarRevisoesFeitas(key);
+
+        const revNome = `rev${Math.min(feitas + 1, 5)}`;
+        AppState.revisaoDatas[key][revNome] = this._agoraISO();
 
         AppState.reviewMeta[key] = {
-            ultimaConclusao: dataHoje,
+            ultimaConclusao: this._agoraISO(),
             proximaEmDias: this._proximaRevisaoDias(key)
         };
     },
@@ -1254,13 +1225,13 @@ const DecisionEngine = {
             data: this._agoraISO()
         });
 
-        // AUMENTADO DE 40 PARA 200 PARA MANTER A PROPORÇÃO MATEMÁTICA PERFEITA
-        if (AppState.historicoCiclo.length > 200) {
+        if (AppState.historicoCiclo.length > 40) {
             AppState.historicoCiclo.shift();
         }
 
         AppState.moduloStats[modulo] = (AppState.moduloStats[modulo] || 0) + 1;
     },
+
     _marcarAulaAtiva(aula) {
         const resolvida = this._resolverAulaEntrada(aula);
         if (!resolvida) return null;
@@ -1332,14 +1303,30 @@ const DecisionEngine = {
     },
 
     _decidirOrdemModulos() {
-        // Agora segue estritamente a ordem do ciclo, sem "fura-fila"
-        const base = [...this.ordemModulos]; // ['bloco1', 'bloco2', 'leis', 'revisao']
+        // Ordem dinâmica: respeita o ciclo, mas sobe revisões vencidas e leis paradas.
+        const base = [...this.ordemModulos];
+        const pressao = {
+            bloco1: this._pressaoBloco(0),
+            bloco2: this._pressaoBloco(1),
+            leis: this._pressaoLeis(),
+            revisao: this._pressaoRevisao()
+        };
+
         const moduloAtual = AppState.ciclo?.moduloAtual || 'bloco1';
-        
+
+        // Se revisão está muito pressionada, ela pode subir no ciclo.
+        const maxModulo = Object.entries(pressao).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const maxValor = pressao[maxModulo] || 0;
+        const atualValor = pressao[moduloAtual] || 0;
+
+        if (maxModulo && maxModulo !== moduloAtual && maxValor > atualValor * 1.25) {
+            // Prioriza o módulo mais urgente sem destruir a lógica do ciclo.
+            return [maxModulo, ...base.filter(m => m !== maxModulo)];
+        }
+
+        // Caso normal: mantém o ciclo com rotação.
         const idx = base.indexOf(moduloAtual);
         if (idx <= 0) return base;
-        
-        // Retorna a ordem do ciclo girada a partir do módulo atual
         return [...base.slice(idx), ...base.slice(0, idx)];
     },
 
@@ -1388,12 +1375,12 @@ const DecisionEngine = {
     // =========================
     // BLOCOS
     // =========================
-   _escolherBloco(blockIdx) {
+    _escolherBloco(blockIdx) {
         const all = getAllLessonsFlat();
         const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks?.[i.key]);
         if (!pendentes.length) return null;
 
-        // 1. Agrupa as disciplinas que ainda possuem aulas a fazer
+        // Seleciona só a primeira pendente de cada disciplina
         const proximasAulas = {};
         pendentes.forEach(aula => {
             if (!proximasAulas[aula.disciplineName]) {
@@ -1401,60 +1388,46 @@ const DecisionEngine = {
             }
         });
 
-        const disciplinasDisponiveis = Object.keys(proximasAulas);
-        
-        // 2. Calcula a soma total dos pesos (Tamanho do "Ciclo Completo")
-        const pesosLocais = {};
-        let somaPesos = 0;
-        disciplinasDisponiveis.forEach(disc => {
-            pesosLocais[disc] = this.pesos[disc] || 1;
-            somaPesos += pesosLocais[disc];
-        });
+        const disciplinas = Object.keys(proximasAulas);
+        const somaPesos = disciplinas.reduce((s, d) => s + (this.pesos[d] || 1), 0) || 1;
 
-        // 3. Puxa o histórico específico deste bloco
-        const moduloNome = blockIdx === 0 ? 'bloco1' : 'bloco2';
-        const historicoDoBloco = (AppState.historicoCiclo || []).filter(h => h.modulo === moduloNome && h.acao !== 'pular');
-        
-        // A janela de observação é EXATAMENTE a soma dos pesos.
-        // Isso garante que em um conjunto, cada matéria apareça exatamente na quantidade do seu peso.
-        const janela = historicoDoBloco.slice(-somaPesos);
-
-        // 4. Filtrar disciplinas que já bateram a cota limite dentro desta janela
-        let candidatas = disciplinasDisponiveis.filter(disc => {
-            const vezesNaJanela = janela.filter(h => h.disciplina === disc).length;
-            return vezesNaJanela < pesosLocais[disc]; // Só passa quem está devendo aparição
-        });
-
-        // Failsafe: se a janela recomeçou e todas estão batidas, liberamos todas.
-        if (candidatas.length === 0) {
-            candidatas = disciplinasDisponiveis;
-        }
-
-        // 5. Garantir o máximo de espaçamento (nunca juntas e com maior distância possível)
-        const pontuacaoEspacamento = candidatas.map(disc => {
-            const aula = proximasAulas[disc];
-            
-            // Achamos a última vez que essa matéria apareceu (0 = muito recente, números maiores = mais distante)
-            const indexNoHistoricoReverso = [...historicoDoBloco].reverse().findIndex(h => h.disciplina === disc);
-            
-            // Se nunca apareceu no histórico recente, ganha pontuação infinita (prioridade máxima)
-            let turnosDesdeAUtlima = indexNoHistoricoReverso === -1 ? 9999 : indexNoHistoricoReverso;
-            
-            // Desempate cronológico: caso duas tenham o mesmo espaçamento no ciclo
+        const candidatos = Object.values(proximasAulas).map(aula => {
+            const disciplina = aula.disciplineName;
+            const peso = this.pesos[disciplina] || 1;
+            const pesoNorm = peso / somaPesos;
             const diasSemVer = this._diasSemEstudo(aula);
+            const dominio = this._obterDominio(aula);
 
-            return { aula, turnosDesdeAUtlima, diasSemVer };
+            // AUMENTADO DE 12 PARA 30 DIAS: Dá tempo para matérias de peso 1 aparecerem na janela
+            const recentCount = this._contarEscolhasDisciplinaRecente(disciplina, 30);
+            const totalRecent = this._totalEscolhasRecentes(30);
+            const recentRate = recentCount / totalRecent;
+
+            const targetRate = pesoNorm;
+            const bonusEquilibrio = this._clamp((targetRate - recentRate) * 2.2, -0.35, 0.35);
+
+            const recencyNeed = this._clamp(diasSemVer / 14, 0, 1);
+            const domainNeed = 1 - dominio;
+            
+            // GATILHO DE ESQUECIMENTO ABSOLUTO: Força matérias abandonadas a subirem (mesmo se peso 1)
+            const bonusEsquecimento = diasSemVer > 21 ? 0.50 : 0; 
+
+            const ruido = (Math.random() - 0.5) * 0.08;
+
+            // FÓRMULA REBALANCEADA
+            const score =
+                (pesoNorm * 0.20) +          // Peso do edital (levemente reduzido)
+                (recencyNeed * 0.40) +       // Tempo sem ver (levemente aumentado)
+                (domainNeed * 0.25) +        // Domínio
+                (bonusEquilibrio * 0.15) +   // Busca manter proporção do peso
+                bonusEsquecimento +          // Gatilho de abandono
+                ruido;
+
+            return { aula, score };
         });
 
-        // 6. Ordena a lista: quem está há MAIS TURNOS sem aparecer ganha o primeiro lugar
-        pontuacaoEspacamento.sort((a, b) => {
-            if (b.turnosDesdeAUtlima !== a.turnosDesdeAUtlima) {
-                return b.turnosDesdeAUtlima - a.turnosDesdeAUtlima; // Prioriza espaçamento
-            }
-            return b.diasSemVer - a.diasSemVer; // Desempate por dias corridos
-        });
-
-        const escolhido = pontuacaoEspacamento[0]?.aula;
+        candidatos.sort((a, b) => b.score - a.score);
+        const escolhido = candidatos[0]?.aula;
         if (!escolhido) return null;
 
         return {
@@ -1462,9 +1435,10 @@ const DecisionEngine = {
             disciplina: escolhido.disciplineName,
             assunto: escolhido.title.split(' - ')[0],
             sub: escolhido.title,
-            modulo: moduloNome
+            modulo: blockIdx === 0 ? 'bloco1' : 'bloco2'
         };
     },
+
     // =========================
     // LEIS
     // =========================
@@ -1774,32 +1748,41 @@ const DecisionEngine = {
                     pararAula(true);
                 }
                 
+                // CORREÇÃO: Usa a missão que já estava salva na tela em vez de recalcular
                 const missao = missaoSugeridaAtual || DecisionEngine.escolherMissao();
+                
                 if (!missao) { alert('Nenhuma missão pendente!'); return; }
-                
-                // Unificando Leis, Revisões e Blocos no mesmo motor de timer!
-                AppState.aulaAtiva = { 
-                    ...missao, 
-                    inicio: Date.now() 
-                };
-                
+                if (missao.modulo === 'leis') {
+                    if (confirm(`Iniciar leitura da lei "${missao.title}"?`)) {
+                        const lei = AppState.leis.find(l => l.nome === missao.title);
+                        if (lei) {
+                            lei.ultimaLeitura = new Date().toISOString();
+                            lei.status = lei.status === 'pendente' ? 'andamento' : lei.status;
+                            registrarAtividade('leitura', 5);
+                            saveState();
+                            renderLeis();
+                        }
+                        salvarAnotacoesMissao(missao.key);
+                        salvarQuestoesMissao(missao.key);
+                        DecisionEngine.avancarCiclo();
+                        missaoSugeridaAtual = null; // Limpa a missão atual após avançar
+                        saveState();
+                        updateDashboard();
+                        renderAll();
+                        return;
+                    }
+                    return;
+                }
+                AppState.aulaAtiva = { blockId: missao.blockId, discIdx: missao.discIdx, lessonIdx: missao.lessonIdx, inicio: Date.now(), modulo: missao.modulo || (missao.blockIdx === 0 ? 'bloco1' : 'bloco2') };
                 AppState.aulaPausada = false;
                 aulaStartTime = Date.now();
-                
-                const startBtn = document.getElementById('startLessonBtn');
-                const pauseBtn = document.getElementById('pauseLessonBtn');
-                const stopBtn = document.getElementById('stopLessonBtn');
-                const skipBtn = document.getElementById('skipLessonBtn');
-                const voltarBtn = document.getElementById('voltarLessonBtn');
-
-                startBtn.textContent = '▶ Estudando...';
-                startBtn.disabled = true;
-                pauseBtn.disabled = false;
-                stopBtn.disabled = false;
-                skipBtn.disabled = true;
-                voltarBtn.disabled = true;
-                pauseBtn.textContent = '⏸ Pausar';
-                
+                document.getElementById('startLessonBtn').textContent = '▶ Estudando...';
+                document.getElementById('startLessonBtn').disabled = true;
+                document.getElementById('pauseLessonBtn').disabled = false;
+                document.getElementById('stopLessonBtn').disabled = false;
+                document.getElementById('skipLessonBtn').disabled = true;
+                document.getElementById('voltarLessonBtn').disabled = true;
+                document.getElementById('pauseLessonBtn').textContent = '⏸ Pausar';
                 if (aulaTimerInterval) clearInterval(aulaTimerInterval);
                 aulaTimerInterval = setInterval(() => {
                     if (!AppState.aulaPausada) {
@@ -1808,10 +1791,9 @@ const DecisionEngine = {
                         updateDashboard();
                     }
                 }, 10000);
+                registrarAtividade('aula');
                 
-                registrarAtividade(missao.modulo === 'leis' ? 'leitura' : (missao.modulo === 'revisao' ? 'revisao' : 'aula'));
-                
-                missaoSugeridaAtual = null; // Limpa para forçar o cálculo na próxima vez
+                missaoSugeridaAtual = null; // Limpa para a próxima vez
                 saveState();
                 updateDashboard();
                 renderHome();
@@ -1858,62 +1840,35 @@ const DecisionEngine = {
             const pararAula = (semSalvar = false) => {
                 if (!AppState.aulaAtiva) return;
                 if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-                
                 if (!semSalvar) {
-                    const key = AppState.aulaAtiva.key || `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
+                    const key = `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
                     const minutos = Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000);
-                    
-                    // 1. Salvar na Engine: Isso é o que alimenta o algoritmo de pesos!
-                    DecisionEngine.registrarConclusaoMissao(AppState.aulaAtiva, { 
-                        tipo: AppState.aulaAtiva.modulo, 
-                        foiRevisao: AppState.aulaAtiva.modulo === 'revisao' 
-                    });
-                    
-                    // 2. Marcar UI de acordo com o módulo
-                    if (AppState.aulaAtiva.modulo === 'leis') {
-                        const lei = AppState.leis.find(l => l.nome === AppState.aulaAtiva.title);
-                        if (lei) {
-                            lei.ultimaLeitura = new Date().toISOString();
-                            if (lei.status === 'pendente') lei.status = 'andamento';
-                        }
-                    } else if (AppState.aulaAtiva.modulo !== 'revisao') {
-                        toggleLesson(key, true);
-                    }
-
-                    // 3. Log de horas e XP
+                    toggleLesson(key, true);
                     if (minutos > 0) {
-                        AppState.sessoes.push({ 
-                            data: new Date().toLocaleDateString('pt-BR'), 
-                            inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), 
-                            duracao: minutos 
-                        });
-                        registrarAtividade(AppState.aulaAtiva.modulo === 'leis' ? 'leitura' : 'aula', minutos);
+                        AppState.sessoes.push({ data: new Date().toLocaleDateString('pt-BR'), inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), duracao: minutos });
+                        registrarAtividade('aula', minutos);
                         AppState.metasSemanais.aulasFeitas += 1;
                     }
-                    
                     salvarAnotacoesMissao(key);
                     salvarQuestoesMissao(key);
                     DecisionEngine.avancarCiclo();
                     saveState();
                 }
-                
                 AppState.aulaAtiva = null;
                 AppState.aulaPausada = false;
                 AppState.tempoEstudoHoje = 0;
-                missaoSugeridaAtual = null; // Zera para girar o ciclo de novo
-                
                 document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
                 document.getElementById('startLessonBtn').disabled = false;
                 document.getElementById('pauseLessonBtn').disabled = true;
                 document.getElementById('stopLessonBtn').disabled = true;
                 document.getElementById('skipLessonBtn').disabled = false;
                 document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
-                
                 limparCamposMissao();
                 saveState();
                 updateDashboard();
                 renderAll();
             };
+
             const pularMissao = () => {
                 if (AppState.aulaAtiva) {
                     if (!confirm('Há uma aula em andamento. Deseja pular mesmo assim?')) return;
@@ -1987,8 +1942,8 @@ const DecisionEngine = {
             };
 
             const renderHome = () => {
-                const missao = AppState.missaoSugeridaAtual || DecisionEngine.escolherMissao();
-                if (!AppState.missaoSugeridaAtual) AppState.missaoSugeridaAtual = missao;
+                const missao = DecisionEngine.escolherMissao();
+                missaoSugeridaAtual = missao; // SALVA A MISSÃO CALCULADA NA VARIÁVEL GLOBAL
 
                 const titleEl = document.getElementById('missionTitle');
                 const subEl = document.getElementById('missionSub');
@@ -2003,19 +1958,26 @@ const DecisionEngine = {
                 voltarBtn.disabled = AppState.historicoCiclo.length === 0;
 
                 if (AppState.aulaAtiva) {
-                    const isLei = AppState.aulaAtiva.modulo === 'leis';
-                    titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${AppState.aulaAtiva.title}` : `⏳ Estudando: ${AppState.aulaAtiva.title}`;
-                    subEl.textContent = isLei ? '📜 Leitura de Lei' : `${AppState.aulaAtiva.disciplina} · ${AppState.aulaAtiva.modulo}`;
-                    timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
-                    
-                    startBtn.textContent = '▶ Estudando...';
-                    startBtn.disabled = true;
-                    pauseBtn.disabled = false;
-                    stopBtn.disabled = false;
-                    skipBtn.disabled = true;
-                    voltarBtn.disabled = true;
-                    pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
-                    justifyEl.innerHTML = '💡 <strong>Sessão em andamento.</strong> Foco total!';
+                    const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
+                    if (block) {
+                        const disc = block.disciplines[AppState.aulaAtiva.discIdx];
+                        const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
+                        titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` : `⏳ Estudando: ${aulaTitle}`;
+                        subEl.textContent = `${disc.name} · ${block.name}`;
+                        timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
+                        startBtn.textContent = '▶ Estudando...';
+                        startBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        stopBtn.disabled = false;
+                        skipBtn.disabled = true;
+                        voltarBtn.disabled = true;
+                        pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
+                        justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
+                    } else {
+                        AppState.aulaAtiva = null;
+                        saveState();
+                        renderHome();
+                    }
                     updateIndicators();
                     return;
                 }
@@ -2030,27 +1992,23 @@ const DecisionEngine = {
                     stopBtn.disabled = true;
                     skipBtn.disabled = true;
                     voltarBtn.disabled = AppState.historicoCiclo.length === 0;
-                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo.</strong>';
+                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo do edital.</strong>';
                 } else {
                     const isLei = missao.modulo === 'leis';
                     const label = isLei ? '📜 Leitura de Lei' : missao.modulo === 'revisao' ? '🔄 Revisão' : missao.blockIdx === 0 ? '📚 Teoria' : '📝 Questões';
                     titleEl.textContent = `${label}: ${missao.sub || missao.title}`;
                     subEl.textContent = isLei ? 'Leis' : `${missao.disciplineName || missao.disciplina} · ${missao.assunto}`;
                     timeEl.textContent = isLei ? '⏱️ Tempo estimado: ~30min' : '⏱️ Tempo estimado: ~2h30';
-                    
                     startBtn.textContent = isLei ? '▶ Iniciar Leitura' : '▶ Iniciar Aula';
                     startBtn.disabled = false;
                     pauseBtn.disabled = true;
                     stopBtn.disabled = true;
                     skipBtn.disabled = false;
                     voltarBtn.disabled = AppState.historicoCiclo.length === 0;
-                    
                     const just = DecisionEngine.gerarJustificativa(missao);
                     justifyEl.innerHTML = `💡 <strong>Por que esta missão?</strong> ${just}`;
-                    
                     const anotacoes = AppState.anotacoes[missao.key]?.texto || '';
                     document.getElementById('missionAnotacoes').value = anotacoes;
-                    
                     const q = AppState.questoesAulas[missao.key] || { feitas: 0, acertos: 0 };
                     document.getElementById('missionQuestFeitas').value = q.feitas || '';
                     document.getElementById('missionQuestAcertos').value = q.acertos || '';
@@ -2059,145 +2017,6 @@ const DecisionEngine = {
                 renderWeeklyGoals();
             };
 
-            const iniciarAula = () => {
-                if (AppState.aulaAtiva) {
-                    if (!confirm('Há uma aula em andamento. Deseja interrompê-la?')) return;
-                    pararAula(true);
-                }
-                
-                const missao = AppState.missaoSugeridaAtual || DecisionEngine.escolherMissao();
-                if (!missao) { alert('Nenhuma missão pendente!'); return; }
-                
-                AppState.aulaAtiva = { ...missao, inicio: Date.now() };
-                AppState.aulaPausada = false;
-                aulaStartTime = Date.now();
-                
-                document.getElementById('startLessonBtn').textContent = '▶ Estudando...';
-                document.getElementById('startLessonBtn').disabled = true;
-                document.getElementById('pauseLessonBtn').disabled = false;
-                document.getElementById('stopLessonBtn').disabled = false;
-                document.getElementById('skipLessonBtn').disabled = true;
-                document.getElementById('voltarLessonBtn').disabled = true;
-                document.getElementById('pauseLessonBtn').textContent = '⏸ Pausar';
-                
-                if (aulaTimerInterval) clearInterval(aulaTimerInterval);
-                aulaTimerInterval = setInterval(() => {
-                    if (!AppState.aulaPausada) {
-                        AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000);
-                        saveState();
-                        updateDashboard();
-                    }
-                }, 10000);
-                
-                registrarAtividade(missao.modulo === 'leis' ? 'leitura' : (missao.modulo === 'revisao' ? 'revisao' : 'aula'));
-                
-                AppState.missaoSugeridaAtual = null;
-                saveState();
-                updateDashboard();
-                renderHome();
-            };
-
-            const pararAula = (semSalvar = false) => {
-                if (!AppState.aulaAtiva) return;
-                if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-                
-                if (!semSalvar) {
-                    const key = AppState.aulaAtiva.key || `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
-                    const minutos = Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000);
-                    
-                    DecisionEngine.registrarConclusaoMissao(AppState.aulaAtiva, { 
-                        tipo: AppState.aulaAtiva.modulo, 
-                        foiRevisao: AppState.aulaAtiva.modulo === 'revisao' 
-                    });
-                    
-                    if (AppState.aulaAtiva.modulo === 'leis') {
-                        const lei = AppState.leis.find(l => l.nome === AppState.aulaAtiva.title);
-                        if (lei) {
-                            lei.ultimaLeitura = new Date().toISOString();
-                            if (lei.status === 'pendente') lei.status = 'andamento';
-                        }
-                    } else if (AppState.aulaAtiva.modulo !== 'revisao') {
-                        toggleLesson(key, true);
-                    }
-
-                    if (minutos > 0) {
-                        AppState.sessoes.push({ 
-                            data: new Date().toLocaleDateString('pt-BR'), 
-                            inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), 
-                            duracao: minutos 
-                        });
-                        registrarAtividade(AppState.aulaAtiva.modulo === 'leis' ? 'leitura' : 'aula', minutos);
-                        AppState.metasSemanais.aulasFeitas += 1;
-                    }
-                    
-                    salvarAnotacoesMissao(key);
-                    salvarQuestoesMissao(key);
-                    DecisionEngine.avancarCiclo();
-                    saveState();
-                }
-                
-                AppState.aulaAtiva = null;
-                AppState.aulaPausada = false;
-                AppState.tempoEstudoHoje = 0;
-                AppState.missaoSugeridaAtual = null;
-                
-                document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
-                document.getElementById('startLessonBtn').disabled = false;
-                document.getElementById('pauseLessonBtn').disabled = true;
-                document.getElementById('stopLessonBtn').disabled = true;
-                document.getElementById('skipLessonBtn').disabled = false;
-                document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
-                
-                limparCamposMissao();
-                saveState();
-                updateDashboard();
-                renderAll();
-            };
-
-            const pularMissao = () => {
-                if (AppState.aulaAtiva) {
-                    if (!confirm('Há uma aula em andamento. Deseja pular mesmo assim?')) return;
-                    if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-                    AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
-                }
-                const missaoAtual = DecisionEngine.escolherMissao();
-                if (missaoAtual && !missaoAtual.isAtiva) {
-                    salvarAnotacoesMissao(missaoAtual.key);
-                    salvarQuestoesMissao(missaoAtual.key);
-                }
-                DecisionEngine.pularMissao();
-                AppState.missaoSugeridaAtual = null;
-                limparCamposMissao();
-                document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
-                document.getElementById('startLessonBtn').disabled = false;
-                document.getElementById('pauseLessonBtn').disabled = true;
-                document.getElementById('stopLessonBtn').disabled = true;
-                document.getElementById('skipLessonBtn').disabled = false;
-                document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
-                saveState();
-                updateDashboard();
-                renderAll();
-            };
-
-            const voltarMissao = () => {
-                if (AppState.aulaAtiva) {
-                    if (!confirm('Há uma aula em andamento. Deseja voltar mesmo assim?')) return;
-                    if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-                    AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
-                }
-                DecisionEngine.voltarMissao();
-                AppState.missaoSugeridaAtual = null;
-                limparCamposMissao();
-                document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
-                document.getElementById('startLessonBtn').disabled = false;
-                document.getElementById('pauseLessonBtn').disabled = true;
-                document.getElementById('stopLessonBtn').disabled = true;
-                document.getElementById('skipLessonBtn').disabled = false;
-                document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
-                saveState();
-                updateDashboard();
-                renderAll();
-            };
             const updateIndicators = () => {
                 const all = getAllLessonsFlat();
                 const done = all.filter(i => AppState.checks[i.key]).length;
