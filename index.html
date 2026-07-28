@@ -905,7 +905,9 @@
                     gamificacao: { xp: 0, nivel: 1, streak: 0, ultimaAtividade: null, conquistas: [] }
                 },
                 ciclo: { moduloAtual: 'bloco1' },
+                missaoSugeridaAtual: null, // <--- ADICIONE ESTA LINHA AQUI
                 arquiteto: { historico: [], notificacoes: [], policy: 'manual', conversas: [] },
+                ...
                 data: JSON.parse(JSON.stringify(DEFAULT_DATA)),
                 flashcards: [],
                 metasSemanais: { aulas: 14, horas: 20, aulasFeitas: 0, horasFeitas: 0, semana: '' },
@@ -1985,8 +1987,8 @@ const DecisionEngine = {
             };
 
             const renderHome = () => {
-                const missao = missaoSugeridaAtual || DecisionEngine.escolherMissao();
-                if (!missaoSugeridaAtual) missaoSugeridaAtual = missao;
+                const missao = AppState.missaoSugeridaAtual || DecisionEngine.escolherMissao();
+                if (!AppState.missaoSugeridaAtual) AppState.missaoSugeridaAtual = missao;
 
                 const titleEl = document.getElementById('missionTitle');
                 const subEl = document.getElementById('missionSub');
@@ -2001,7 +2003,6 @@ const DecisionEngine = {
                 voltarBtn.disabled = AppState.historicoCiclo.length === 0;
 
                 if (AppState.aulaAtiva) {
-                    // UI de Aula Ativa: Garante que as Leis e Revisões apareçam no Timer
                     const isLei = AppState.aulaAtiva.modulo === 'leis';
                     titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${AppState.aulaAtiva.title}` : `⏳ Estudando: ${AppState.aulaAtiva.title}`;
                     subEl.textContent = isLei ? '📜 Leitura de Lei' : `${AppState.aulaAtiva.disciplina} · ${AppState.aulaAtiva.modulo}`;
@@ -2056,6 +2057,146 @@ const DecisionEngine = {
                 }
                 updateIndicators();
                 renderWeeklyGoals();
+            };
+
+            const iniciarAula = () => {
+                if (AppState.aulaAtiva) {
+                    if (!confirm('Há uma aula em andamento. Deseja interrompê-la?')) return;
+                    pararAula(true);
+                }
+                
+                const missao = AppState.missaoSugeridaAtual || DecisionEngine.escolherMissao();
+                if (!missao) { alert('Nenhuma missão pendente!'); return; }
+                
+                AppState.aulaAtiva = { ...missao, inicio: Date.now() };
+                AppState.aulaPausada = false;
+                aulaStartTime = Date.now();
+                
+                document.getElementById('startLessonBtn').textContent = '▶ Estudando...';
+                document.getElementById('startLessonBtn').disabled = true;
+                document.getElementById('pauseLessonBtn').disabled = false;
+                document.getElementById('stopLessonBtn').disabled = false;
+                document.getElementById('skipLessonBtn').disabled = true;
+                document.getElementById('voltarLessonBtn').disabled = true;
+                document.getElementById('pauseLessonBtn').textContent = '⏸ Pausar';
+                
+                if (aulaTimerInterval) clearInterval(aulaTimerInterval);
+                aulaTimerInterval = setInterval(() => {
+                    if (!AppState.aulaPausada) {
+                        AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000);
+                        saveState();
+                        updateDashboard();
+                    }
+                }, 10000);
+                
+                registrarAtividade(missao.modulo === 'leis' ? 'leitura' : (missao.modulo === 'revisao' ? 'revisao' : 'aula'));
+                
+                AppState.missaoSugeridaAtual = null;
+                saveState();
+                updateDashboard();
+                renderHome();
+            };
+
+            const pararAula = (semSalvar = false) => {
+                if (!AppState.aulaAtiva) return;
+                if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
+                
+                if (!semSalvar) {
+                    const key = AppState.aulaAtiva.key || `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
+                    const minutos = Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000);
+                    
+                    DecisionEngine.registrarConclusaoMissao(AppState.aulaAtiva, { 
+                        tipo: AppState.aulaAtiva.modulo, 
+                        foiRevisao: AppState.aulaAtiva.modulo === 'revisao' 
+                    });
+                    
+                    if (AppState.aulaAtiva.modulo === 'leis') {
+                        const lei = AppState.leis.find(l => l.nome === AppState.aulaAtiva.title);
+                        if (lei) {
+                            lei.ultimaLeitura = new Date().toISOString();
+                            if (lei.status === 'pendente') lei.status = 'andamento';
+                        }
+                    } else if (AppState.aulaAtiva.modulo !== 'revisao') {
+                        toggleLesson(key, true);
+                    }
+
+                    if (minutos > 0) {
+                        AppState.sessoes.push({ 
+                            data: new Date().toLocaleDateString('pt-BR'), 
+                            inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), 
+                            duracao: minutos 
+                        });
+                        registrarAtividade(AppState.aulaAtiva.modulo === 'leis' ? 'leitura' : 'aula', minutos);
+                        AppState.metasSemanais.aulasFeitas += 1;
+                    }
+                    
+                    salvarAnotacoesMissao(key);
+                    salvarQuestoesMissao(key);
+                    DecisionEngine.avancarCiclo();
+                    saveState();
+                }
+                
+                AppState.aulaAtiva = null;
+                AppState.aulaPausada = false;
+                AppState.tempoEstudoHoje = 0;
+                AppState.missaoSugeridaAtual = null;
+                
+                document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
+                document.getElementById('startLessonBtn').disabled = false;
+                document.getElementById('pauseLessonBtn').disabled = true;
+                document.getElementById('stopLessonBtn').disabled = true;
+                document.getElementById('skipLessonBtn').disabled = false;
+                document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
+                
+                limparCamposMissao();
+                saveState();
+                updateDashboard();
+                renderAll();
+            };
+
+            const pularMissao = () => {
+                if (AppState.aulaAtiva) {
+                    if (!confirm('Há uma aula em andamento. Deseja pular mesmo assim?')) return;
+                    if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
+                    AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+                }
+                const missaoAtual = DecisionEngine.escolherMissao();
+                if (missaoAtual && !missaoAtual.isAtiva) {
+                    salvarAnotacoesMissao(missaoAtual.key);
+                    salvarQuestoesMissao(missaoAtual.key);
+                }
+                DecisionEngine.pularMissao();
+                AppState.missaoSugeridaAtual = null;
+                limparCamposMissao();
+                document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
+                document.getElementById('startLessonBtn').disabled = false;
+                document.getElementById('pauseLessonBtn').disabled = true;
+                document.getElementById('stopLessonBtn').disabled = true;
+                document.getElementById('skipLessonBtn').disabled = false;
+                document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
+                saveState();
+                updateDashboard();
+                renderAll();
+            };
+
+            const voltarMissao = () => {
+                if (AppState.aulaAtiva) {
+                    if (!confirm('Há uma aula em andamento. Deseja voltar mesmo assim?')) return;
+                    if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
+                    AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+                }
+                DecisionEngine.voltarMissao();
+                AppState.missaoSugeridaAtual = null;
+                limparCamposMissao();
+                document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
+                document.getElementById('startLessonBtn').disabled = false;
+                document.getElementById('pauseLessonBtn').disabled = true;
+                document.getElementById('stopLessonBtn').disabled = true;
+                document.getElementById('skipLessonBtn').disabled = false;
+                document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
+                saveState();
+                updateDashboard();
+                renderAll();
             };
             const updateIndicators = () => {
                 const all = getAllLessonsFlat();
