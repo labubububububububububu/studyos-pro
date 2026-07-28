@@ -1155,10 +1155,19 @@ const DecisionEngine = {
             .filter(e => e.aula === aula.title && e.disciplina === aula.disciplineName)
             .pop();
 
-        if (!entry) return 30;
+        if (!entry) return 30; // Se nunca estudou, considera o máximo de 30 dias de atraso
 
-        const dataHora = `${entry.data}T${entry.hora || '00:00'}`;
-        return Math.min(30, this._diasEntre(new Date(), new Date(dataHora)));
+        let dataFinal;
+        // O JS se perde com datas DD/MM/YYYY, precisamos inverter para YYYY-MM-DD
+        if (entry.data && entry.data.includes('/')) {
+            const partes = entry.data.split('/');
+            dataFinal = new Date(`${partes[2]}-${partes[1]}-${partes[0]}T12:00:00`);
+        } else {
+            dataFinal = new Date(entry.data);
+        }
+
+        const dias = Math.floor((new Date() - dataFinal) / (1000 * 60 * 60 * 24));
+        return isNaN(dias) ? 30 : Math.max(0, Math.min(30, dias));
     },
 
     _diasSemRevisao(key) {
@@ -1225,13 +1234,13 @@ const DecisionEngine = {
             data: this._agoraISO()
         });
 
-        if (AppState.historicoCiclo.length > 40) {
+        // AUMENTADO DE 40 PARA 200 PARA MANTER A PROPORÇÃO MATEMÁTICA PERFEITA
+        if (AppState.historicoCiclo.length > 200) {
             AppState.historicoCiclo.shift();
         }
 
         AppState.moduloStats[modulo] = (AppState.moduloStats[modulo] || 0) + 1;
     },
-
     _marcarAulaAtiva(aula) {
         const resolvida = this._resolverAulaEntrada(aula);
         if (!resolvida) return null;
@@ -1303,30 +1312,14 @@ const DecisionEngine = {
     },
 
     _decidirOrdemModulos() {
-        // Ordem dinâmica: respeita o ciclo, mas sobe revisões vencidas e leis paradas.
-        const base = [...this.ordemModulos];
-        const pressao = {
-            bloco1: this._pressaoBloco(0),
-            bloco2: this._pressaoBloco(1),
-            leis: this._pressaoLeis(),
-            revisao: this._pressaoRevisao()
-        };
-
+        // Agora segue estritamente a ordem do ciclo, sem "fura-fila"
+        const base = [...this.ordemModulos]; // ['bloco1', 'bloco2', 'leis', 'revisao']
         const moduloAtual = AppState.ciclo?.moduloAtual || 'bloco1';
-
-        // Se revisão está muito pressionada, ela pode subir no ciclo.
-        const maxModulo = Object.entries(pressao).sort((a, b) => b[1] - a[1])[0]?.[0];
-        const maxValor = pressao[maxModulo] || 0;
-        const atualValor = pressao[moduloAtual] || 0;
-
-        if (maxModulo && maxModulo !== moduloAtual && maxValor > atualValor * 1.25) {
-            // Prioriza o módulo mais urgente sem destruir a lógica do ciclo.
-            return [maxModulo, ...base.filter(m => m !== maxModulo)];
-        }
-
-        // Caso normal: mantém o ciclo com rotação.
+        
         const idx = base.indexOf(moduloAtual);
         if (idx <= 0) return base;
+        
+        // Retorna a ordem do ciclo girada a partir do módulo atual
         return [...base.slice(idx), ...base.slice(0, idx)];
     },
 
@@ -1375,12 +1368,12 @@ const DecisionEngine = {
     // =========================
     // BLOCOS
     // =========================
-    _escolherBloco(blockIdx) {
+   _escolherBloco(blockIdx) {
         const all = getAllLessonsFlat();
         const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks?.[i.key]);
         if (!pendentes.length) return null;
 
-        // Seleciona só a primeira pendente de cada disciplina
+        // 1. Agrupa apenas as disciplinas que ainda têm conteúdo não estudado
         const proximasAulas = {};
         pendentes.forEach(aula => {
             if (!proximasAulas[aula.disciplineName]) {
@@ -1388,45 +1381,47 @@ const DecisionEngine = {
             }
         });
 
-        const disciplinas = Object.keys(proximasAulas);
-        const somaPesos = disciplinas.reduce((s, d) => s + (this.pesos[d] || 1), 0) || 1;
+        const disciplinasDisponiveis = Object.keys(proximasAulas);
+        
+        // 2. Calcula a soma dos pesos APENAS das matérias disponíveis
+        const somaPesos = disciplinasDisponiveis.reduce((s, disc) => s + (this.pesos[disc] || 1), 0);
 
-        const candidatos = Object.values(proximasAulas).map(aula => {
-            const disciplina = aula.disciplineName;
-            const peso = this.pesos[disciplina] || 1;
-            const pesoNorm = peso / somaPesos;
-            const diasSemVer = this._diasSemEstudo(aula);
-            const dominio = this._obterDominio(aula);
+        // 3. Puxa o histórico específico deste bloco (Teoria ou Questões)
+        const moduloNome = blockIdx === 0 ? 'bloco1' : 'bloco2';
+        const historicoDoBloco = (AppState.historicoCiclo || []).filter(h => h.modulo === moduloNome && h.acao !== 'pular');
+        
+        // Usa as últimas 50 escolhas para ter uma amostragem matemática sólida
+        const janela = historicoDoBloco.slice(-50);
+        const totalNaJanela = janela.length || 1; // Evita divisão por zero no início
 
-            // AUMENTADO DE 12 PARA 30 DIAS: Dá tempo para matérias de peso 1 aparecerem na janela
-            const recentCount = this._contarEscolhasDisciplinaRecente(disciplina, 30);
-            const totalRecent = this._totalEscolhasRecentes(30);
-            const recentRate = recentCount / totalRecent;
-
-            const targetRate = pesoNorm;
-            const bonusEquilibrio = this._clamp((targetRate - recentRate) * 2.2, -0.35, 0.35);
-
-            const recencyNeed = this._clamp(diasSemVer / 14, 0, 1);
-            const domainNeed = 1 - dominio;
+        // 4. Calcula o déficit matemático de cada disciplina
+        const candidatos = disciplinasDisponiveis.map(disc => {
+            const aula = proximasAulas[disc];
+            const peso = this.pesos[disc] || 1;
             
-            // GATILHO DE ESQUECIMENTO ABSOLUTO: Força matérias abandonadas a subirem (mesmo se peso 1)
-            const bonusEsquecimento = diasSemVer > 21 ? 0.50 : 0; 
-
-            const ruido = (Math.random() - 0.5) * 0.08;
-
-            // FÓRMULA REBALANCEADA
-            const score =
-                (pesoNorm * 0.20) +          // Peso do edital (levemente reduzido)
-                (recencyNeed * 0.40) +       // Tempo sem ver (levemente aumentado)
-                (domainNeed * 0.25) +        // Domínio
-                (bonusEquilibrio * 0.15) +   // Busca manter proporção do peso
-                bonusEsquecimento +          // Gatilho de abandono
-                ruido;
-
+            // A proporção IDEAL (A fatia do bolo que ela deveria ter pelo edital)
+            const proporcaoIdeal = peso / somaPesos;
+            
+            // A proporção REAL (A fatia do bolo que ela realmente teve ultimamente)
+            const vezesEstudada = janela.filter(h => h.disciplina === disc).length;
+            const proporcaoReal = vezesEstudada / totalNaJanela;
+            
+            // O DÉFICIT: Se for positivo, essa matéria está aparecendo menos do que deveria
+            const deficit = proporcaoIdeal - proporcaoReal;
+            
+            // Desempate de microssistemas (Caso duas matérias tenham o exato mesmo déficit)
+            // A que estiver há mais tempo sem ser vista ganha o desempate
+            const diasSemVer = this._diasSemEstudo(aula);
+            const desempate = (diasSemVer * 0.0001) + ((Math.random() - 0.5) * 0.00001);
+            
+            const score = deficit + desempate;
+            
             return { aula, score };
         });
 
+        // 5. A matéria mais "injustiçada" matematicamente (maior déficit) vence a rodada
         candidatos.sort((a, b) => b.score - a.score);
+        
         const escolhido = candidatos[0]?.aula;
         if (!escolhido) return null;
 
@@ -1435,7 +1430,7 @@ const DecisionEngine = {
             disciplina: escolhido.disciplineName,
             assunto: escolhido.title.split(' - ')[0],
             sub: escolhido.title,
-            modulo: blockIdx === 0 ? 'bloco1' : 'bloco2'
+            modulo: moduloNome
         };
     },
 
