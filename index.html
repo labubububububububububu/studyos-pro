@@ -1772,41 +1772,32 @@ const DecisionEngine = {
                     pararAula(true);
                 }
                 
-                // CORREÇÃO: Usa a missão que já estava salva na tela em vez de recalcular
                 const missao = missaoSugeridaAtual || DecisionEngine.escolherMissao();
-                
                 if (!missao) { alert('Nenhuma missão pendente!'); return; }
-                if (missao.modulo === 'leis') {
-                    if (confirm(`Iniciar leitura da lei "${missao.title}"?`)) {
-                        const lei = AppState.leis.find(l => l.nome === missao.title);
-                        if (lei) {
-                            lei.ultimaLeitura = new Date().toISOString();
-                            lei.status = lei.status === 'pendente' ? 'andamento' : lei.status;
-                            registrarAtividade('leitura', 5);
-                            saveState();
-                            renderLeis();
-                        }
-                        salvarAnotacoesMissao(missao.key);
-                        salvarQuestoesMissao(missao.key);
-                        DecisionEngine.avancarCiclo();
-                        missaoSugeridaAtual = null; // Limpa a missão atual após avançar
-                        saveState();
-                        updateDashboard();
-                        renderAll();
-                        return;
-                    }
-                    return;
-                }
-                AppState.aulaAtiva = { blockId: missao.blockId, discIdx: missao.discIdx, lessonIdx: missao.lessonIdx, inicio: Date.now(), modulo: missao.modulo || (missao.blockIdx === 0 ? 'bloco1' : 'bloco2') };
+                
+                // Unificando Leis, Revisões e Blocos no mesmo motor de timer!
+                AppState.aulaAtiva = { 
+                    ...missao, 
+                    inicio: Date.now() 
+                };
+                
                 AppState.aulaPausada = false;
                 aulaStartTime = Date.now();
-                document.getElementById('startLessonBtn').textContent = '▶ Estudando...';
-                document.getElementById('startLessonBtn').disabled = true;
-                document.getElementById('pauseLessonBtn').disabled = false;
-                document.getElementById('stopLessonBtn').disabled = false;
-                document.getElementById('skipLessonBtn').disabled = true;
-                document.getElementById('voltarLessonBtn').disabled = true;
-                document.getElementById('pauseLessonBtn').textContent = '⏸ Pausar';
+                
+                const startBtn = document.getElementById('startLessonBtn');
+                const pauseBtn = document.getElementById('pauseLessonBtn');
+                const stopBtn = document.getElementById('stopLessonBtn');
+                const skipBtn = document.getElementById('skipLessonBtn');
+                const voltarBtn = document.getElementById('voltarLessonBtn');
+
+                startBtn.textContent = '▶ Estudando...';
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                skipBtn.disabled = true;
+                voltarBtn.disabled = true;
+                pauseBtn.textContent = '⏸ Pausar';
+                
                 if (aulaTimerInterval) clearInterval(aulaTimerInterval);
                 aulaTimerInterval = setInterval(() => {
                     if (!AppState.aulaPausada) {
@@ -1815,9 +1806,10 @@ const DecisionEngine = {
                         updateDashboard();
                     }
                 }, 10000);
-                registrarAtividade('aula');
                 
-                missaoSugeridaAtual = null; // Limpa para a próxima vez
+                registrarAtividade(missao.modulo === 'leis' ? 'leitura' : (missao.modulo === 'revisao' ? 'revisao' : 'aula'));
+                
+                missaoSugeridaAtual = null; // Limpa para forçar o cálculo na próxima vez
                 saveState();
                 updateDashboard();
                 renderHome();
@@ -1864,35 +1856,62 @@ const DecisionEngine = {
             const pararAula = (semSalvar = false) => {
                 if (!AppState.aulaAtiva) return;
                 if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
+                
                 if (!semSalvar) {
-                    const key = `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
+                    const key = AppState.aulaAtiva.key || `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
                     const minutos = Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000);
-                    toggleLesson(key, true);
+                    
+                    // 1. Salvar na Engine: Isso é o que alimenta o algoritmo de pesos!
+                    DecisionEngine.registrarConclusaoMissao(AppState.aulaAtiva, { 
+                        tipo: AppState.aulaAtiva.modulo, 
+                        foiRevisao: AppState.aulaAtiva.modulo === 'revisao' 
+                    });
+                    
+                    // 2. Marcar UI de acordo com o módulo
+                    if (AppState.aulaAtiva.modulo === 'leis') {
+                        const lei = AppState.leis.find(l => l.nome === AppState.aulaAtiva.title);
+                        if (lei) {
+                            lei.ultimaLeitura = new Date().toISOString();
+                            if (lei.status === 'pendente') lei.status = 'andamento';
+                        }
+                    } else if (AppState.aulaAtiva.modulo !== 'revisao') {
+                        toggleLesson(key, true);
+                    }
+
+                    // 3. Log de horas e XP
                     if (minutos > 0) {
-                        AppState.sessoes.push({ data: new Date().toLocaleDateString('pt-BR'), inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), duracao: minutos });
-                        registrarAtividade('aula', minutos);
+                        AppState.sessoes.push({ 
+                            data: new Date().toLocaleDateString('pt-BR'), 
+                            inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), 
+                            duracao: minutos 
+                        });
+                        registrarAtividade(AppState.aulaAtiva.modulo === 'leis' ? 'leitura' : 'aula', minutos);
                         AppState.metasSemanais.aulasFeitas += 1;
                     }
+                    
                     salvarAnotacoesMissao(key);
                     salvarQuestoesMissao(key);
                     DecisionEngine.avancarCiclo();
                     saveState();
                 }
+                
                 AppState.aulaAtiva = null;
                 AppState.aulaPausada = false;
                 AppState.tempoEstudoHoje = 0;
+                missaoSugeridaAtual = null; // Zera para girar o ciclo de novo
+                
                 document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
                 document.getElementById('startLessonBtn').disabled = false;
                 document.getElementById('pauseLessonBtn').disabled = true;
                 document.getElementById('stopLessonBtn').disabled = true;
                 document.getElementById('skipLessonBtn').disabled = false;
                 document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
+                
                 limparCamposMissao();
                 saveState();
                 updateDashboard();
                 renderAll();
             };
-
             const pularMissao = () => {
                 if (AppState.aulaAtiva) {
                     if (!confirm('Há uma aula em andamento. Deseja pular mesmo assim?')) return;
@@ -1966,8 +1985,8 @@ const DecisionEngine = {
             };
 
             const renderHome = () => {
-                const missao = DecisionEngine.escolherMissao();
-                missaoSugeridaAtual = missao; // SALVA A MISSÃO CALCULADA NA VARIÁVEL GLOBAL
+                const missao = missaoSugeridaAtual || DecisionEngine.escolherMissao();
+                if (!missaoSugeridaAtual) missaoSugeridaAtual = missao;
 
                 const titleEl = document.getElementById('missionTitle');
                 const subEl = document.getElementById('missionSub');
@@ -1982,26 +2001,20 @@ const DecisionEngine = {
                 voltarBtn.disabled = AppState.historicoCiclo.length === 0;
 
                 if (AppState.aulaAtiva) {
-                    const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
-                    if (block) {
-                        const disc = block.disciplines[AppState.aulaAtiva.discIdx];
-                        const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
-                        titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` : `⏳ Estudando: ${aulaTitle}`;
-                        subEl.textContent = `${disc.name} · ${block.name}`;
-                        timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
-                        startBtn.textContent = '▶ Estudando...';
-                        startBtn.disabled = true;
-                        pauseBtn.disabled = false;
-                        stopBtn.disabled = false;
-                        skipBtn.disabled = true;
-                        voltarBtn.disabled = true;
-                        pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
-                        justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
-                    } else {
-                        AppState.aulaAtiva = null;
-                        saveState();
-                        renderHome();
-                    }
+                    // UI de Aula Ativa: Garante que as Leis e Revisões apareçam no Timer
+                    const isLei = AppState.aulaAtiva.modulo === 'leis';
+                    titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${AppState.aulaAtiva.title}` : `⏳ Estudando: ${AppState.aulaAtiva.title}`;
+                    subEl.textContent = isLei ? '📜 Leitura de Lei' : `${AppState.aulaAtiva.disciplina} · ${AppState.aulaAtiva.modulo}`;
+                    timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
+                    
+                    startBtn.textContent = '▶ Estudando...';
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = false;
+                    stopBtn.disabled = false;
+                    skipBtn.disabled = true;
+                    voltarBtn.disabled = true;
+                    pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
+                    justifyEl.innerHTML = '💡 <strong>Sessão em andamento.</strong> Foco total!';
                     updateIndicators();
                     return;
                 }
@@ -2016,23 +2029,27 @@ const DecisionEngine = {
                     stopBtn.disabled = true;
                     skipBtn.disabled = true;
                     voltarBtn.disabled = AppState.historicoCiclo.length === 0;
-                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo do edital.</strong>';
+                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo.</strong>';
                 } else {
                     const isLei = missao.modulo === 'leis';
                     const label = isLei ? '📜 Leitura de Lei' : missao.modulo === 'revisao' ? '🔄 Revisão' : missao.blockIdx === 0 ? '📚 Teoria' : '📝 Questões';
                     titleEl.textContent = `${label}: ${missao.sub || missao.title}`;
                     subEl.textContent = isLei ? 'Leis' : `${missao.disciplineName || missao.disciplina} · ${missao.assunto}`;
                     timeEl.textContent = isLei ? '⏱️ Tempo estimado: ~30min' : '⏱️ Tempo estimado: ~2h30';
+                    
                     startBtn.textContent = isLei ? '▶ Iniciar Leitura' : '▶ Iniciar Aula';
                     startBtn.disabled = false;
                     pauseBtn.disabled = true;
                     stopBtn.disabled = true;
                     skipBtn.disabled = false;
                     voltarBtn.disabled = AppState.historicoCiclo.length === 0;
+                    
                     const just = DecisionEngine.gerarJustificativa(missao);
                     justifyEl.innerHTML = `💡 <strong>Por que esta missão?</strong> ${just}`;
+                    
                     const anotacoes = AppState.anotacoes[missao.key]?.texto || '';
                     document.getElementById('missionAnotacoes').value = anotacoes;
+                    
                     const q = AppState.questoesAulas[missao.key] || { feitas: 0, acertos: 0 };
                     document.getElementById('missionQuestFeitas').value = q.feitas || '';
                     document.getElementById('missionQuestAcertos').value = q.acertos || '';
@@ -2040,7 +2057,6 @@ const DecisionEngine = {
                 updateIndicators();
                 renderWeeklyGoals();
             };
-
             const updateIndicators = () => {
                 const all = getAllLessonsFlat();
                 const done = all.filter(i => AppState.checks[i.key]).length;
