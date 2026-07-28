@@ -1251,20 +1251,13 @@ const DecisionEngine = {
     // INÍCIO MANUAL
     // =========================
     iniciarMissaoSelecionada(aulaOuKey) {
-    this._garantirEstruturas();
+        this._garantirEstruturas();
+        const aula = this._resolverAulaEntrada(aulaOuKey);
+        if (!aula) return null;
 
-    const aula = this._resolverAulaEntrada(aulaOuKey);
-
-    if (!aula) return null;
-
-    const resultado = this._marcarAulaAtiva(aula);
-
-    // A missão já começou.
-    // Não existe mais missão pendente.
-    AppState.proximaMissao = null;
-
-    return resultado;
-}
+        // Início manual: não chama o motor automático.
+        return this._marcarAulaAtiva(aula);
+    },
 
     iniciarMissaoPorKey(key) {
         return this.iniciarMissaoSelecionada(key);
@@ -1277,26 +1270,21 @@ const DecisionEngine = {
         this._garantirEstruturas();
 
         // Se já existe uma aula ativa, mantém ela.
-       // Se já existe uma missão sugerida e ainda não iniciada,
-// devolve exatamente essa mesma missão.
-if (AppState.proximaMissao) {
-    const found = this._resolverAulaPorKey(
-        this._chaveAula(AppState.proximaMissao)
-    );
+        if (AppState.aulaAtiva) {
+            const found = this._resolverAulaPorKey(this._chaveAula(AppState.aulaAtiva));
+            if (found) {
+                return {
+                    ...found,
+                    disciplina: found.disciplineName,
+                    assunto: found.title.split(' - ')[0],
+                    sub: found.title,
+                    isAtiva: true
+                };
+            }
 
-    if (found) {
-        return {
-            ...found,
-            disciplina: found.disciplineName,
-            assunto: found.title.split(' - ')[0],
-            sub: found.title
-        };
-    }
-
-    // A missão salva não existe mais (foi removida/alterada).
-    AppState.proximaMissao = null;
-    saveState();
-}
+            AppState.aulaAtiva = null;
+            saveState();
+        }
 
         const ordem = this._decidirOrdemModulos();
 
@@ -1586,9 +1574,7 @@ if (AppState.proximaMissao) {
         }
 
         saveState();
-        AppState.proximaMissao = null;
-
-return null;
+        return this.escolherMissao();
     },
 
     voltarMissao() {
@@ -1613,9 +1599,7 @@ return null;
             }
 
             saveState();
-            AppState.proximaMissao = null;
-
-return null;
+            return this.escolherMissao();
         }
 
         return null;
@@ -1761,7 +1745,7 @@ return null;
                     if (!confirm('Há uma aula em andamento. Deseja interrompê-la?')) return;
                     pararAula(true);
                 }
-                const missao = AppState.proximaMissao;
+                const missao = DecisionEngine.escolherMissao();
                 if (!missao) { alert('Nenhuma missão pendente!'); return; }
                 if (missao.modulo === 'leis') {
                     if (confirm(`Iniciar leitura da lei "${missao.title}"?`)) {
@@ -1883,9 +1867,7 @@ return null;
                     if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
                     AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
                 }
-                const missaoAtual =
-    AppState.proximaMissao ||
-    AppState.aulaAtiva;
+                const missaoAtual = DecisionEngine.escolherMissao();
                 if (missaoAtual && !missaoAtual.isAtiva) {
                     salvarAnotacoesMissao(missaoAtual.key);
                     salvarQuestoesMissao(missaoAtual.key);
@@ -1951,7 +1933,6 @@ return null;
 
             const renderHome = () => {
                 const missao = DecisionEngine.escolherMissao();
-				AppState.proximaMissao = missao;
                 const titleEl = document.getElementById('missionTitle');
                 const subEl = document.getElementById('missionSub');
                 const timeEl = document.getElementById('missionTime');
