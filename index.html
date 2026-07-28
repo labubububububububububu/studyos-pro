@@ -1172,53 +1172,71 @@ const DecisionEngine = {
 
     _diasSemRevisao(key) {
         const datas = AppState.revisaoDatas?.[key];
-        if (!datas) return 999;
-
         let ultima = null;
-        for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
-            if (datas[rev]) {
-                const d = new Date(datas[rev]);
-                if (!ultima || d > ultima) ultima = d;
+        
+        if (datas && datas.ultimaRevisao) {
+            // Sincroniza com o formato gerado pelo botão da tela
+            ultima = new Date(datas.ultimaRevisao + 'T12:00:00');
+        } else if (datas) {
+            // Fallback de compatibilidade
+            for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
+                if (datas[rev]) {
+                    const d = new Date(datas[rev] + 'T12:00:00');
+                    if (!ultima || d > ultima) ultima = d;
+                }
             }
         }
-        return ultima ? Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)) : 999;
+        
+        // Se ainda não achou, ele puxa do diário (aulas concluídas manualmente entram aqui!)
+        if (!ultima) {
+            const aula = this._resolverAulaPorKey(key);
+            if (aula) {
+                const entry = (AppState.diario || []).find(e => e.aula === aula.title);
+                if (entry && entry.data) {
+                    const partes = entry.data.split('/');
+                    ultima = new Date(`${partes[2]}-${partes[1]}-${partes[0]}T12:00:00`);
+                }
+            }
+        }
+
+        return ultima ? Math.max(0, Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24))) : 999;
     },
 
     _contarRevisoesFeitas(key) {
         const datas = AppState.revisaoDatas?.[key];
         if (!datas) return 0;
-        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']
-            .filter(rev => !!datas[rev]).length;
-    },
-
-    _proximaRevisaoDias(key) {
-        const feitas = this._contarRevisoesFeitas(key);
-        return this.agendaRevisao[Math.min(feitas, this.agendaRevisao.length - 1)];
+        // Compatível com a variável da tela
+        if (datas.totalRevisoes !== undefined) return datas.totalRevisoes; 
+        
+        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5'].filter(rev => !!datas[rev]).length;
     },
 
     _revisaoVencida(key) {
-        const datas = AppState.revisaoDatas?.[key];
-        if (!datas) return false;
-
+        // Agora calcula até para aulas que você só marcou no checkbox!
         const feitas = this._contarRevisoesFeitas(key);
-        if (feitas === 0) return true;
-
+        const alvoDias = this._proximaRevisaoDias(key); 
         const ultimaDias = this._diasSemRevisao(key);
-        return ultimaDias >= this._proximaRevisaoDias(key);
+        
+        // Se os dias passados forem maiores ou iguais a meta de espaçamento, está vencida
+        return ultimaDias >= alvoDias;
     },
 
     _atualizarAgendaRevisao(aula) {
         const key = this._chaveAula(aula);
         if (!key) return;
 
-        AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || {};
-        const feitas = this._contarRevisoesFeitas(key);
-
-        const revNome = `rev${Math.min(feitas + 1, 5)}`;
-        AppState.revisaoDatas[key][revNome] = this._agoraISO();
+        AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || { totalRevisoes: 0, historico: [] };
+        
+        const dataHoje = new Date().toISOString().split('T')[0]; 
+        
+        AppState.revisaoDatas[key].ultimaRevisao = dataHoje;
+        AppState.revisaoDatas[key].totalRevisoes = (AppState.revisaoDatas[key].totalRevisoes || 0) + 1;
+        
+        if (!AppState.revisaoDatas[key].historico) AppState.revisaoDatas[key].historico = [];
+        AppState.revisaoDatas[key].historico.push(dataHoje);
 
         AppState.reviewMeta[key] = {
-            ultimaConclusao: this._agoraISO(),
+            ultimaConclusao: dataHoje,
             proximaEmDias: this._proximaRevisaoDias(key)
         };
     },
@@ -1373,7 +1391,7 @@ const DecisionEngine = {
         const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks?.[i.key]);
         if (!pendentes.length) return null;
 
-        // 1. Agrupa apenas as disciplinas que ainda têm conteúdo não estudado
+        // 1. Agrupa as disciplinas que ainda possuem aulas a fazer
         const proximasAulas = {};
         pendentes.forEach(aula => {
             if (!proximasAulas[aula.disciplineName]) {
@@ -1383,46 +1401,58 @@ const DecisionEngine = {
 
         const disciplinasDisponiveis = Object.keys(proximasAulas);
         
-        // 2. Calcula a soma dos pesos APENAS das matérias disponíveis
-        const somaPesos = disciplinasDisponiveis.reduce((s, disc) => s + (this.pesos[disc] || 1), 0);
+        // 2. Calcula a soma total dos pesos (Tamanho do "Ciclo Completo")
+        const pesosLocais = {};
+        let somaPesos = 0;
+        disciplinasDisponiveis.forEach(disc => {
+            pesosLocais[disc] = this.pesos[disc] || 1;
+            somaPesos += pesosLocais[disc];
+        });
 
-        // 3. Puxa o histórico específico deste bloco (Teoria ou Questões)
+        // 3. Puxa o histórico específico deste bloco
         const moduloNome = blockIdx === 0 ? 'bloco1' : 'bloco2';
         const historicoDoBloco = (AppState.historicoCiclo || []).filter(h => h.modulo === moduloNome && h.acao !== 'pular');
         
-        // Usa as últimas 50 escolhas para ter uma amostragem matemática sólida
-        const janela = historicoDoBloco.slice(-50);
-        const totalNaJanela = janela.length || 1; // Evita divisão por zero no início
+        // A janela de observação é EXATAMENTE a soma dos pesos.
+        // Isso garante que em um conjunto, cada matéria apareça exatamente na quantidade do seu peso.
+        const janela = historicoDoBloco.slice(-somaPesos);
 
-        // 4. Calcula o déficit matemático de cada disciplina
-        const candidatos = disciplinasDisponiveis.map(disc => {
-            const aula = proximasAulas[disc];
-            const peso = this.pesos[disc] || 1;
-            
-            // A proporção IDEAL (A fatia do bolo que ela deveria ter pelo edital)
-            const proporcaoIdeal = peso / somaPesos;
-            
-            // A proporção REAL (A fatia do bolo que ela realmente teve ultimamente)
-            const vezesEstudada = janela.filter(h => h.disciplina === disc).length;
-            const proporcaoReal = vezesEstudada / totalNaJanela;
-            
-            // O DÉFICIT: Se for positivo, essa matéria está aparecendo menos do que deveria
-            const deficit = proporcaoIdeal - proporcaoReal;
-            
-            // Desempate de microssistemas (Caso duas matérias tenham o exato mesmo déficit)
-            // A que estiver há mais tempo sem ser vista ganha o desempate
-            const diasSemVer = this._diasSemEstudo(aula);
-            const desempate = (diasSemVer * 0.0001) + ((Math.random() - 0.5) * 0.00001);
-            
-            const score = deficit + desempate;
-            
-            return { aula, score };
+        // 4. Filtrar disciplinas que já bateram a cota limite dentro desta janela
+        let candidatas = disciplinasDisponiveis.filter(disc => {
+            const vezesNaJanela = janela.filter(h => h.disciplina === disc).length;
+            return vezesNaJanela < pesosLocais[disc]; // Só passa quem está devendo aparição
         });
 
-        // 5. A matéria mais "injustiçada" matematicamente (maior déficit) vence a rodada
-        candidatos.sort((a, b) => b.score - a.score);
-        
-        const escolhido = candidatos[0]?.aula;
+        // Failsafe: se a janela recomeçou e todas estão batidas, liberamos todas.
+        if (candidatas.length === 0) {
+            candidatas = disciplinasDisponiveis;
+        }
+
+        // 5. Garantir o máximo de espaçamento (nunca juntas e com maior distância possível)
+        const pontuacaoEspacamento = candidatas.map(disc => {
+            const aula = proximasAulas[disc];
+            
+            // Achamos a última vez que essa matéria apareceu (0 = muito recente, números maiores = mais distante)
+            const indexNoHistoricoReverso = [...historicoDoBloco].reverse().findIndex(h => h.disciplina === disc);
+            
+            // Se nunca apareceu no histórico recente, ganha pontuação infinita (prioridade máxima)
+            let turnosDesdeAUtlima = indexNoHistoricoReverso === -1 ? 9999 : indexNoHistoricoReverso;
+            
+            // Desempate cronológico: caso duas tenham o mesmo espaçamento no ciclo
+            const diasSemVer = this._diasSemEstudo(aula);
+
+            return { aula, turnosDesdeAUtlima, diasSemVer };
+        });
+
+        // 6. Ordena a lista: quem está há MAIS TURNOS sem aparecer ganha o primeiro lugar
+        pontuacaoEspacamento.sort((a, b) => {
+            if (b.turnosDesdeAUtlima !== a.turnosDesdeAUtlima) {
+                return b.turnosDesdeAUtlima - a.turnosDesdeAUtlima; // Prioriza espaçamento
+            }
+            return b.diasSemVer - a.diasSemVer; // Desempate por dias corridos
+        });
+
+        const escolhido = pontuacaoEspacamento[0]?.aula;
         if (!escolhido) return null;
 
         return {
@@ -1433,7 +1463,6 @@ const DecisionEngine = {
             modulo: moduloNome
         };
     },
-
     // =========================
     // LEIS
     // =========================
