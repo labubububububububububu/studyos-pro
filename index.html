@@ -593,34 +593,36 @@
         <div class="main-content">
             <!-- HOME -->
             <div id="page-home" class="page active">
-                <div class="mission-card" id="missionCard">
-                    <div class="label">🎯 Missão de Hoje</div>
-                    <div class="title" id="missionTitle">Carregando...</div>
-                    <div class="sub" id="missionSub">Disciplina · Assunto</div>
-                    <div class="time" id="missionTime">⏱️ Tempo estimado: --</div>
-                    <div class="pomodoro-ring" id="pomodoroRing" style="--pomo-pct:100%;">25:00</div>
-                    <div class="pomodoro-controls">
-                        <button class="btn-glass" id="pomodoroStartBtn">▶ Iniciar</button>
-                        <button class="btn-glass" id="pomodoroPauseBtn" disabled>⏸ Pausar</button>
-                        <button class="btn-glass" id="pomodoroResetBtn">↺ Reset</button>
-                    </div>
-                    <div class="action-group">
-                        <button class="btn-action" id="startLessonBtn">▶ Iniciar Aula</button>
-                        <button class="btn-action pause" id="pauseLessonBtn" disabled>⏸ Pausar</button>
-                        <button class="btn-action stop" id="stopLessonBtn" disabled>⏹ Concluir</button>
-                        <button class="btn-action skip" id="skipLessonBtn" title="Pular esta missão">⏭ Pular</button>
-                        <button class="btn-action skip" id="voltarLessonBtn" title="Voltar para missão anterior" disabled>⏮ Voltar</button>
-                    </div>
-                    <div style="display:flex; gap:8px; justify-content:center; margin:8px 0; flex-wrap:wrap; align-items:center;">
-                        <span style="font-size:0.8rem; color:#6b7280;">Questões:</span>
-                        <input type="number" id="missionQuestFeitas" placeholder="Feitas" min="0" style="width:60px; padding:4px 8px; background:rgba(0,0,0,0.3); border:var(--border-light); color:#d1d5db; border-radius:8px; font-size:0.8rem; text-align:center;" />
-                        <input type="number" id="missionQuestAcertos" placeholder="Acertos" min="0" style="width:60px; padding:4px 8px; background:rgba(0,0,0,0.3); border:var(--border-light); color:#d1d5db; border-radius:8px; font-size:0.8rem; text-align:center;" />
-                    </div>
-                    <div class="justify-box" id="justifyBox">💡 <strong>Por que esta aula?</strong> Carregando justificativa...</div>
-                    <div class="anotacoes-mission">
-                        <textarea id="missionAnotacoes" placeholder="Anotações rápidas desta missão..."></textarea>
-                    </div>
-                </div>
+               <div class="mission-card" id="missionCard">
+    <div class="label">🎯 MISSÃO 4.0 (Powered by MICH)</div>
+    <div class="title" id="missionTitle">Calculando...</div>
+    <div class="sub" id="missionSub">Bloco · Disciplina</div>
+    
+    <!-- Pomodoro simplificado para a missão -->
+    <div class="time" id="missionTime" style="margin-top:8px; font-weight:600; color:#a78bfa;">⏱️ Preparando motor...</div>
+    
+    <div class="action-group" style="margin-top: 20px;">
+        <button class="btn-action" id="startLessonBtn">▶ INICIAR TAREFA</button>
+        <button class="btn-action pause" id="pauseLessonBtn" style="display:none;">⏸ PAUSAR</button>
+        <button class="btn-action stop" id="stopLessonBtn" style="display:none;">✅ CONCLUIR TAREFA</button>
+        <button class="btn-action skip" id="skipLessonBtn" title="Forçar re-cálculo do motor">⏭ PULAR</button>
+    </div>
+
+    <div class="justify-box" id="justifyBox" style="text-align: left; padding: 16px; background: rgba(0,0,0,0.2);">
+        💡 <strong>Por que esta tarefa?</strong> <br>
+        <ul id="justifyList" style="margin-top:8px; margin-left: 16px; color: #a78bfa; font-size: 0.85rem;">
+            <!-- Preenchido via JS -->
+        </ul>
+    </div>
+
+    <!-- Fila de Próximas Missões -->
+    <div style="margin-top: 16px; text-align: left; padding: 12px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm);">
+        <h4 style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Fila do Algoritmo (Próximas)</h4>
+        <div id="proximasMissoesList" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Preenchido via JS -->
+        </div>
+    </div>
+</div>
                 <div class="indicators-grid" id="indicatorsGrid">
                     <div class="indicator-card"><div class="number" id="indDominio">0%</div><div class="label">Domínio geral</div></div>
                     <div class="indicator-card"><div class="number" id="indHorasEstudadas">0h</div><div class="label">Horas estudadas</div></div>
@@ -825,7 +827,7 @@
 
     <script>
         // ================================================================
-        // STUDYOS PRO v4.0 + STUDYOS EXTRAS v4.0 (UNIFICADO) + MICH INTEGRADO
+        // STUDYOS PRO v4.0 + STUDYOS EXTRAS v4.0 (UNIFICADO)
         // ================================================================
         (function() {
             'use strict';
@@ -939,7 +941,15 @@
                         if (!AppState.extras) {
                             AppState.extras = { mapaCalor: {}, emocoes: [], picosProdutividade: {}, topicosCriticos: [], cronogramaReverso: null, desafiosDiarios: [], badges: [], metasSemanais: { aulas: 0, questoes: 0, horas: 0, cumpridas: false }, preferencias: { modoFoco: false, notificacoes: true, tema: 'dark', timerTipo: 'pomodoro' }, estatisticas: { diasEstudo: 0, mediaDiaria: 0, melhorDia: null, piorDia: null } };
                         }
-                        atualizarStreakEGamificacao();
+                        if (!AppState.mich) {
+    AppState.mich = {
+        creditos: { PRIORITARIA: 0, MEDIA: 0, BAIXA: 0, BAIXISSIMA: 0 },
+        rodadas: { PRIORITARIA: [], MEDIA: [], BAIXA: [], BAIXISSIMA: [] },
+        cadernoErros: [],
+        estatisticas: {}
+    };
+}
+						atualizarStreakEGamificacao();
                         return true;
                     }
                 } catch (e) { console.warn('Estado corrompido, resetando...'); }
@@ -949,7 +959,13 @@
 
             const resetState = () => {
                 AppState = {
-                    checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
+                    mich: {
+    creditos: { PRIORITARIA: 0, MEDIA: 0, BAIXA: 0, BAIXISSIMA: 0 },
+    rodadas: { PRIORITARIA: [], MEDIA: [], BAIXA: [], BAIXISSIMA: [] },
+    cadernoErros: [],
+    estatisticas: {} // Armazena dias sem contato, percentual etc.
+},
+					checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
                     leis: DEFAULT_LEIS.map(n => ({ nome: n, totalPaginas: 30, paginaAtual: 0, status: 'pendente', ultimaLeitura: null, anotacoes: '' })),
                     anotacoes: {}, expanded: {}, tempoEstudoHoje: 0, aulaAtiva: null, aulaPausada: false,
                     revisaoDatas: {}, revisaoNotas: {}, questoesAulas: {}, historicoCiclo: [],
@@ -1053,57 +1069,118 @@
 
 const DecisionEngine = {
     // =========================
-    // 1. CONFIGURAÇÕES MICH
+    // CONFIGURAÇÕES DE PESO
     // =========================
-    classes: {
-        '🔴': { peso: 4.0, nome: 'Prioritária' },
-        '🟠': { peso: 2.5, nome: 'Média' },
-        '🟡': { peso: 1.5, nome: 'Baixa' },
-        '⚪': { peso: 1.0, nome: 'Baixíssima' }
+    pesos: {
+        'Administração Financeira e Orçamentária (AFO)': 3,
+        'Contabilidade Pública': 3,
+        'Auditoria Governamental e Controle': 3,
+        'Fundamentos de Auditoria Governamental': 3,
+        'Direito Administrativo (Prof. Herbert Almeida)': 2,
+        'Noções de Direito Administrativo (Prof. Antonio Daud)': 2,
+        'Direito Constitucional': 2,
+        'Avaliação de Políticas Públicas': 2,
+        'Políticas Públicas': 2,
+        'Administração Pública': 2,
+        'Finanças Públicas': 2,
+        'Finanças Públicas II': 2,
+        'Português': 1.5,
+        'Inglês': 1,
+        'Ética no Serviço Público': 1,
+        'Legislação': 1
     },
 
-    disciplinasMapeamento: {
-        'Administração Financeira e Orçamentária (AFO)': '🔴',
-        'Contabilidade Pública': '🔴',
-        'Auditoria Governamental e Controle': '🔴',
-        'Fundamentos de Auditoria Governamental': '🔴',
-        
-        'Direito Administrativo (Prof. Herbert Almeida)': '🟠',
-        'Noções de Direito Administrativo (Prof. Antonio Daud)': '🟠',
-        'Direito Constitucional': '🟠',
-        'Avaliação de Políticas Públicas': '🟠',
-        'Políticas Públicas': '🟠',
-        'Administração Pública': '🟠',
-        'Finanças Públicas': '🟠',
-        'Finanças Públicas II': '🟠',
-        
-        'Português': '🟡',
-        
-        'Inglês': '⚪',
-        'Ética no Serviço Público': '⚪',
-        'Legislação': '⚪',
-        'Direito Administrativo (itens 14 à 16) - Prof. Paulo Sousa': '⚪'
-    },
-
+    // Intervalos de revisão espaçada em dias
     agendaRevisao: [1, 3, 7, 14, 30],
+
+    // Ordem-base do ciclo
     ordemModulos: ['bloco1', 'bloco2', 'leis', 'revisao'],
 
     // =========================
-    // 2. UTILITÁRIOS ORIGINAIS (MANTIDOS)
+    // UTILITÁRIOS
     // =========================
-    _clamp(v, min, max) { return Math.max(min, Math.min(max, v)); },
-    _norm(v, min, max) { if (max === min) return 0; return this._clamp((v - min) / (max - min), 0, 1); },
-    _diasEntre(a, b) { return Math.floor((new Date(a) - new Date(b)) / (1000 * 60 * 60 * 24)); },
-    _agoraISO() { return new Date().toISOString(); },
-    _getHistoricoEscolhasRecente(qtd = 12) { const hist = AppState.historicoCiclo || []; return hist.slice(Math.max(0, hist.length - qtd)); },
-    _contarEscolhasDisciplinaRecente(disciplina, qtd = 12) { const rec = this._getHistoricoEscolhasRecente(qtd); return rec.filter(x => x && x.disciplina === disciplina).length; },
-    _totalEscolhasRecentes(qtd = 12) { return this._getHistoricoEscolhasRecente(qtd).length || 1; },
-    _chaveAula(aula) { return aula?.key || `${aula?.blockId}|${aula?.discIdx}|${aula?.lessonIdx}`; },
-    _resolverAulaPorKey(key) { return getAllLessonsFlat().find(i => i.key === key) || null; },
-    _resolverAulaEntrada(aulaOuKey) { if (!aulaOuKey) return null; if (typeof aulaOuKey === 'string') return this._resolverAulaPorKey(aulaOuKey); return aulaOuKey; },
+    _clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+    },
+
+    _norm(v, min, max) {
+        if (max === min) return 0;
+        return this._clamp((v - min) / (max - min), 0, 1);
+    },
+
+    _diasEntre(a, b) {
+        return Math.floor((new Date(a) - new Date(b)) / (1000 * 60 * 60 * 24));
+    },
+
+    _agoraISO() {
+        return new Date().toISOString();
+    },
+
+    _getHistoricoEscolhasRecente(qtd = 12) {
+        const hist = AppState.historicoCiclo || [];
+        return hist.slice(Math.max(0, hist.length - qtd));
+    },
+
+    _contarEscolhasDisciplinaRecente(disciplina, qtd = 12) {
+        const rec = this._getHistoricoEscolhasRecente(qtd);
+        return rec.filter(x => x && x.disciplina === disciplina).length;
+    },
+
+    _totalEscolhasRecentes(qtd = 12) {
+        return this._getHistoricoEscolhasRecente(qtd).length || 1;
+    },
+
+    _garantirEstruturas() {
+        AppState.historicoCiclo = AppState.historicoCiclo || [];
+        AppState.revisaoDatas = AppState.revisaoDatas || {};
+        AppState.reviewMeta = AppState.reviewMeta || {};     // agenda de revisão por aula
+        AppState.creditosCiclo = AppState.creditosCiclo || {}; // opcional, memória de equilíbrio
+        AppState.moduloStats = AppState.moduloStats || {
+            bloco1: 0,
+            bloco2: 0,
+            leis: 0,
+            revisao: 0
+        };
+        AppState.missoesConcluidas = AppState.missoesConcluidas || {};
+    },
+
+    _chaveAula(aula) {
+        return aula?.key || `${aula?.blockId}|${aula?.discIdx}|${aula?.lessonIdx}`;
+    },
+
+    _resolverAulaPorKey(key) {
+        return getAllLessonsFlat().find(i => i.key === key) || null;
+    },
+
+    _resolverAulaEntrada(aulaOuKey) {
+        if (!aulaOuKey) return null;
+        if (typeof aulaOuKey === 'string') return this._resolverAulaPorKey(aulaOuKey);
+        return aulaOuKey;
+    },
+
+    _obterDominio(aula) {
+        const twin = AppState.student?.digitalTwin || {};
+        const disc = aula.disciplineName;
+        const assunto = aula.title.split(' - ')[0] || aula.title;
+        const sub = aula.title;
+        return (twin[disc]?.[assunto]?.[sub]?.dominio) || 0.5;
+    },
+
+    _diasSemEstudo(aula) {
+        const entry = (AppState.diario || [])
+            .filter(e => e.aula === aula.title && e.disciplina === aula.disciplineName)
+            .pop();
+
+        if (!entry) return 30;
+
+        const dataHora = `${entry.data}T${entry.hora || '00:00'}`;
+        return Math.min(30, this._diasEntre(new Date(), new Date(dataHora)));
+    },
+
     _diasSemRevisao(key) {
         const datas = AppState.revisaoDatas?.[key];
         if (!datas) return 999;
+
         let ultima = null;
         for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
             if (datas[rev]) {
@@ -1113,33 +1190,49 @@ const DecisionEngine = {
         }
         return ultima ? Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)) : 999;
     },
+
     _contarRevisoesFeitas(key) {
         const datas = AppState.revisaoDatas?.[key];
         if (!datas) return 0;
-        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5'].filter(rev => !!datas[rev]).length;
+        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']
+            .filter(rev => !!datas[rev]).length;
     },
+
     _proximaRevisaoDias(key) {
         const feitas = this._contarRevisoesFeitas(key);
         return this.agendaRevisao[Math.min(feitas, this.agendaRevisao.length - 1)];
     },
+
     _revisaoVencida(key) {
+        const datas = AppState.revisaoDatas?.[key];
+        if (!datas) return false;
+
         const feitas = this._contarRevisoesFeitas(key);
         if (feitas === 0) return true;
+
         const ultimaDias = this._diasSemRevisao(key);
         return ultimaDias >= this._proximaRevisaoDias(key);
     },
+
     _atualizarAgendaRevisao(aula) {
         const key = this._chaveAula(aula);
         if (!key) return;
+
         AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || {};
         const feitas = this._contarRevisoesFeitas(key);
+
         const revNome = `rev${Math.min(feitas + 1, 5)}`;
         AppState.revisaoDatas[key][revNome] = this._agoraISO();
-        AppState.reviewMeta = AppState.reviewMeta || {};
-        AppState.reviewMeta[key] = { ultimaConclusao: this._agoraISO(), proximaEmDias: this._proximaRevisaoDias(key) };
+
+        AppState.reviewMeta[key] = {
+            ultimaConclusao: this._agoraISO(),
+            proximaEmDias: this._proximaRevisaoDias(key)
+        };
     },
+
     _registrarEscolha(aula) {
         this._garantirEstruturas();
+
         const modulo = aula.modulo || (aula.blockIdx === 0 ? 'bloco1' : aula.blockIdx === 1 ? 'bloco2' : aula.blockId) || 'desconhecido';
         AppState.historicoCiclo.push({
             modulo,
@@ -1147,242 +1240,308 @@ const DecisionEngine = {
             key: this._chaveAula(aula),
             data: this._agoraISO()
         });
-        if (AppState.historicoCiclo.length > 40) AppState.historicoCiclo.shift();
+
+        if (AppState.historicoCiclo.length > 40) {
+            AppState.historicoCiclo.shift();
+        }
+
         AppState.moduloStats[modulo] = (AppState.moduloStats[modulo] || 0) + 1;
     },
+
     _marcarAulaAtiva(aula) {
         const resolvida = this._resolverAulaEntrada(aula);
         if (!resolvida) return null;
-        AppState.aulaAtiva = { ...resolvida, disciplina: resolvida.disciplineName, assunto: resolvida.title.split(' - ')[0], sub: resolvida.title };
+
+        AppState.aulaAtiva = {
+            ...resolvida,
+            disciplina: resolvida.disciplineName,
+            assunto: resolvida.title.split(' - ')[0],
+            sub: resolvida.title
+        };
+
         saveState();
         return AppState.aulaAtiva;
     },
 
     // =========================
-    // 3. INICIALIZAÇÃO E INTEGRAÇÃO MICH
-    // =========================
-    _garantirEstruturas() {
-        AppState.historicoCiclo = AppState.historicoCiclo || [];
-        AppState.revisaoDatas = AppState.revisaoDatas || {};
-        AppState.reviewMeta = AppState.reviewMeta || {};
-        AppState.creditosCiclo = AppState.creditosCiclo || {};
-        AppState.moduloStats = AppState.moduloStats || { bloco1: 0, bloco2: 0, leis: 0, revisao: 0 };
-        AppState.missoesConcluidas = AppState.missoesConcluidas || {};
-
-        if (!AppState.mich) {
-            AppState.mich = {
-                creditos: { '🔴': 0, '🟠': 0, '🟡': 0, '⚪': 0 },
-                filas: { '🔴': [], '🟠': [], '🟡': [], '⚪': [] }
-            };
-        }
-    },
-
-    // =========================
-    // 4. CAMADA TÁTICA: IP E FILAS
-    // =========================
-    _diasSemEstudoDisciplina(disciplina) {
-        const entry = (AppState.diario || []).filter(e => e.disciplina === disciplina).pop();
-        if (!entry) return 30;
-        const parts = entry.data.split('/');
-        if (parts.length === 3) {
-            const dataStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            return Math.floor((new Date() - new Date(dataStr)) / (1000 * 60 * 60 * 24));
-        }
-        return 30;
-    },
-
-    _obterDominioGeralDisciplina(disciplina) {
-        const all = getAllLessonsFlat().filter(a => a.disciplineName === disciplina);
-        if (!all.length) return 0.5;
-        let feitas = 0; let acertos = 0;
-        all.forEach(a => {
-            const q = AppState.questoesAulas[a.key];
-            if (q) { feitas += (q.feitas || 0); acertos += (q.acertos || 0); }
-        });
-        if (feitas === 0) return 0.5;
-        return acertos / feitas;
-    },
-
-    _calcularAtrasoRevisoes(disciplina) {
-        const concluidas = getAllLessonsFlat().filter(i => i.disciplineName === disciplina && AppState.checks?.[i.key]);
-        let atrasos = 0;
-        concluidas.forEach(a => { if (this._revisaoVencida(a.key)) atrasos++; });
-        return atrasos;
-    },
-
-    _calcularIP(disciplina) {
-        const dominio = this._obterDominioGeralDisciplina(disciplina);
-        const diasSemEstudo = this._diasSemEstudoDisciplina(disciplina);
-        const atrasoRev = this._calcularAtrasoRevisoes(disciplina);
-        let ip = 10;
-        ip += Math.min(diasSemEstudo * 0.5, 15);
-        ip += (atrasoRev * 2);
-        ip += ((1 - dominio) * 20);
-        return ip;
-    },
-
-    _novaRodada(classeId) {
-        const disciplinas = Object.keys(this.disciplinasMapeamento).filter(d => this.disciplinasMapeamento[d] === classeId);
-        if (disciplinas.length === 0) return [];
-        const comIP = disciplinas.map(d => ({ nome: d, ip: this._calcularIP(d) }));
-        comIP.sort((a, b) => b.ip - a.ip);
-        AppState.mich.filas[classeId] = comIP.map(item => item.nome);
-        saveState();
-        return AppState.mich.filas[classeId];
-    },
-
-    _obterProximaDisciplinaDaClasse(classeId) {
-        let fila = AppState.mich.filas[classeId];
-        if (!fila || fila.length === 0) { fila = this._novaRodada(classeId); }
-        return fila.length > 0 ? fila[0] : null;
-    },
-
-    _avancarFilaDaClasse(classeId) {
-        if (AppState.mich.filas[classeId] && AppState.mich.filas[classeId].length > 0) {
-            AppState.mich.filas[classeId].shift();
-            saveState();
-        }
-    },
-
-    // =========================
-    // 5. CAMADA ESTRATÉGICA: CRÉDITOS
-    // =========================
-    _escolherClasse(creditosObj) {
-        let classeEscolhida = '🔴';
-        let maiorSaldo = -9999;
-        for (const [classeId, saldo] of Object.entries(creditosObj)) {
-            if (saldo > maiorSaldo) {
-                maiorSaldo = saldo;
-                classeEscolhida = classeId;
-            }
-        }
-        return classeEscolhida;
-    },
-
-    _atualizarCreditos(classeExecutada) {
-        for (const [cId, dados] of Object.entries(this.classes)) {
-            AppState.mich.creditos[cId] += dados.peso;
-        }
-        AppState.mich.creditos[classeExecutada] -= 4.0;
-        saveState();
-    },
-
-    // =========================
-    // 6. CAMADA OPERACIONAL: BUSCA
-    // =========================
-    _buscarRevisaoPorDisciplina(disciplina) {
-        const concluidas = getAllLessonsFlat().filter(i => i.disciplineName === disciplina && AppState.checks?.[i.key]);
-        const vencidas = concluidas.filter(a => this._revisaoVencida(a.key));
-        vencidas.sort((a, b) => {
-            return (this._diasSemRevisao(b.key) - this._proximaRevisaoDias(b.key)) - 
-                   (this._diasSemRevisao(a.key) - this._proximaRevisaoDias(a.key));
-        });
-        return vencidas.length > 0 ? vencidas[0] : null;
-    },
-
-    _buscarAulaPorBloco(disciplina, blockIdx) {
-        const pendentes = getAllLessonsFlat().filter(i => i.blockIdx === blockIdx && i.disciplineName === disciplina && !AppState.checks?.[i.key]);
-        return pendentes.length > 0 ? pendentes[0] : null;
-    },
-
-    _buscarLeiPendente() {
-        const pendentes = (AppState.leis || []).filter(l => l.status !== 'concluido');
-        if (!pendentes.length) return null;
-        pendentes.sort((a, b) => {
-            const da = a.ultimaLeitura ? new Date(a.ultimaLeitura) : new Date('2020-01-01');
-            const db = b.ultimaLeitura ? new Date(b.ultimaLeitura) : new Date('2020-01-01');
-            return da - db;
-        });
-        const l = pendentes[0];
-        return { blockId: 'leis', key: `lei_${l.nome}`, title: l.nome, disciplineName: 'Leis', nome: l.nome, dados: l };
-    },
-
-    _buscarTarefaDaDisciplina(disciplina) {
-        const rev = this._buscarRevisaoPorDisciplina(disciplina);
-        if (rev) return { ...rev, modulo: 'revisao' };
-
-        const quest = this._buscarAulaPorBloco(disciplina, 1);
-        if (quest) return { ...quest, modulo: 'bloco2' };
-
-        if (disciplina === 'Legislação' || disciplina.includes('Direito')) {
-            const lei = this._buscarLeiPendente();
-            if (lei) return { ...lei, modulo: 'leis', disciplineName: disciplina };
-        }
-
-        const teoria = this._buscarAulaPorBloco(disciplina, 0);
-        if (teoria) return { ...teoria, modulo: 'bloco1' };
-
-        return null;
-    },
-
-    // =========================
-    // 7. MOTOR PRINCIPAL EXPOSTO
+    // INÍCIO MANUAL
     // =========================
     iniciarMissaoSelecionada(aulaOuKey) {
         this._garantirEstruturas();
         const aula = this._resolverAulaEntrada(aulaOuKey);
         if (!aula) return null;
+
+        // Início manual: não chama o motor automático.
         return this._marcarAulaAtiva(aula);
     },
 
-    iniciarMissaoPorKey(key) { return this.iniciarMissaoSelecionada(key); },
+    iniciarMissaoPorKey(key) {
+        return this.iniciarMissaoSelecionada(key);
+    },
 
+    // =========================
+    // ESCOLHA AUTOMÁTICA
+    // =========================
     escolherMissao() {
         this._garantirEstruturas();
 
+        // Se já existe uma aula ativa, mantém ela.
         if (AppState.aulaAtiva) {
             const found = this._resolverAulaPorKey(this._chaveAula(AppState.aulaAtiva));
-            if (found) return { ...found, disciplina: found.disciplineName, assunto: found.title.split(' - ')[0], sub: found.title, isAtiva: true, modulo: AppState.aulaAtiva.modulo };
+            if (found) {
+                return {
+                    ...found,
+                    disciplina: found.disciplineName,
+                    assunto: found.title.split(' - ')[0],
+                    sub: found.title,
+                    isAtiva: true
+                };
+            }
+
             AppState.aulaAtiva = null;
             saveState();
         }
 
-        let tentativas = 0;
-        let creditosTemp = { ...AppState.mich.creditos };
+        const ordem = this._decidirOrdemModulos();
 
-        while (tentativas < 4) {
-            let classeAtual = this._escolherClasse(creditosTemp);
-            let disciplinaDaVez = this._obterProximaDisciplinaDaClasse(classeAtual);
+        for (const modulo of ordem) {
+            let sugestao = null;
 
-            if (disciplinaDaVez) {
-                let missao = this._buscarTarefaDaDisciplina(disciplinaDaVez);
-                if (missao) {
-                    missao.disciplina = missao.disciplineName || disciplinaDaVez;
-                    missao.assunto = missao.title ? missao.title.split(' - ')[0] : (missao.nome || disciplinaDaVez);
-                    missao.sub = missao.title || missao.nome;
-                    missao.classeMICH = classeAtual;
-                    return missao;
-                } else {
-                    this._avancarFilaDaClasse(classeAtual);
-                    continue;
-                }
-            }
-            creditosTemp[classeAtual] = -9999;
-            tentativas++;
+            if (modulo === 'bloco1') sugestao = this._escolherBloco(0);
+            else if (modulo === 'bloco2') sugestao = this._escolherBloco(1);
+            else if (modulo === 'leis') sugestao = this._escolherLei();
+            else if (modulo === 'revisao') sugestao = this._escolherRevisao();
+
+            if (sugestao) return sugestao;
         }
+
         return null;
     },
 
+    _decidirOrdemModulos() {
+        // Ordem dinâmica: respeita o ciclo, mas sobe revisões vencidas e leis paradas.
+        const base = [...this.ordemModulos];
+        const pressao = {
+            bloco1: this._pressaoBloco(0),
+            bloco2: this._pressaoBloco(1),
+            leis: this._pressaoLeis(),
+            revisao: this._pressaoRevisao()
+        };
+
+        const moduloAtual = AppState.ciclo?.moduloAtual || 'bloco1';
+
+        // Se revisão está muito pressionada, ela pode subir no ciclo.
+        const maxModulo = Object.entries(pressao).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const maxValor = pressao[maxModulo] || 0;
+        const atualValor = pressao[moduloAtual] || 0;
+
+        if (maxModulo && maxModulo !== moduloAtual && maxValor > atualValor * 1.25) {
+            // Prioriza o módulo mais urgente sem destruir a lógica do ciclo.
+            return [maxModulo, ...base.filter(m => m !== maxModulo)];
+        }
+
+        // Caso normal: mantém o ciclo com rotação.
+        const idx = base.indexOf(moduloAtual);
+        if (idx <= 0) return base;
+        return [...base.slice(idx), ...base.slice(0, idx)];
+    },
+
+    _pressaoBloco(blockIdx) {
+        const all = getAllLessonsFlat();
+        const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks?.[i.key]);
+        if (!pendentes.length) return 0;
+
+        const diasMax = 30;
+        let soma = 0;
+
+        for (const aula of pendentes) {
+            const peso = this.pesos[aula.disciplineName] || 1;
+            const dias = this._diasSemEstudo(aula);
+            const dominio = this._obterDominio(aula);
+            soma += (peso * 0.35) + (dias / diasMax) * 0.40 + (1 - dominio) * 0.25;
+        }
+
+        return soma / pendentes.length;
+    },
+
+    _pressaoLeis() {
+        const pendentes = (AppState.leis || []).filter(l => l.status !== 'concluido');
+        if (!pendentes.length) return 0;
+
+        const hoje = new Date();
+        let soma = 0;
+
+        for (const lei of pendentes) {
+            const ultima = lei.ultimaLeitura ? new Date(lei.ultimaLeitura) : new Date('2020-01-01');
+            const dias = Math.max(0, Math.floor((hoje - ultima) / (1000 * 60 * 60 * 24)));
+            soma += this._clamp(dias / 30, 0, 1);
+        }
+
+        return soma / pendentes.length;
+    },
+
+    _pressaoRevisao() {
+        const concluidas = getAllLessonsFlat().filter(i => AppState.checks?.[i.key]);
+        if (!concluidas.length) return 0;
+
+        const vencidas = concluidas.filter(aula => this._revisaoVencida(aula.key));
+        return vencidas.length / concluidas.length;
+    },
+
+    // =========================
+    // BLOCOS
+    // =========================
+    _escolherBloco(blockIdx) {
+        const all = getAllLessonsFlat();
+        const pendentes = all.filter(i => i.blockIdx === blockIdx && !AppState.checks?.[i.key]);
+        if (!pendentes.length) return null;
+
+        // Seleciona só a primeira pendente de cada disciplina
+        const proximasAulas = {};
+        pendentes.forEach(aula => {
+            if (!proximasAulas[aula.disciplineName]) {
+                proximasAulas[aula.disciplineName] = aula;
+            }
+        });
+
+        const disciplinas = Object.keys(proximasAulas);
+        const somaPesos = disciplinas.reduce((s, d) => s + (this.pesos[d] || 1), 0) || 1;
+
+        const candidatos = Object.values(proximasAulas).map(aula => {
+            const disciplina = aula.disciplineName;
+            const peso = this.pesos[disciplina] || 1;
+            const pesoNorm = peso / somaPesos;
+            const diasSemVer = this._diasSemEstudo(aula);
+            const dominio = this._obterDominio(aula);
+
+            // AUMENTADO DE 12 PARA 30 DIAS: Dá tempo para matérias de peso 1 aparecerem na janela
+            const recentCount = this._contarEscolhasDisciplinaRecente(disciplina, 30);
+            const totalRecent = this._totalEscolhasRecentes(30);
+            const recentRate = recentCount / totalRecent;
+
+            const targetRate = pesoNorm;
+            const bonusEquilibrio = this._clamp((targetRate - recentRate) * 2.2, -0.35, 0.35);
+
+            const recencyNeed = this._clamp(diasSemVer / 14, 0, 1);
+            const domainNeed = 1 - dominio;
+            
+            // GATILHO DE ESQUECIMENTO ABSOLUTO: Força matérias abandonadas a subirem (mesmo se peso 1)
+            const bonusEsquecimento = diasSemVer > 21 ? 0.50 : 0; 
+
+            const ruido = (Math.random() - 0.5) * 0.08;
+
+            // FÓRMULA REBALANCEADA
+            const score =
+                (pesoNorm * 0.20) +          // Peso do edital (levemente reduzido)
+                (recencyNeed * 0.40) +       // Tempo sem ver (levemente aumentado)
+                (domainNeed * 0.25) +        // Domínio
+                (bonusEquilibrio * 0.15) +   // Busca manter proporção do peso
+                bonusEsquecimento +          // Gatilho de abandono
+                ruido;
+
+            return { aula, score };
+        });
+
+        candidatos.sort((a, b) => b.score - a.score);
+        const escolhido = candidatos[0]?.aula;
+        if (!escolhido) return null;
+
+        return {
+            ...escolhido,
+            disciplina: escolhido.disciplineName,
+            assunto: escolhido.title.split(' - ')[0],
+            sub: escolhido.title,
+            modulo: blockIdx === 0 ? 'bloco1' : 'bloco2'
+        };
+    },
+
+    // =========================
+    // LEIS
+    // =========================
+    _escolherLei() {
+        const pendentes = (AppState.leis || []).filter(l => l.status !== 'concluido');
+        if (!pendentes.length) return null;
+
+        // Prioriza a leitura mais antiga, mas também considera lembrete de revisitação.
+        pendentes.sort((a, b) => {
+            const da = a.ultimaLeitura ? new Date(a.ultimaLeitura) : new Date('2020-01-01');
+            const db = b.ultimaLeitura ? new Date(b.ultimaLeitura) : new Date('2020-01-01');
+            return da - db;
+        });
+
+        const escolhida = pendentes[0];
+        return {
+            blockIdx: -1,
+            discIdx: -1,
+            lessonIdx: -1,
+            blockId: 'leis',
+            disciplineName: 'Leis',
+            title: escolhida.nome,
+            key: `lei_${escolhida.nome}`,
+            modulo: 'leis',
+            tipo: 'Leis',
+            dados: escolhida
+        };
+    },
+
+    // =========================
+    // REVISÃO
+    // =========================
+    _escolherRevisao() {
+        const concluidas = getAllLessonsFlat().filter(i => AppState.checks?.[i.key]);
+        if (!concluidas.length) return null;
+
+        const vencidas = concluidas.filter(aula => this._revisaoVencida(aula.key));
+        if (!vencidas.length) return null;
+
+        // Entre as vencidas, prioriza as mais atrasadas e com menor domínio.
+        vencidas.sort((a, b) => {
+            const atrasoA = this._diasSemRevisao(a.key) - this._proximaRevisaoDias(a.key);
+            const atrasoB = this._diasSemRevisao(b.key) - this._proximaRevisaoDias(b.key);
+
+            if (atrasoB !== atrasoA) return atrasoB - atrasoA;
+
+            const domA = this._obterDominio(a);
+            const domB = this._obterDominio(b);
+            return domA - domB;
+        });
+
+        const melhor = vencidas[0];
+        return {
+            ...melhor,
+            disciplina: melhor.disciplineName,
+            assunto: melhor.title.split(' - ')[0],
+            sub: melhor.title,
+            modulo: 'revisao'
+        };
+    },
+
+    // =========================
+    // CONCLUSÃO / REGISTRO
+    // =========================
     registrarConclusaoMissao(aulaOuKey, options = {}) {
         this._garantirEstruturas();
+
         const aula = this._resolverAulaEntrada(aulaOuKey) || AppState.aulaAtiva;
         if (!aula) return false;
 
         const key = this._chaveAula(aula);
         const tipo = options.tipo || aula.modulo || (aula.blockId === 'leis' ? 'leis' : 'aula');
 
-        AppState.missoesConcluidas[key] = { key, tipo, data: this._agoraISO() };
+        AppState.missoesConcluidas[key] = {
+            key,
+            tipo,
+            data: this._agoraISO()
+        };
 
+        // Se foi revisão, atualiza agenda espaçada
         if (tipo === 'revisao' || options.foiRevisao === true) {
             this._atualizarAgendaRevisao(aula);
         }
 
-        const disciplinaReal = aula.disciplineName || aula.disciplina;
-        const classeExecutada = aula.classeMICH || this.disciplinasMapeamento[disciplinaReal] || '🟠';
-        this._atualizarCreditos(classeExecutada);
-        this._avancarFilaDaClasse(classeExecutada);
-
+        // Registra no histórico de ciclo
         this._registrarEscolha(aula);
+
         saveState();
         return true;
     },
@@ -1390,52 +1549,87 @@ const DecisionEngine = {
     finalizarAulaAtivaComoRevisao() {
         if (!AppState.aulaAtiva) return false;
         const ok = this.registrarConclusaoMissao(AppState.aulaAtiva, { tipo: 'revisao', foiRevisao: true });
-        AppState.aulaAtiva = null; AppState.aulaPausada = false; saveState();
+        AppState.aulaAtiva = null;
+        AppState.aulaPausada = false;
+        saveState();
         return ok;
     },
 
     finalizarAulaAtivaComoEstudo() {
         if (!AppState.aulaAtiva) return false;
         const ok = this.registrarConclusaoMissao(AppState.aulaAtiva, { tipo: 'estudo' });
-        AppState.aulaAtiva = null; AppState.aulaPausada = false; saveState();
+        AppState.aulaAtiva = null;
+        AppState.aulaPausada = false;
+        saveState();
         return ok;
     },
 
+    // =========================
+    // NAVEGAÇÃO DO CICLO
+    // =========================
     pularMissao() {
         this._garantirEstruturas();
-        const missaoAtual = this.escolherMissao();
-        if (missaoAtual && missaoAtual.classeMICH) {
-            this._avancarFilaDaClasse(missaoAtual.classeMICH);
-        }
-        AppState.historicoCiclo.push({ modulo: AppState.ciclo?.moduloAtual || 'bloco1', data: this._agoraISO(), acao: 'pular' });
+		if (missaoSugeridaAtual && missaoSugeridaAtual.classe) {
+    // Pula para o final da fila (rotaciona) sem cobrar créditos
+    const classe = missaoSugeridaAtual.classe;
+    const discPulada = AppState.mich.rodadas[classe].shift();
+    AppState.mich.rodadas[classe].push(discPulada); 
+}
+        AppState.historicoCiclo.push({
+            modulo: AppState.ciclo?.moduloAtual || 'bloco1',
+            data: this._agoraISO(),
+            acao: 'pular'
+        });
+
         if (AppState.historicoCiclo.length > 40) AppState.historicoCiclo.shift();
-        
+
+        this.avancarCiclo();
+
         if (AppState.aulaAtiva) {
-            if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-            AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+            if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) {
+                clearInterval(aulaTimerInterval);
+                aulaTimerInterval = null;
+            }
+            AppState.aulaAtiva = null;
+            AppState.aulaPausada = false;
+            AppState.tempoEstudoHoje = 0;
         }
+
         saveState();
         return this.escolherMissao();
     },
 
     voltarMissao() {
         this._garantirEstruturas();
+
         if (AppState.historicoCiclo.length > 0) {
             const ultimo = AppState.historicoCiclo.pop();
             const moduloAnterior = ultimo?.modulo;
-            if (moduloAnterior) AppState.ciclo.moduloAtual = moduloAnterior;
-            if (AppState.aulaAtiva) {
-                if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-                AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+
+            if (moduloAnterior) {
+                AppState.ciclo.moduloAtual = moduloAnterior;
             }
+
+            if (AppState.aulaAtiva) {
+                if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) {
+                    clearInterval(aulaTimerInterval);
+                    aulaTimerInterval = null;
+                }
+                AppState.aulaAtiva = null;
+                AppState.aulaPausada = false;
+                AppState.tempoEstudoHoje = 0;
+            }
+
             saveState();
             return this.escolherMissao();
         }
+
         return null;
     },
 
     avancarCiclo() {
         this._garantirEstruturas();
+
         const ordem = this.ordemModulos;
         const idx = ordem.indexOf(AppState.ciclo.moduloAtual || 'bloco1');
         AppState.ciclo.moduloAtual = ordem[(idx + 1) % ordem.length];
@@ -1443,37 +1637,57 @@ const DecisionEngine = {
     },
 
     // =========================
-    // 8. INTERFACE & PREVISÕES (MANTIDAS)
+    // JUSTIFICATIVA
     // =========================
     gerarJustificativa(aula) {
         if (!aula) return 'Sem justificativa disponível.';
-        if (aula.modulo === 'leis') return 'Leitura pendente e prioritária para a disciplina.';
+
+        if (aula.modulo === 'leis') {
+            return 'Leitura pendente há mais tempo.';
+        }
+
         if (aula.modulo === 'revisao') {
             const atraso = this._diasSemRevisao(aula.key) - this._proximaRevisaoDias(aula.key);
-            if (atraso > 0) return `Revisão vencida há ${atraso} dia(s) (Prioridade MICH).`;
+            if (atraso > 0) return `Revisão vencida há ${atraso} dia(s).`;
             return 'Revisão agendada no ciclo espaçado.';
         }
-        const ip = aula.classeMICH ? `Classe ${aula.classeMICH} (via Motor MICH)` : '';
+
+        const diasSem = this._diasSemEstudo(aula);
+        const dominio = this._obterDominio(aula);
+        const peso = this.pesos[aula.disciplineName] || 1;
+
         const fatores = [];
-        if (ip) fatores.push(ip);
-        const diasSem = this._diasSemEstudoDisciplina(aula.disciplineName);
+        if (peso >= 2.5) fatores.push(`Alta prioridade no edital (Peso ${peso})`);
         if (diasSem > 7) fatores.push(`${diasSem} dias sem contato`);
-        return fatores.join('; ') || 'Sequência inteligente do MICH.';
+        if (dominio < 0.6) fatores.push(`Baixo domínio (${Math.round(dominio * 100)}%)`);
+
+        return fatores.join('; ') || 'Sequência equilibrada do ciclo.';
     },
 
+    // =========================
+    // PREVISÕES
+    // =========================
     preverConclusaoBloco1() {
         const all = getAllLessonsFlat();
         const bloco1 = all.filter(i => i.blockIdx === 0);
         const total = bloco1.length;
         const concluidos = bloco1.filter(i => AppState.checks?.[i.key]).length;
         const restantes = total - concluidos;
+
         if (restantes === 0) return { data: 'Concluído', atraso: 0, restantes, total };
+
         const horasPorDia = AppState.student?.config?.horasPorDia || 4;
         const tempoMedio = 2.5;
         const diasNecessarios = Math.ceil((restantes * tempoMedio) / horasPorDia);
         const dataPrevista = new Date(Date.now() + diasNecessarios * 86400000);
         const atraso = Math.ceil((dataPrevista - CONFIG.diasProva) / 86400000);
-        return { data: dataPrevista.toLocaleDateString('pt-BR'), atraso, restantes, total };
+
+        return {
+            data: dataPrevista.toLocaleDateString('pt-BR'),
+            atraso,
+            restantes,
+            total
+        };
     },
 
     detectarFadiga() {
@@ -1490,7 +1704,187 @@ const DecisionEngine = {
         return Math.round((ultimos7.filter(Boolean).length / 7) * 100);
     }
 };
+			// ================================================================
+// MOTOR INTELIGENTE DE CICLO HIERÁRQUICO (MICH)
+// ================================================================
+const MICH = {
+    pesosClasse: { PRIORITARIA: 4, MEDIA: 2.5, BAIXA: 1.5, BAIXISSIMA: 1 },
+    custoBase: 9, // Soma dos pesos para manter o equilíbrio no desconto
 
+    _classificarDisciplina(nome) {
+        // Mapeia as disciplinas usando os pesos já existentes no DecisionEngine como base heurística inicial
+        const peso = DecisionEngine.pesos[nome] || 1;
+        if (peso >= 3) return 'PRIORITARIA';
+        if (peso >= 2) return 'MEDIA';
+        if (peso >= 1.5) return 'BAIXA';
+        return 'BAIXISSIMA';
+    },
+
+    _inicializarEstatisticas(disciplina) {
+        if (!AppState.mich.estatisticas[disciplina]) {
+            AppState.mich.estatisticas[disciplina] = {
+                ultimoEstudo: new Date('2020-01-01').toISOString(),
+                acertos: 0,
+                questoes: 0,
+                revisoesAtrasadas: 0
+            };
+        }
+        return AppState.mich.estatisticas[disciplina];
+    },
+
+    calcularIPD(disciplina) {
+        const stats = this._inicializarEstatisticas(disciplina);
+        const classe = this._classificarDisciplina(disciplina);
+        const pesoBase = this.pesosClasse[classe];
+        
+        const diasSemContato = Math.min(30, Math.floor((new Date() - new Date(stats.ultimoEstudo)) / (1000 * 60 * 60 * 24)));
+        const percAcerto = stats.questoes > 0 ? (stats.acertos / stats.questoes) * 100 : 50; // Se não tem histórico, assume 50%
+        const deficitAcerto = 100 - percAcerto;
+        
+        // IPD = Peso da classe * 10 + (Dias parados * 2) + Deficit de acertos + Penalidade de Revisões
+        let ipd = (pesoBase * 10) + (diasSemContato * 2) + (deficitAcerto * 0.5) + (stats.revisoesAtrasadas * 5);
+        return ipd;
+    },
+
+    _gerarNovaRodada(classe) {
+        // Encontra todas as disciplinas que pertencem a essa classe
+        const todasDisciplinas = Object.keys(DecisionEngine.pesos).filter(d => this._classificarDisciplina(d) === classe);
+        
+        // Calcula IPD para ordenação inteligente
+        const fila = todasDisciplinas.map(d => ({ nome: d, ipd: this.calcularIPD(d) }));
+        fila.sort((a, b) => b.ipd - a.ipd); // Maior IPD primeiro
+        
+        AppState.mich.rodadas[classe] = fila.map(f => f.nome);
+        saveState();
+    },
+
+    selecionarTarefa(disciplina) {
+        // Prioridade MICH: 1. Revisão Vencida -> 2. Lei Seca -> 3. Teoria Nova -> 4. Questões
+        const todasAulas = getAllLessonsFlat().filter(a => a.disciplineName === disciplina);
+        const concluidas = todasAulas.filter(a => AppState.checks[a.key]);
+        const pendentes = todasAulas.filter(a => !AppState.checks[a.key]);
+        const motivos = [];
+
+        // 1. Verificar Revisão
+        const revisaoVencida = concluidas.find(a => DecisionEngine._revisaoVencida(a.key));
+        if (revisaoVencida) {
+            motivos.push("Revisão programada vencida.");
+            return { tipo: 'Revisão', bloco: 'Bloco 4 (Revisão)', aula: revisaoVencida, motivos };
+        }
+
+        // 2. Verificar Questões (Heurística: a cada 3 aulas teóricas feitas, forçar bloco de questões)
+        if (concluidas.length > 0 && concluidas.length % 3 === 0 && AppState.mich.estatisticas[disciplina].ultimoEstudoTipo !== 'Questões') {
+            motivos.push("Ciclo de consolidação (Questões).");
+            // Usa a última aula concluída como alvo para questões
+            return { tipo: 'Questões', bloco: 'Bloco 2 (Prática)', aula: concluidas[concluidas.length - 1], motivos };
+        }
+
+        // 3. Teoria Nova
+        if (pendentes.length > 0) {
+            motivos.push("Avanço no edital (Teoria Nova).");
+            return { tipo: 'Teoria Nova', bloco: 'Bloco 1 (Teoria)', aula: pendentes[0], motivos };
+        }
+
+        // Fallback: Se não há mais teoria, focar em Questões e Revisão permanentemente
+        motivos.push("Edital concluído, foco em manutenção.");
+        return { tipo: 'Questões', bloco: 'Bloco 2 (Revisão Contínua)', aula: concluidas[Math.floor(Math.random() * concluidas.length)], motivos };
+    },
+
+    gerarFilaMissoes(quantidade = 4) {
+        // Acumula créditos (Simulação para prever fila, não altera o estado real)
+        let fila = [];
+        let creditosTemp = JSON.parse(JSON.stringify(AppState.mich.creditos));
+        let rodadasTemp = JSON.parse(JSON.stringify(AppState.mich.rodadas));
+
+        for (let i = 0; i < quantidade; i++) {
+            // Adiciona créditos diários
+            Object.keys(this.pesosClasse).forEach(c => creditosTemp[c] += this.pesosClasse[c]);
+            
+            // Escolhe a classe com maior saldo
+            const classeEscolhida = Object.keys(creditosTemp).reduce((a, b) => creditosTemp[a] > creditosTemp[b] ? a : b);
+            
+            // Verifica rodada temporária
+            if (!rodadasTemp[classeEscolhida] || rodadasTemp[classeEscolhida].length === 0) {
+                 // Simulando geração de rodada
+                 const todas = Object.keys(DecisionEngine.pesos).filter(d => this._classificarDisciplina(d) === classeEscolhida);
+                 rodadasTemp[classeEscolhida] = todas.sort((a,b) => Math.random() - 0.5); 
+            }
+            
+            const disciplinaEscolhida = rodadasTemp[classeEscolhida].shift();
+            creditosTemp[classeEscolhida] -= this.custoBase;
+
+            const tarefa = this.selecionarTarefa(disciplinaEscolhida);
+            fila.push({ classe: classeEscolhida, disciplina: disciplinaEscolhida, tarefa });
+        }
+        return fila;
+    },
+
+    gerarMissao() {
+        // 1. Acumular Créditos Universais
+        Object.keys(this.pesosClasse).forEach(c => AppState.mich.creditos[c] += this.pesosClasse[c]);
+
+        // 2. Escolher Classe (A mais necessitada proporcionalmente)
+        const classe = Object.keys(AppState.mich.creditos).reduce((a, b) => AppState.mich.creditos[a] > AppState.mich.creditos[b] ? a : b);
+
+        // 3. Gerenciar Rodada
+        if (!AppState.mich.rodadas[classe] || AppState.mich.rodadas[classe].length === 0) {
+            this._gerarNovaRodada(classe);
+        }
+        const disciplina = AppState.mich.rodadas[classe][0]; // Espia o próximo, não remove ainda
+
+        // 4. Selecionar Tarefa
+        const tarefa = this.selecionarTarefa(disciplina);
+        
+        // Gera motivos ricos para a UI
+        const stats = this._inicializarEstatisticas(disciplina);
+        const dias = Math.floor((new Date() - new Date(stats.ultimoEstudo)) / (1000 * 60 * 60 * 24));
+        const percAcertos = stats.questoes > 0 ? Math.round((stats.acertos/stats.questoes)*100) : 0;
+        
+        tarefa.motivos.unshift(`Classe ${classe} necessitava de processamento.`);
+        if (dias > 7) tarefa.motivos.push(`Disciplina sem contato há ${dias} dias.`);
+        if (percAcertos > 0 && percAcertos < 70) tarefa.motivos.push(`Índice de acerto crítico (${percAcertos}%).`);
+
+        return {
+            classe,
+            disciplina,
+            tarefa,
+            // Mantém compatibilidade com funções antigas do StudyOS
+            key: tarefa.aula.key,
+            title: tarefa.aula.title,
+            modulo: tarefa.tipo === 'Revisão' ? 'revisao' : 'bloco1'
+        };
+    },
+
+    finalizarTarefa(missaoExecutada) {
+        const disc = missaoExecutada.disciplina;
+        const classe = missaoExecutada.classe;
+
+        // 1. Atualizar Estatísticas MICH
+        const stats = this._inicializarEstatisticas(disc);
+        stats.ultimoEstudo = new Date().toISOString();
+        stats.ultimoEstudoTipo = missaoExecutada.tarefa.tipo;
+        
+        // Pega inputs da UI se houver (Questões resolvidas no card)
+        const feitas = parseInt(document.getElementById('missionQuestFeitas')?.value) || 0;
+        const acertos = parseInt(document.getElementById('missionQuestAcertos')?.value) || 0;
+        if (feitas > 0) {
+            stats.questoes += feitas;
+            stats.acertos += acertos;
+        }
+
+        // 2. Descontar Créditos da Classe
+        AppState.mich.creditos[classe] -= this.custoBase;
+
+        // 3. Atualizar Rodada (remover disciplina do topo)
+        AppState.mich.rodadas[classe].shift();
+
+        // 4. Marcar Check no Sistema Antigo (Retrocompatibilidade)
+        toggleLesson(missaoExecutada.key, true);
+        DecisionEngine.registrarConclusaoMissao(missaoExecutada.key, { tipo: missaoExecutada.tarefa.tipo === 'Revisão' ? 'revisao' : 'estudo' });
+
+        saveState();
+    }
+};
             let missaoSugeridaAtual = null; // GUARDA A MISSÃO DA TELA AQUI
             let aulaTimerInterval = null;
             let aulaStartTime = 0;
@@ -1659,6 +2053,12 @@ const DecisionEngine = {
                     }
                     salvarAnotacoesMissao(key);
                     salvarQuestoesMissao(key);
+					// Dentro de pararAula, depois de salvarQuestoesMissao(key):
+if (missaoSugeridaAtual) {
+    MICH.finalizarTarefa(missaoSugeridaAtual);
+} else {
+    DecisionEngine.avancarCiclo(); // fallback legado
+}
                     DecisionEngine.avancarCiclo();
                     saveState();
                 }
@@ -1750,81 +2150,67 @@ const DecisionEngine = {
             };
 
             const renderHome = () => {
-                const missao = DecisionEngine.escolherMissao();
-                missaoSugeridaAtual = missao; // SALVA A MISSÃO CALCULADA NA VARIÁVEL GLOBAL
+    // 1. MICH assume o controle da geração da missão principal
+    const missaoMich = MICH.gerarMissao();
+    missaoSugeridaAtual = missaoMich; // Vínculo global
 
-                const titleEl = document.getElementById('missionTitle');
-                const subEl = document.getElementById('missionSub');
-                const timeEl = document.getElementById('missionTime');
-                const justifyEl = document.getElementById('justifyBox');
-                const startBtn = document.getElementById('startLessonBtn');
-                const pauseBtn = document.getElementById('pauseLessonBtn');
-                const stopBtn = document.getElementById('stopLessonBtn');
-                const skipBtn = document.getElementById('skipLessonBtn');
-                const voltarBtn = document.getElementById('voltarLessonBtn');
+    const titleEl = document.getElementById('missionTitle');
+    const subEl = document.getElementById('missionSub');
+    const timeEl = document.getElementById('missionTime');
+    const justifyList = document.getElementById('justifyList');
+    const startBtn = document.getElementById('startLessonBtn');
+    const pauseBtn = document.getElementById('pauseLessonBtn');
+    const stopBtn = document.getElementById('stopLessonBtn');
+    const skipBtn = document.getElementById('skipLessonBtn');
+    const filaList = document.getElementById('proximasMissoesList');
 
-                voltarBtn.disabled = AppState.historicoCiclo.length === 0;
+    if (AppState.aulaAtiva) {
+        // Aula em andamento (mantém a lógica visual)
+        const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
+        if (block) {
+            const disc = block.disciplines[AppState.aulaAtiva.discIdx];
+            const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
+            titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado` : `⏳ Estudando agora`;
+            subEl.textContent = `${disc.name} · ${aulaTitle}`;
+            timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
+            
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'inline-block';
+            skipBtn.style.display = 'none';
+            pauseBtn.textContent = AppState.aulaPausada ? '▶ CONTINUAR' : '⏸ PAUSAR';
+            justifyList.innerHTML = '<li>Foco total. Aula em andamento!</li>';
+        }
+        updateIndicators();
+        return;
+    }
 
-                if (AppState.aulaAtiva) {
-                    const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
-                    if (block) {
-                        const disc = block.disciplines[AppState.aulaAtiva.discIdx];
-                        const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
-                        titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` : `⏳ Estudando: ${aulaTitle}`;
-                        subEl.textContent = `${disc.name} · ${block.name}`;
-                        timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
-                        startBtn.textContent = '▶ Estudando...';
-                        startBtn.disabled = true;
-                        pauseBtn.disabled = false;
-                        stopBtn.disabled = false;
-                        skipBtn.disabled = true;
-                        voltarBtn.disabled = true;
-                        pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
-                        justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
-                    } else {
-                        AppState.aulaAtiva = null;
-                        saveState();
-                        renderHome();
-                    }
-                    updateIndicators();
-                    return;
-                }
+    // Preparar nova missão na UI
+    titleEl.textContent = missaoMich.tarefa.aula.title;
+    subEl.textContent = `${missaoMich.tarefa.bloco} | ${missaoMich.disciplina}`;
+    timeEl.textContent = `Prioridade da Classe: ${missaoMich.classe}`;
+    
+    startBtn.style.display = 'inline-block';
+    pauseBtn.style.display = 'none';
+    stopBtn.style.display = 'none';
+    skipBtn.style.display = 'inline-block';
+    startBtn.textContent = missaoMich.tarefa.tipo === 'Revisão' ? '▶ INICIAR REVISÃO' : '▶ INICIAR TAREFA';
 
-                if (!missao) {
-                    titleEl.textContent = '🎉 Parabéns! Todas as missões concluídas!';
-                    subEl.textContent = 'Continue revisando e praticando.';
-                    timeEl.textContent = '';
-                    startBtn.textContent = '▶ Iniciar Aula';
-                    startBtn.disabled = true;
-                    pauseBtn.disabled = true;
-                    stopBtn.disabled = true;
-                    skipBtn.disabled = true;
-                    voltarBtn.disabled = AppState.historicoCiclo.length === 0;
-                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo do edital.</strong>';
-                } else {
-                    const isLei = missao.modulo === 'leis';
-                    const label = isLei ? '📜 Leitura de Lei' : missao.modulo === 'revisao' ? '🔄 Revisão' : missao.blockIdx === 0 ? '📚 Teoria' : '📝 Questões';
-                    titleEl.textContent = `${label}: ${missao.sub || missao.title}`;
-                    subEl.textContent = isLei ? 'Leis' : `${missao.disciplineName || missao.disciplina} · ${missao.assunto}`;
-                    timeEl.textContent = isLei ? '⏱️ Tempo estimado: ~30min' : '⏱️ Tempo estimado: ~2h30';
-                    startBtn.textContent = isLei ? '▶ Iniciar Leitura' : '▶ Iniciar Aula';
-                    startBtn.disabled = false;
-                    pauseBtn.disabled = true;
-                    stopBtn.disabled = true;
-                    skipBtn.disabled = false;
-                    voltarBtn.disabled = AppState.historicoCiclo.length === 0;
-                    const just = DecisionEngine.gerarJustificativa(missao);
-                    justifyEl.innerHTML = `💡 <strong>Por que esta missão?</strong> ${just}`;
-                    const anotacoes = AppState.anotacoes[missao.key]?.texto || '';
-                    document.getElementById('missionAnotacoes').value = anotacoes;
-                    const q = AppState.questoesAulas[missao.key] || { feitas: 0, acertos: 0 };
-                    document.getElementById('missionQuestFeitas').value = q.feitas || '';
-                    document.getElementById('missionQuestAcertos').value = q.acertos || '';
-                }
-                updateIndicators();
-                renderWeeklyGoals();
-            };
+    // Renderiza Justificativa MICH
+    justifyList.innerHTML = missaoMich.tarefa.motivos.map(m => `<li>✓ ${m}</li>`).join('');
 
+    // Preenche a fila de próximas missões simulando o algoritmo
+    const fila = MICH.gerarFilaMissoes(3);
+    filaList.innerHTML = fila.map((item, index) => 
+        `<div style="display:flex; justify-content:space-between; padding: 6px 10px; background: rgba(0,0,0,0.25); border-radius: 8px;">
+            <span><strong>${index + 1}. ${item.disciplina}</strong> <br> <span style="font-size:0.7rem; color:#6b7280;">${item.tarefa.tipo}</span></span>
+            <span style="font-size:0.7rem; color:#a78bfa;">${item.classe}</span>
+        </div>`
+    ).join('');
+
+    updateIndicators();
+    renderWeeklyGoals();
+};
             const updateIndicators = () => {
                 const all = getAllLessonsFlat();
                 const done = all.filter(i => AppState.checks[i.key]).length;
@@ -1880,12 +2266,9 @@ const DecisionEngine = {
                         const originalLi = disc.lessons.indexOf(title);
                         const key = `${block.id}|${di}|${originalLi}`;
                         const checked = !!AppState.checks[key];
-                        
-                        // Adaptação MICH para _diasSemEstudoDisciplina
-                        const forget = DecisionEngine._diasSemEstudoDisciplina(disc.name);
+                        const forget = DecisionEngine._diasSemEstudo({ key, title, disciplineName: disc.name });
                         const forgetLabel = forget > 20 ? '🔴' : forget > 10 ? '🟡' : '🟢';
                         const forgetClass = forget > 20 ? 'low' : forget > 10 ? 'medium' : 'high';
-                        
                         const qData = AppState.questoesAulas[key] || { feitas: 0, acertos: 0 };
                         html += `<div class="lesson-item ${checked ? 'done' : ''}">
                             <input type="checkbox" ${checked ? 'checked' : ''} onchange="window.toggleLessonDirect('${key}', this.checked)" />
@@ -1972,7 +2355,7 @@ const renderRevisao = () => {
         reader.readAsText(file);
     };
 
-    // 2. FUNÇÃO LOCAL DE CÁLCULO DE DIAS
+    // 2. FUNÇÃO LOCAL DE CÁLCULO DE DIAS (Não interfere no resto do seu app)
     const calcularDiasSemRevisao = (key) => {
         const datas = AppState.revisaoDatas ? AppState.revisaoDatas[key] : null;
         
@@ -2032,8 +2415,7 @@ const renderRevisao = () => {
 
     concluidas.slice(0, 20).forEach(item => {
         const dias = calcularDiasSemRevisao(item.key);
-        // Adaptação MICH para domínio de revisão
-        const dominio = (typeof DecisionEngine !== 'undefined' && DecisionEngine._obterDominioGeralDisciplina) ? DecisionEngine._obterDominioGeralDisciplina(item.disciplineName) : 0.5;
+        const dominio = (typeof DecisionEngine !== 'undefined' && DecisionEngine._obterDominio) ? DecisionEngine._obterDominio(item) : 0;
         
         const classe = dias > 30 ? 'low' : dias > 15 ? 'medium' : 'high';
         
@@ -2949,7 +3331,7 @@ const renderRevisao = () => {
                 aulaTimerInterval = setInterval(() => { if (!AppState.aulaPausada) { AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000); saveState(); updateDashboard(); } }, 10000);
             }
             setInterval(updateDashboard, 30000);
-            console.log('✅ StudyOS Pro v4.0 + Extras + Motor MICH integrados com sucesso.');
+            console.log('✅ StudyOS Pro v4.0 + Extras integrados com sucesso.');
         })();
     </script>
 	<script src="studyos_ultra.js"></script>
