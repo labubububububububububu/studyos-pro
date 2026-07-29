@@ -593,36 +593,34 @@
         <div class="main-content">
             <!-- HOME -->
             <div id="page-home" class="page active">
-               <div class="mission-card" id="missionCard">
-    <div class="label">🎯 MISSÃO 4.0 (Powered by MICH)</div>
-    <div class="title" id="missionTitle">Calculando...</div>
-    <div class="sub" id="missionSub">Bloco · Disciplina</div>
-    
-    <!-- Pomodoro simplificado para a missão -->
-    <div class="time" id="missionTime" style="margin-top:8px; font-weight:600; color:#a78bfa;">⏱️ Preparando motor...</div>
-    
-    <div class="action-group" style="margin-top: 20px;">
-        <button class="btn-action" id="startLessonBtn">▶ INICIAR TAREFA</button>
-        <button class="btn-action pause" id="pauseLessonBtn" style="display:none;">⏸ PAUSAR</button>
-        <button class="btn-action stop" id="stopLessonBtn" style="display:none;">✅ CONCLUIR TAREFA</button>
-        <button class="btn-action skip" id="skipLessonBtn" title="Forçar re-cálculo do motor">⏭ PULAR</button>
-    </div>
-
-    <div class="justify-box" id="justifyBox" style="text-align: left; padding: 16px; background: rgba(0,0,0,0.2);">
-        💡 <strong>Por que esta tarefa?</strong> <br>
-        <ul id="justifyList" style="margin-top:8px; margin-left: 16px; color: #a78bfa; font-size: 0.85rem;">
-            <!-- Preenchido via JS -->
-        </ul>
-    </div>
-
-    <!-- Fila de Próximas Missões -->
-    <div style="margin-top: 16px; text-align: left; padding: 12px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm);">
-        <h4 style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Fila do Algoritmo (Próximas)</h4>
-        <div id="proximasMissoesList" style="display: flex; flex-direction: column; gap: 8px;">
-            <!-- Preenchido via JS -->
-        </div>
-    </div>
-</div>
+                <div class="mission-card" id="missionCard">
+                    <div class="label">🎯 Missão de Hoje</div>
+                    <div class="title" id="missionTitle">Carregando...</div>
+                    <div class="sub" id="missionSub">Disciplina · Assunto</div>
+                    <div class="time" id="missionTime">⏱️ Tempo estimado: --</div>
+                    <div class="pomodoro-ring" id="pomodoroRing" style="--pomo-pct:100%;">25:00</div>
+                    <div class="pomodoro-controls">
+                        <button class="btn-glass" id="pomodoroStartBtn">▶ Iniciar</button>
+                        <button class="btn-glass" id="pomodoroPauseBtn" disabled>⏸ Pausar</button>
+                        <button class="btn-glass" id="pomodoroResetBtn">↺ Reset</button>
+                    </div>
+                    <div class="action-group">
+                        <button class="btn-action" id="startLessonBtn">▶ Iniciar Aula</button>
+                        <button class="btn-action pause" id="pauseLessonBtn" disabled>⏸ Pausar</button>
+                        <button class="btn-action stop" id="stopLessonBtn" disabled>⏹ Concluir</button>
+                        <button class="btn-action skip" id="skipLessonBtn" title="Pular esta missão">⏭ Pular</button>
+                        <button class="btn-action skip" id="voltarLessonBtn" title="Voltar para missão anterior" disabled>⏮ Voltar</button>
+                    </div>
+                    <div style="display:flex; gap:8px; justify-content:center; margin:8px 0; flex-wrap:wrap; align-items:center;">
+                        <span style="font-size:0.8rem; color:#6b7280;">Questões:</span>
+                        <input type="number" id="missionQuestFeitas" placeholder="Feitas" min="0" style="width:60px; padding:4px 8px; background:rgba(0,0,0,0.3); border:var(--border-light); color:#d1d5db; border-radius:8px; font-size:0.8rem; text-align:center;" />
+                        <input type="number" id="missionQuestAcertos" placeholder="Acertos" min="0" style="width:60px; padding:4px 8px; background:rgba(0,0,0,0.3); border:var(--border-light); color:#d1d5db; border-radius:8px; font-size:0.8rem; text-align:center;" />
+                    </div>
+                    <div class="justify-box" id="justifyBox">💡 <strong>Por que esta aula?</strong> Carregando justificativa...</div>
+                    <div class="anotacoes-mission">
+                        <textarea id="missionAnotacoes" placeholder="Anotações rápidas desta missão..."></textarea>
+                    </div>
+                </div>
                 <div class="indicators-grid" id="indicatorsGrid">
                     <div class="indicator-card"><div class="number" id="indDominio">0%</div><div class="label">Domínio geral</div></div>
                     <div class="indicator-card"><div class="number" id="indHorasEstudadas">0h</div><div class="label">Horas estudadas</div></div>
@@ -941,15 +939,7 @@
                         if (!AppState.extras) {
                             AppState.extras = { mapaCalor: {}, emocoes: [], picosProdutividade: {}, topicosCriticos: [], cronogramaReverso: null, desafiosDiarios: [], badges: [], metasSemanais: { aulas: 0, questoes: 0, horas: 0, cumpridas: false }, preferencias: { modoFoco: false, notificacoes: true, tema: 'dark', timerTipo: 'pomodoro' }, estatisticas: { diasEstudo: 0, mediaDiaria: 0, melhorDia: null, piorDia: null } };
                         }
-                        if (!AppState.mich) {
-    AppState.mich = {
-        creditos: { PRIORITARIA: 0, MEDIA: 0, BAIXA: 0, BAIXISSIMA: 0 },
-        rodadas: { PRIORITARIA: [], MEDIA: [], BAIXA: [], BAIXISSIMA: [] },
-        cadernoErros: [],
-        estatisticas: {}
-    };
-}
-						atualizarStreakEGamificacao();
+                        atualizarStreakEGamificacao();
                         return true;
                     }
                 } catch (e) { console.warn('Estado corrompido, resetando...'); }
@@ -959,13 +949,7 @@
 
             const resetState = () => {
                 AppState = {
-                    mich: {
-    creditos: { PRIORITARIA: 0, MEDIA: 0, BAIXA: 0, BAIXISSIMA: 0 },
-    rodadas: { PRIORITARIA: [], MEDIA: [], BAIXA: [], BAIXISSIMA: [] },
-    cadernoErros: [],
-    estatisticas: {} // Armazena dias sem contato, percentual etc.
-},
-					checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
+                    checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
                     leis: DEFAULT_LEIS.map(n => ({ nome: n, totalPaginas: 30, paginaAtual: 0, status: 'pendente', ultimaLeitura: null, anotacoes: '' })),
                     anotacoes: {}, expanded: {}, tempoEstudoHoje: 0, aulaAtiva: null, aulaPausada: false,
                     revisaoDatas: {}, revisaoNotas: {}, questoesAulas: {}, historicoCiclo: [],
@@ -1569,12 +1553,7 @@ const DecisionEngine = {
     // =========================
     pularMissao() {
         this._garantirEstruturas();
-		if (missaoSugeridaAtual && missaoSugeridaAtual.classe) {
-    // Pula para o final da fila (rotaciona) sem cobrar créditos
-    const classe = missaoSugeridaAtual.classe;
-    const discPulada = AppState.mich.rodadas[classe].shift();
-    AppState.mich.rodadas[classe].push(discPulada); 
-}
+
         AppState.historicoCiclo.push({
             modulo: AppState.ciclo?.moduloAtual || 'bloco1',
             data: this._agoraISO(),
@@ -1702,187 +1681,6 @@ const DecisionEngine = {
             ultimos7.push((AppState.sessoes || []).some(s => s.data === d));
         }
         return Math.round((ultimos7.filter(Boolean).length / 7) * 100);
-    }
-};
-			// ================================================================
-// MOTOR INTELIGENTE DE CICLO HIERÁRQUICO (MICH)
-// ================================================================
-const MICH = {
-    pesosClasse: { PRIORITARIA: 4, MEDIA: 2.5, BAIXA: 1.5, BAIXISSIMA: 1 },
-    custoBase: 9, // Soma dos pesos para manter o equilíbrio no desconto
-
-    _classificarDisciplina(nome) {
-        // Mapeia as disciplinas usando os pesos já existentes no DecisionEngine como base heurística inicial
-        const peso = DecisionEngine.pesos[nome] || 1;
-        if (peso >= 3) return 'PRIORITARIA';
-        if (peso >= 2) return 'MEDIA';
-        if (peso >= 1.5) return 'BAIXA';
-        return 'BAIXISSIMA';
-    },
-
-    _inicializarEstatisticas(disciplina) {
-        if (!AppState.mich.estatisticas[disciplina]) {
-            AppState.mich.estatisticas[disciplina] = {
-                ultimoEstudo: new Date('2020-01-01').toISOString(),
-                acertos: 0,
-                questoes: 0,
-                revisoesAtrasadas: 0
-            };
-        }
-        return AppState.mich.estatisticas[disciplina];
-    },
-
-    calcularIPD(disciplina) {
-        const stats = this._inicializarEstatisticas(disciplina);
-        const classe = this._classificarDisciplina(disciplina);
-        const pesoBase = this.pesosClasse[classe];
-        
-        const diasSemContato = Math.min(30, Math.floor((new Date() - new Date(stats.ultimoEstudo)) / (1000 * 60 * 60 * 24)));
-        const percAcerto = stats.questoes > 0 ? (stats.acertos / stats.questoes) * 100 : 50; // Se não tem histórico, assume 50%
-        const deficitAcerto = 100 - percAcerto;
-        
-        // IPD = Peso da classe * 10 + (Dias parados * 2) + Deficit de acertos + Penalidade de Revisões
-        let ipd = (pesoBase * 10) + (diasSemContato * 2) + (deficitAcerto * 0.5) + (stats.revisoesAtrasadas * 5);
-        return ipd;
-    },
-
-    _gerarNovaRodada(classe) {
-        // Encontra todas as disciplinas que pertencem a essa classe
-        const todasDisciplinas = Object.keys(DecisionEngine.pesos).filter(d => this._classificarDisciplina(d) === classe);
-        
-        // Calcula IPD para ordenação inteligente
-        const fila = todasDisciplinas.map(d => ({ nome: d, ipd: this.calcularIPD(d) }));
-        fila.sort((a, b) => b.ipd - a.ipd); // Maior IPD primeiro
-        
-        AppState.mich.rodadas[classe] = fila.map(f => f.nome);
-        saveState();
-    },
-
-    selecionarTarefa(disciplina) {
-        // Prioridade MICH: 1. Revisão Vencida -> 2. Lei Seca -> 3. Teoria Nova -> 4. Questões
-        const todasAulas = getAllLessonsFlat().filter(a => a.disciplineName === disciplina);
-        const concluidas = todasAulas.filter(a => AppState.checks[a.key]);
-        const pendentes = todasAulas.filter(a => !AppState.checks[a.key]);
-        const motivos = [];
-
-        // 1. Verificar Revisão
-        const revisaoVencida = concluidas.find(a => DecisionEngine._revisaoVencida(a.key));
-        if (revisaoVencida) {
-            motivos.push("Revisão programada vencida.");
-            return { tipo: 'Revisão', bloco: 'Bloco 4 (Revisão)', aula: revisaoVencida, motivos };
-        }
-
-        // 2. Verificar Questões (Heurística: a cada 3 aulas teóricas feitas, forçar bloco de questões)
-        if (concluidas.length > 0 && concluidas.length % 3 === 0 && AppState.mich.estatisticas[disciplina].ultimoEstudoTipo !== 'Questões') {
-            motivos.push("Ciclo de consolidação (Questões).");
-            // Usa a última aula concluída como alvo para questões
-            return { tipo: 'Questões', bloco: 'Bloco 2 (Prática)', aula: concluidas[concluidas.length - 1], motivos };
-        }
-
-        // 3. Teoria Nova
-        if (pendentes.length > 0) {
-            motivos.push("Avanço no edital (Teoria Nova).");
-            return { tipo: 'Teoria Nova', bloco: 'Bloco 1 (Teoria)', aula: pendentes[0], motivos };
-        }
-
-        // Fallback: Se não há mais teoria, focar em Questões e Revisão permanentemente
-        motivos.push("Edital concluído, foco em manutenção.");
-        return { tipo: 'Questões', bloco: 'Bloco 2 (Revisão Contínua)', aula: concluidas[Math.floor(Math.random() * concluidas.length)], motivos };
-    },
-
-    gerarFilaMissoes(quantidade = 4) {
-        // Acumula créditos (Simulação para prever fila, não altera o estado real)
-        let fila = [];
-        let creditosTemp = JSON.parse(JSON.stringify(AppState.mich.creditos));
-        let rodadasTemp = JSON.parse(JSON.stringify(AppState.mich.rodadas));
-
-        for (let i = 0; i < quantidade; i++) {
-            // Adiciona créditos diários
-            Object.keys(this.pesosClasse).forEach(c => creditosTemp[c] += this.pesosClasse[c]);
-            
-            // Escolhe a classe com maior saldo
-            const classeEscolhida = Object.keys(creditosTemp).reduce((a, b) => creditosTemp[a] > creditosTemp[b] ? a : b);
-            
-            // Verifica rodada temporária
-            if (!rodadasTemp[classeEscolhida] || rodadasTemp[classeEscolhida].length === 0) {
-                 // Simulando geração de rodada
-                 const todas = Object.keys(DecisionEngine.pesos).filter(d => this._classificarDisciplina(d) === classeEscolhida);
-                 rodadasTemp[classeEscolhida] = todas.sort((a,b) => Math.random() - 0.5); 
-            }
-            
-            const disciplinaEscolhida = rodadasTemp[classeEscolhida].shift();
-            creditosTemp[classeEscolhida] -= this.custoBase;
-
-            const tarefa = this.selecionarTarefa(disciplinaEscolhida);
-            fila.push({ classe: classeEscolhida, disciplina: disciplinaEscolhida, tarefa });
-        }
-        return fila;
-    },
-
-    gerarMissao() {
-        // 1. Acumular Créditos Universais
-        Object.keys(this.pesosClasse).forEach(c => AppState.mich.creditos[c] += this.pesosClasse[c]);
-
-        // 2. Escolher Classe (A mais necessitada proporcionalmente)
-        const classe = Object.keys(AppState.mich.creditos).reduce((a, b) => AppState.mich.creditos[a] > AppState.mich.creditos[b] ? a : b);
-
-        // 3. Gerenciar Rodada
-        if (!AppState.mich.rodadas[classe] || AppState.mich.rodadas[classe].length === 0) {
-            this._gerarNovaRodada(classe);
-        }
-        const disciplina = AppState.mich.rodadas[classe][0]; // Espia o próximo, não remove ainda
-
-        // 4. Selecionar Tarefa
-        const tarefa = this.selecionarTarefa(disciplina);
-        
-        // Gera motivos ricos para a UI
-        const stats = this._inicializarEstatisticas(disciplina);
-        const dias = Math.floor((new Date() - new Date(stats.ultimoEstudo)) / (1000 * 60 * 60 * 24));
-        const percAcertos = stats.questoes > 0 ? Math.round((stats.acertos/stats.questoes)*100) : 0;
-        
-        tarefa.motivos.unshift(`Classe ${classe} necessitava de processamento.`);
-        if (dias > 7) tarefa.motivos.push(`Disciplina sem contato há ${dias} dias.`);
-        if (percAcertos > 0 && percAcertos < 70) tarefa.motivos.push(`Índice de acerto crítico (${percAcertos}%).`);
-
-        return {
-            classe,
-            disciplina,
-            tarefa,
-            // Mantém compatibilidade com funções antigas do StudyOS
-            key: tarefa.aula.key,
-            title: tarefa.aula.title,
-            modulo: tarefa.tipo === 'Revisão' ? 'revisao' : 'bloco1'
-        };
-    },
-
-    finalizarTarefa(missaoExecutada) {
-        const disc = missaoExecutada.disciplina;
-        const classe = missaoExecutada.classe;
-
-        // 1. Atualizar Estatísticas MICH
-        const stats = this._inicializarEstatisticas(disc);
-        stats.ultimoEstudo = new Date().toISOString();
-        stats.ultimoEstudoTipo = missaoExecutada.tarefa.tipo;
-        
-        // Pega inputs da UI se houver (Questões resolvidas no card)
-        const feitas = parseInt(document.getElementById('missionQuestFeitas')?.value) || 0;
-        const acertos = parseInt(document.getElementById('missionQuestAcertos')?.value) || 0;
-        if (feitas > 0) {
-            stats.questoes += feitas;
-            stats.acertos += acertos;
-        }
-
-        // 2. Descontar Créditos da Classe
-        AppState.mich.creditos[classe] -= this.custoBase;
-
-        // 3. Atualizar Rodada (remover disciplina do topo)
-        AppState.mich.rodadas[classe].shift();
-
-        // 4. Marcar Check no Sistema Antigo (Retrocompatibilidade)
-        toggleLesson(missaoExecutada.key, true);
-        DecisionEngine.registrarConclusaoMissao(missaoExecutada.key, { tipo: missaoExecutada.tarefa.tipo === 'Revisão' ? 'revisao' : 'estudo' });
-
-        saveState();
     }
 };
             let missaoSugeridaAtual = null; // GUARDA A MISSÃO DA TELA AQUI
@@ -2053,12 +1851,6 @@ const MICH = {
                     }
                     salvarAnotacoesMissao(key);
                     salvarQuestoesMissao(key);
-					// Dentro de pararAula, depois de salvarQuestoesMissao(key):
-if (missaoSugeridaAtual) {
-    MICH.finalizarTarefa(missaoSugeridaAtual);
-} else {
-    DecisionEngine.avancarCiclo(); // fallback legado
-}
                     DecisionEngine.avancarCiclo();
                     saveState();
                 }
@@ -2150,67 +1942,81 @@ if (missaoSugeridaAtual) {
             };
 
             const renderHome = () => {
-    // 1. MICH assume o controle da geração da missão principal
-    const missaoMich = MICH.gerarMissao();
-    missaoSugeridaAtual = missaoMich; // Vínculo global
+                const missao = DecisionEngine.escolherMissao();
+                missaoSugeridaAtual = missao; // SALVA A MISSÃO CALCULADA NA VARIÁVEL GLOBAL
 
-    const titleEl = document.getElementById('missionTitle');
-    const subEl = document.getElementById('missionSub');
-    const timeEl = document.getElementById('missionTime');
-    const justifyList = document.getElementById('justifyList');
-    const startBtn = document.getElementById('startLessonBtn');
-    const pauseBtn = document.getElementById('pauseLessonBtn');
-    const stopBtn = document.getElementById('stopLessonBtn');
-    const skipBtn = document.getElementById('skipLessonBtn');
-    const filaList = document.getElementById('proximasMissoesList');
+                const titleEl = document.getElementById('missionTitle');
+                const subEl = document.getElementById('missionSub');
+                const timeEl = document.getElementById('missionTime');
+                const justifyEl = document.getElementById('justifyBox');
+                const startBtn = document.getElementById('startLessonBtn');
+                const pauseBtn = document.getElementById('pauseLessonBtn');
+                const stopBtn = document.getElementById('stopLessonBtn');
+                const skipBtn = document.getElementById('skipLessonBtn');
+                const voltarBtn = document.getElementById('voltarLessonBtn');
 
-    if (AppState.aulaAtiva) {
-        // Aula em andamento (mantém a lógica visual)
-        const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
-        if (block) {
-            const disc = block.disciplines[AppState.aulaAtiva.discIdx];
-            const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
-            titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado` : `⏳ Estudando agora`;
-            subEl.textContent = `${disc.name} · ${aulaTitle}`;
-            timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
-            
-            startBtn.style.display = 'none';
-            pauseBtn.style.display = 'inline-block';
-            stopBtn.style.display = 'inline-block';
-            skipBtn.style.display = 'none';
-            pauseBtn.textContent = AppState.aulaPausada ? '▶ CONTINUAR' : '⏸ PAUSAR';
-            justifyList.innerHTML = '<li>Foco total. Aula em andamento!</li>';
-        }
-        updateIndicators();
-        return;
-    }
+                voltarBtn.disabled = AppState.historicoCiclo.length === 0;
 
-    // Preparar nova missão na UI
-    titleEl.textContent = missaoMich.tarefa.aula.title;
-    subEl.textContent = `${missaoMich.tarefa.bloco} | ${missaoMich.disciplina}`;
-    timeEl.textContent = `Prioridade da Classe: ${missaoMich.classe}`;
-    
-    startBtn.style.display = 'inline-block';
-    pauseBtn.style.display = 'none';
-    stopBtn.style.display = 'none';
-    skipBtn.style.display = 'inline-block';
-    startBtn.textContent = missaoMich.tarefa.tipo === 'Revisão' ? '▶ INICIAR REVISÃO' : '▶ INICIAR TAREFA';
+                if (AppState.aulaAtiva) {
+                    const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
+                    if (block) {
+                        const disc = block.disciplines[AppState.aulaAtiva.discIdx];
+                        const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
+                        titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` : `⏳ Estudando: ${aulaTitle}`;
+                        subEl.textContent = `${disc.name} · ${block.name}`;
+                        timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
+                        startBtn.textContent = '▶ Estudando...';
+                        startBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        stopBtn.disabled = false;
+                        skipBtn.disabled = true;
+                        voltarBtn.disabled = true;
+                        pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
+                        justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
+                    } else {
+                        AppState.aulaAtiva = null;
+                        saveState();
+                        renderHome();
+                    }
+                    updateIndicators();
+                    return;
+                }
 
-    // Renderiza Justificativa MICH
-    justifyList.innerHTML = missaoMich.tarefa.motivos.map(m => `<li>✓ ${m}</li>`).join('');
+                if (!missao) {
+                    titleEl.textContent = '🎉 Parabéns! Todas as missões concluídas!';
+                    subEl.textContent = 'Continue revisando e praticando.';
+                    timeEl.textContent = '';
+                    startBtn.textContent = '▶ Iniciar Aula';
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    skipBtn.disabled = true;
+                    voltarBtn.disabled = AppState.historicoCiclo.length === 0;
+                    justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo do edital.</strong>';
+                } else {
+                    const isLei = missao.modulo === 'leis';
+                    const label = isLei ? '📜 Leitura de Lei' : missao.modulo === 'revisao' ? '🔄 Revisão' : missao.blockIdx === 0 ? '📚 Teoria' : '📝 Questões';
+                    titleEl.textContent = `${label}: ${missao.sub || missao.title}`;
+                    subEl.textContent = isLei ? 'Leis' : `${missao.disciplineName || missao.disciplina} · ${missao.assunto}`;
+                    timeEl.textContent = isLei ? '⏱️ Tempo estimado: ~30min' : '⏱️ Tempo estimado: ~2h30';
+                    startBtn.textContent = isLei ? '▶ Iniciar Leitura' : '▶ Iniciar Aula';
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    skipBtn.disabled = false;
+                    voltarBtn.disabled = AppState.historicoCiclo.length === 0;
+                    const just = DecisionEngine.gerarJustificativa(missao);
+                    justifyEl.innerHTML = `💡 <strong>Por que esta missão?</strong> ${just}`;
+                    const anotacoes = AppState.anotacoes[missao.key]?.texto || '';
+                    document.getElementById('missionAnotacoes').value = anotacoes;
+                    const q = AppState.questoesAulas[missao.key] || { feitas: 0, acertos: 0 };
+                    document.getElementById('missionQuestFeitas').value = q.feitas || '';
+                    document.getElementById('missionQuestAcertos').value = q.acertos || '';
+                }
+                updateIndicators();
+                renderWeeklyGoals();
+            };
 
-    // Preenche a fila de próximas missões simulando o algoritmo
-    const fila = MICH.gerarFilaMissoes(3);
-    filaList.innerHTML = fila.map((item, index) => 
-        `<div style="display:flex; justify-content:space-between; padding: 6px 10px; background: rgba(0,0,0,0.25); border-radius: 8px;">
-            <span><strong>${index + 1}. ${item.disciplina}</strong> <br> <span style="font-size:0.7rem; color:#6b7280;">${item.tarefa.tipo}</span></span>
-            <span style="font-size:0.7rem; color:#a78bfa;">${item.classe}</span>
-        </div>`
-    ).join('');
-
-    updateIndicators();
-    renderWeeklyGoals();
-};
             const updateIndicators = () => {
                 const all = getAllLessonsFlat();
                 const done = all.filter(i => AppState.checks[i.key]).length;
