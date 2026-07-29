@@ -825,7 +825,7 @@
 
     <script>
         // ================================================================
-        // STUDYOS PRO v4.0 + STUDYOS EXTRAS v4.0 (UNIFICADO)
+        // STUDYOS PRO v4.0 + STUDYOS EXTRAS v4.0 (UNIFICADO) + MICH INTEGRADO
         // ================================================================
         (function() {
             'use strict';
@@ -1062,7 +1062,6 @@ const DecisionEngine = {
         '⚪': { peso: 1.0, nome: 'Baixíssima' }
     },
 
-    // Mapeamento das disciplinas para as Classes do MICH
     disciplinasMapeamento: {
         'Administração Financeira e Orçamentária (AFO)': '🔴',
         'Contabilidade Pública': '🔴',
@@ -1083,103 +1082,176 @@ const DecisionEngine = {
         'Inglês': '⚪',
         'Ética no Serviço Público': '⚪',
         'Legislação': '⚪',
-        'Direito Administrativo (itens 14 à 16) - Prof. Paulo Sousa': '⚪' // Adicionado para cobrir todas
+        'Direito Administrativo (itens 14 à 16) - Prof. Paulo Sousa': '⚪'
     },
 
     agendaRevisao: [1, 3, 7, 14, 30],
+    ordemModulos: ['bloco1', 'bloco2', 'leis', 'revisao'],
 
     // =========================
-    // 2. INICIALIZAÇÃO DE ESTADO
+    // 2. UTILITÁRIOS ORIGINAIS (MANTIDOS)
     // =========================
-    _garantirMICH() {
-        // Inicializa a estrutura MICH dentro do AppState caso não exista
+    _clamp(v, min, max) { return Math.max(min, Math.min(max, v)); },
+    _norm(v, min, max) { if (max === min) return 0; return this._clamp((v - min) / (max - min), 0, 1); },
+    _diasEntre(a, b) { return Math.floor((new Date(a) - new Date(b)) / (1000 * 60 * 60 * 24)); },
+    _agoraISO() { return new Date().toISOString(); },
+    _getHistoricoEscolhasRecente(qtd = 12) { const hist = AppState.historicoCiclo || []; return hist.slice(Math.max(0, hist.length - qtd)); },
+    _contarEscolhasDisciplinaRecente(disciplina, qtd = 12) { const rec = this._getHistoricoEscolhasRecente(qtd); return rec.filter(x => x && x.disciplina === disciplina).length; },
+    _totalEscolhasRecentes(qtd = 12) { return this._getHistoricoEscolhasRecente(qtd).length || 1; },
+    _chaveAula(aula) { return aula?.key || `${aula?.blockId}|${aula?.discIdx}|${aula?.lessonIdx}`; },
+    _resolverAulaPorKey(key) { return getAllLessonsFlat().find(i => i.key === key) || null; },
+    _resolverAulaEntrada(aulaOuKey) { if (!aulaOuKey) return null; if (typeof aulaOuKey === 'string') return this._resolverAulaPorKey(aulaOuKey); return aulaOuKey; },
+    _diasSemRevisao(key) {
+        const datas = AppState.revisaoDatas?.[key];
+        if (!datas) return 999;
+        let ultima = null;
+        for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
+            if (datas[rev]) {
+                const d = new Date(datas[rev]);
+                if (!ultima || d > ultima) ultima = d;
+            }
+        }
+        return ultima ? Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)) : 999;
+    },
+    _contarRevisoesFeitas(key) {
+        const datas = AppState.revisaoDatas?.[key];
+        if (!datas) return 0;
+        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5'].filter(rev => !!datas[rev]).length;
+    },
+    _proximaRevisaoDias(key) {
+        const feitas = this._contarRevisoesFeitas(key);
+        return this.agendaRevisao[Math.min(feitas, this.agendaRevisao.length - 1)];
+    },
+    _revisaoVencida(key) {
+        const feitas = this._contarRevisoesFeitas(key);
+        if (feitas === 0) return true;
+        const ultimaDias = this._diasSemRevisao(key);
+        return ultimaDias >= this._proximaRevisaoDias(key);
+    },
+    _atualizarAgendaRevisao(aula) {
+        const key = this._chaveAula(aula);
+        if (!key) return;
+        AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || {};
+        const feitas = this._contarRevisoesFeitas(key);
+        const revNome = `rev${Math.min(feitas + 1, 5)}`;
+        AppState.revisaoDatas[key][revNome] = this._agoraISO();
+        AppState.reviewMeta = AppState.reviewMeta || {};
+        AppState.reviewMeta[key] = { ultimaConclusao: this._agoraISO(), proximaEmDias: this._proximaRevisaoDias(key) };
+    },
+    _registrarEscolha(aula) {
+        this._garantirEstruturas();
+        const modulo = aula.modulo || (aula.blockIdx === 0 ? 'bloco1' : aula.blockIdx === 1 ? 'bloco2' : aula.blockId) || 'desconhecido';
+        AppState.historicoCiclo.push({
+            modulo,
+            disciplina: aula.disciplineName || aula.tipo || aula.disciplina || 'N/A',
+            key: this._chaveAula(aula),
+            data: this._agoraISO()
+        });
+        if (AppState.historicoCiclo.length > 40) AppState.historicoCiclo.shift();
+        AppState.moduloStats[modulo] = (AppState.moduloStats[modulo] || 0) + 1;
+    },
+    _marcarAulaAtiva(aula) {
+        const resolvida = this._resolverAulaEntrada(aula);
+        if (!resolvida) return null;
+        AppState.aulaAtiva = { ...resolvida, disciplina: resolvida.disciplineName, assunto: resolvida.title.split(' - ')[0], sub: resolvida.title };
+        saveState();
+        return AppState.aulaAtiva;
+    },
+
+    // =========================
+    // 3. INICIALIZAÇÃO E INTEGRAÇÃO MICH
+    // =========================
+    _garantirEstruturas() {
+        AppState.historicoCiclo = AppState.historicoCiclo || [];
+        AppState.revisaoDatas = AppState.revisaoDatas || {};
+        AppState.reviewMeta = AppState.reviewMeta || {};
+        AppState.creditosCiclo = AppState.creditosCiclo || {};
+        AppState.moduloStats = AppState.moduloStats || { bloco1: 0, bloco2: 0, leis: 0, revisao: 0 };
+        AppState.missoesConcluidas = AppState.missoesConcluidas || {};
+
         if (!AppState.mich) {
             AppState.mich = {
                 creditos: { '🔴': 0, '🟠': 0, '🟡': 0, '⚪': 0 },
                 filas: { '🔴': [], '🟠': [], '🟡': [], '⚪': [] }
             };
         }
-        
-        // Mantém estruturas legadas para não quebrar outras partes do app
-        AppState.historicoCiclo = AppState.historicoCiclo || [];
-        AppState.revisaoDatas = AppState.revisaoDatas || {};
-        AppState.missoesConcluidas = AppState.missoesConcluidas || {};
     },
 
     // =========================
-    // 3. CAMADA TÁTICA: IP E FILAS (RODADAS)
+    // 4. CAMADA TÁTICA: IP E FILAS
     // =========================
+    _diasSemEstudoDisciplina(disciplina) {
+        const entry = (AppState.diario || []).filter(e => e.disciplina === disciplina).pop();
+        if (!entry) return 30;
+        const parts = entry.data.split('/');
+        if (parts.length === 3) {
+            const dataStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return Math.floor((new Date() - new Date(dataStr)) / (1000 * 60 * 60 * 24));
+        }
+        return 30;
+    },
+
+    _obterDominioGeralDisciplina(disciplina) {
+        const all = getAllLessonsFlat().filter(a => a.disciplineName === disciplina);
+        if (!all.length) return 0.5;
+        let feitas = 0; let acertos = 0;
+        all.forEach(a => {
+            const q = AppState.questoesAulas[a.key];
+            if (q) { feitas += (q.feitas || 0); acertos += (q.acertos || 0); }
+        });
+        if (feitas === 0) return 0.5;
+        return acertos / feitas;
+    },
+
+    _calcularAtrasoRevisoes(disciplina) {
+        const concluidas = getAllLessonsFlat().filter(i => i.disciplineName === disciplina && AppState.checks?.[i.key]);
+        let atrasos = 0;
+        concluidas.forEach(a => { if (this._revisaoVencida(a.key)) atrasos++; });
+        return atrasos;
+    },
+
     _calcularIP(disciplina) {
-        // Busca métricas
-        const dominio = this._obterDominioGeralDisciplina(disciplina); // Média de domínio
+        const dominio = this._obterDominioGeralDisciplina(disciplina);
         const diasSemEstudo = this._diasSemEstudoDisciplina(disciplina);
         const atrasoRev = this._calcularAtrasoRevisoes(disciplina);
-        
-        // Índice de Prioridade: quanto maior, mais urgente vai para o topo da rodada
-        // Peso base (10) + Fator Recência + Fator Atraso + Fator Dificuldade
         let ip = 10;
-        ip += Math.min(diasSemEstudo * 0.5, 15); // Até 15 pontos por tempo sem ver
-        ip += (atrasoRev * 2); // 2 pontos por cada revisão atrasada
-        ip += ((1 - dominio) * 20); // Até 20 pontos por baixo domínio
-
+        ip += Math.min(diasSemEstudo * 0.5, 15);
+        ip += (atrasoRev * 2);
+        ip += ((1 - dominio) * 20);
         return ip;
     },
 
     _novaRodada(classeId) {
-        // Pega todas as disciplinas que pertencem a esta classe
-        const disciplinas = Object.keys(this.disciplinasMapeamento)
-            .filter(d => this.disciplinasMapeamento[d] === classeId);
-
-        // Se a classe estiver vazia no edital, ignora
+        const disciplinas = Object.keys(this.disciplinasMapeamento).filter(d => this.disciplinasMapeamento[d] === classeId);
         if (disciplinas.length === 0) return [];
-
-        // Calcula o IP para cada disciplina e ordena decrescente
-        const comIP = disciplinas.map(d => ({
-            nome: d,
-            ip: this._calcularIP(d)
-        }));
-
+        const comIP = disciplinas.map(d => ({ nome: d, ip: this._calcularIP(d) }));
         comIP.sort((a, b) => b.ip - a.ip);
-
-        // Preenche a fila da classe
         AppState.mich.filas[classeId] = comIP.map(item => item.nome);
         saveState();
-        
         return AppState.mich.filas[classeId];
     },
 
     _obterProximaDisciplinaDaClasse(classeId) {
         let fila = AppState.mich.filas[classeId];
-        
-        // Se a rodada acabou (fila vazia), calcula o IP e gera nova rodada
-        if (!fila || fila.length === 0) {
-            fila = this._novaRodada(classeId);
-        }
-        
-        // Pega a primeira da fila (não remove ainda, só remove quando concluir a tarefa)
+        if (!fila || fila.length === 0) { fila = this._novaRodada(classeId); }
         return fila.length > 0 ? fila[0] : null;
     },
 
-    _avançarFilaDaClasse(classeId) {
+    _avancarFilaDaClasse(classeId) {
         if (AppState.mich.filas[classeId] && AppState.mich.filas[classeId].length > 0) {
-            AppState.mich.filas[classeId].shift(); // Remove a disciplina que acabou de ser estudada
+            AppState.mich.filas[classeId].shift();
             saveState();
         }
     },
 
     // =========================
-    // 4. CAMADA ESTRATÉGICA: CRÉDITOS E ESCOLHA DE CLASSE
+    // 5. CAMADA ESTRATÉGICA: CRÉDITOS
     // =========================
-    _escolherClasse() {
-        const creditos = AppState.mich.creditos;
+    _escolherClasse(creditosObj) {
         let classeEscolhida = '🔴';
         let maiorSaldo = -9999;
-
-        // Encontra a classe com maior saldo acumulado
-        for (const [classeId, saldo] of Object.entries(creditos)) {
-            // Verifica se a classe tem matérias ativas/pendentes antes de escolhê-la
-            // (Para evitar travar o sistema em uma classe 100% concluída)
-            if (saldo > maiorSaldo && this._classeTemTarefasPendentes(classeId)) {
+        for (const [classeId, saldo] of Object.entries(creditosObj)) {
+            if (saldo > maiorSaldo) {
                 maiorSaldo = saldo;
                 classeEscolhida = classeId;
             }
@@ -1188,182 +1260,19 @@ const DecisionEngine = {
     },
 
     _atualizarCreditos(classeExecutada) {
-        // Dá os ganhos normais para TODAS as classes por "rodada de tarefa"
         for (const [cId, dados] of Object.entries(this.classes)) {
             AppState.mich.creditos[cId] += dados.peso;
         }
-        
-        // Desconta o "custo" da classe que foi efetivamente executada
-        // Ex: Custo fixo de 4 para forçar o esgotamento do saldo e girar a roleta
-        const custoFixo = 4.0; 
-        AppState.mich.creditos[classeExecutada] -= custoFixo;
-        
+        AppState.mich.creditos[classeExecutada] -= 4.0;
         saveState();
     },
 
     // =========================
-    // 5. CAMADA OPERACIONAL: BUSCA DE TAREFA INTERNA
+    // 6. CAMADA OPERACIONAL: BUSCA
     // =========================
-    _buscarTarefaDaDisciplina(disciplina) {
-        // 1. Existe REVISÃO vencida desta disciplina?
-        const revisaoVencida = this._buscarRevisaoPorDisciplina(disciplina);
-        if (revisaoVencida) return { ...revisaoVencida, modulo: 'revisao' };
-
-        // 2. Existe QUESTÕES pendentes (Bloco 2)?
-        const questaoPendente = this._buscarAulaPorBloco(disciplina, 1);
-        if (questaoPendente) return { ...questaoPendente, modulo: 'bloco2' };
-
-        // 3. Existe LEI pendente? (Mapeamento simplificado)
-        // Se a disciplina for "Legislação", procura no módulo de leis
-        if (disciplina === 'Legislação' || disciplina.includes('Direito')) {
-            const leiPendente = this._buscarLeiPendente();
-            if (leiPendente) return { ...leiPendente, modulo: 'leis', disciplinaName: disciplina };
-        }
-
-        // 4. Existe TEORIA NOVA pendente (Bloco 1)?
-        const teoriaPendente = this._buscarAulaPorBloco(disciplina, 0);
-        if (teoriaPendente) return { ...teoriaPendente, modulo: 'bloco1' };
-
-        // Disciplina 100% concluída (não há mais teoria, questões e as revisões estão em dia)
-        return null; 
-    },
-
-    // =========================
-    // 6. MOTOR PRINCIPAL
-    // =========================
-    escolherMissao() {
-        this._garantirMICH();
-
-        // 0. Se já tem aula ativa, retorna ela
-        if (AppState.aulaAtiva) {
-            const found = this._resolverAulaPorKey(this._chaveAula(AppState.aulaAtiva));
-            if (found) return { ...found, isAtiva: true, modulo: AppState.aulaAtiva.modulo };
-            AppState.aulaAtiva = null;
-        }
-
-        // Tenta achar uma missão válida. Se a classe escolhida não tiver nada,
-        // força o sistema a procurar na próxima classe com saldo.
-        let tentativas = 0;
-        let classeAtual = this._escolherClasse();
-
-        while (tentativas < 4) {
-            const disciplinaDaVez = this._obterProximaDisciplinaDaClasse(classeAtual);
-            
-            if (disciplinaDaVez) {
-                const missao = this._buscarTarefaDaDisciplina(disciplinaDaVez);
-                
-                if (missao) {
-                    // Prepara o objeto para a interface
-                    missao.disciplina = missao.disciplineName || missao.disciplinaName || disciplinaDaVez;
-                    missao.assunto = missao.title ? missao.title.split(' - ')[0] : missao.nome;
-                    missao.sub = missao.title || missao.nome;
-                    missao.classeMICH = classeAtual; // Guarda a classe para descontar créditos depois
-                    return missao;
-                } else {
-                    // A disciplina está 100% em dia. Tira da fila e tenta a próxima da mesma classe.
-                    this._avançarFilaDaClasse(classeAtual);
-                    continue; 
-                }
-            }
-            
-            // Se chegou aqui, a classe atual não tem NENHUMA disciplina com pendência agora.
-            // Temporariamente zera o crédito dela para forçar buscar em outra classe.
-            AppState.mich.creditos[classeAtual] = -999; 
-            classeAtual = this._escolherClasse();
-            tentativas++;
-        }
-
-        return null; // Usuário zerou o edital inteiro e não há revisões!
-    },
-
-    registrarConclusaoMissao(aulaOuKey, options = {}) {
-        this._garantirMICH();
-        const aula = this._resolverAulaEntrada(aulaOuKey) || AppState.aulaAtiva;
-        if (!aula) return false;
-
-        const key = this._chaveAula(aula);
-        const tipo = options.tipo || aula.modulo || 'aula';
-        
-        // 1. Atualiza créditos da Classe que acabou de rodar
-        // Descobre qual era a classe baseada na disciplina da aula
-        const disciplinaReal = aula.disciplineName || aula.disciplina;
-        const classeExecutada = this.disciplinasMapeamento[disciplinaReal] || '🟠'; 
-        this._atualizarCreditos(classeExecutada);
-
-        // 2. Avança a fila circular desta classe (rodada tática)
-        // Isso impede a repetição imediata!
-        this._avançarFilaDaClasse(classeExecutada);
-
-        // 3. Registros padrão do sistema
-        AppState.missoesConcluidas[key] = { key, tipo, data: new Date().toISOString() };
-        if (tipo === 'revisao' || options.foiRevisao) {
-            this._atualizarAgendaRevisao(aula);
-        }
-
-        AppState.historicoCiclo.push({
-            modulo: tipo,
-            disciplina: disciplinaReal,
-            key: key,
-            data: new Date().toISOString()
-        });
-
-        saveState();
-        return true;
-    },
-
-    pularMissao() {
-        this._garantirMICH();
-        
-        // Pular significa avançar a fila tática sem ganhar créditos, 
-        // ou seja, joga a disciplina pro fim da fila daquela classe.
-        const missaoAtual = this.escolherMissao();
-        if (missaoAtual && missaoAtual.classeMICH) {
-            this._avançarFilaDaClasse(missaoAtual.classeMICH);
-        }
-
-        if (AppState.aulaAtiva) {
-            if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) clearInterval(aulaTimerInterval);
-            AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
-        }
-        
-        saveState();
-        return this.escolherMissao();
-    },
-
-    avancarCiclo() {
-        // No MICH, o "avançarCiclo" não gira os módulos duros (Bloco 1 -> Bloco 2).
-        // A lógica de avanço é gerida automaticamente pelos créditos em registrarConclusaoMissao.
-        // Essa função fica vazia para manter compatibilidade com botões da UI.
-    },
-    
-    voltarMissao() {
-        // Funcionalidade legada, requer recálculo de créditos complexo no MICH.
-        // Por segurança, apenas limpa a aula ativa.
-        if (AppState.aulaAtiva) {
-            AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
-            saveState();
-        }
-        return this.escolherMissao();
-    },
-
-    // =========================
-    // 7. FUNÇÕES AUXILIARES E DE DADOS
-    // =========================
-    _classeTemTarefasPendentes(classeId) {
-        const disciplinas = Object.keys(this.disciplinasMapeamento).filter(d => this.disciplinasMapeamento[d] === classeId);
-        for (let d of disciplinas) {
-            if (this._buscarTarefaDaDisciplina(d) !== null) return true;
-        }
-        return false;
-    },
-
     _buscarRevisaoPorDisciplina(disciplina) {
-        const concluidas = getAllLessonsFlat().filter(i => 
-            i.disciplineName === disciplina && AppState.checks?.[i.key]
-        );
+        const concluidas = getAllLessonsFlat().filter(i => i.disciplineName === disciplina && AppState.checks?.[i.key]);
         const vencidas = concluidas.filter(a => this._revisaoVencida(a.key));
-        
-        // Ordena pela mais atrasada
         vencidas.sort((a, b) => {
             return (this._diasSemRevisao(b.key) - this._proximaRevisaoDias(b.key)) - 
                    (this._diasSemRevisao(a.key) - this._proximaRevisaoDias(a.key));
@@ -1372,89 +1281,216 @@ const DecisionEngine = {
     },
 
     _buscarAulaPorBloco(disciplina, blockIdx) {
-        const pendentes = getAllLessonsFlat().filter(i => 
-            i.blockIdx === blockIdx && 
-            i.disciplineName === disciplina && 
-            !AppState.checks?.[i.key]
-        );
-        // Retorna a primeira na ordem do edital
+        const pendentes = getAllLessonsFlat().filter(i => i.blockIdx === blockIdx && i.disciplineName === disciplina && !AppState.checks?.[i.key]);
         return pendentes.length > 0 ? pendentes[0] : null;
     },
 
     _buscarLeiPendente() {
         const pendentes = (AppState.leis || []).filter(l => l.status !== 'concluido');
         if (!pendentes.length) return null;
-        // Ordena por data de leitura mais antiga
         pendentes.sort((a, b) => {
             const da = a.ultimaLeitura ? new Date(a.ultimaLeitura) : new Date('2020-01-01');
             const db = b.ultimaLeitura ? new Date(b.ultimaLeitura) : new Date('2020-01-01');
             return da - db;
         });
         const l = pendentes[0];
-        return { blockId: 'leis', key: `lei_${l.nome}`, title: l.nome, disciplineName: 'Leis' };
+        return { blockId: 'leis', key: `lei_${l.nome}`, title: l.nome, disciplineName: 'Leis', nome: l.nome, dados: l };
     },
 
-    _diasSemEstudoDisciplina(disciplina) {
-        const entry = (AppState.diario || []).filter(e => e.disciplina === disciplina).pop();
-        if (!entry) return 30;
-        const dataStr = entry.data.split('/').reverse().join('-'); // DD/MM/YYYY para YYYY-MM-DD
-        return Math.floor((new Date() - new Date(dataStr)) / (1000 * 60 * 60 * 24));
-    },
+    _buscarTarefaDaDisciplina(disciplina) {
+        const rev = this._buscarRevisaoPorDisciplina(disciplina);
+        if (rev) return { ...rev, modulo: 'revisao' };
 
-    _obterDominioGeralDisciplina(disciplina) {
-        // Média de acertos nas questões dessa disciplina
-        const keys = getAllLessonsFlat().filter(a => a.disciplineName === disciplina).map(a => a.key);
-        let feitas = 0; let acertos = 0;
-        keys.forEach(k => {
-            const q = AppState.questoesAulas[k];
-            if (q) { feitas += q.feitas || 0; acertos += q.acertos || 0; }
-        });
-        return feitas === 0 ? 0.5 : (acertos / feitas); // Neutro 50% se não há questões
-    },
+        const quest = this._buscarAulaPorBloco(disciplina, 1);
+        if (quest) return { ...quest, modulo: 'bloco2' };
 
-    _calcularAtrasoRevisoes(disciplina) {
-        const concluidas = getAllLessonsFlat().filter(i => i.disciplineName === disciplina && AppState.checks?.[i.key]);
-        let atrasos = 0;
-        concluidas.forEach(a => {
-            if (this._revisaoVencida(a.key)) atrasos++;
-        });
-        return atrasos;
-    },
-
-    // Funções utilitárias legadas que a interface usa
-    _chaveAula(aula) { return aula?.key || `${aula?.blockId}|${aula?.discIdx}|${aula?.lessonIdx}`; },
-    _resolverAulaPorKey(key) { return getAllLessonsFlat().find(i => i.key === key) || null; },
-    _resolverAulaEntrada(a) { if (!a) return null; if (typeof a === 'string') return this._resolverAulaPorKey(a); return a; },
-    _diasSemRevisao(key) {
-        const datas = AppState.revisaoDatas?.[key]; if (!datas) return 999;
-        let ultima = null;
-        for (let rev of ['rev1', 'rev2', 'rev3', 'rev4', 'rev5']) {
-            if (datas[rev]) { const d = new Date(datas[rev]); if (!ultima || d > ultima) ultima = d; }
+        if (disciplina === 'Legislação' || disciplina.includes('Direito')) {
+            const lei = this._buscarLeiPendente();
+            if (lei) return { ...lei, modulo: 'leis', disciplineName: disciplina };
         }
-        return ultima ? Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24)) : 999;
+
+        const teoria = this._buscarAulaPorBloco(disciplina, 0);
+        if (teoria) return { ...teoria, modulo: 'bloco1' };
+
+        return null;
     },
-    _contarRevisoesFeitas(key) {
-        const datas = AppState.revisaoDatas?.[key]; if (!datas) return 0;
-        return ['rev1', 'rev2', 'rev3', 'rev4', 'rev5'].filter(rev => !!datas[rev]).length;
+
+    // =========================
+    // 7. MOTOR PRINCIPAL EXPOSTO
+    // =========================
+    iniciarMissaoSelecionada(aulaOuKey) {
+        this._garantirEstruturas();
+        const aula = this._resolverAulaEntrada(aulaOuKey);
+        if (!aula) return null;
+        return this._marcarAulaAtiva(aula);
     },
-    _proximaRevisaoDias(key) { return this.agendaRevisao[Math.min(this._contarRevisoesFeitas(key), this.agendaRevisao.length - 1)]; },
-    _revisaoVencida(key) {
-        if (this._contarRevisoesFeitas(key) === 0) return true;
-        return this._diasSemRevisao(key) >= this._proximaRevisaoDias(key);
+
+    iniciarMissaoPorKey(key) { return this.iniciarMissaoSelecionada(key); },
+
+    escolherMissao() {
+        this._garantirEstruturas();
+
+        if (AppState.aulaAtiva) {
+            const found = this._resolverAulaPorKey(this._chaveAula(AppState.aulaAtiva));
+            if (found) return { ...found, disciplina: found.disciplineName, assunto: found.title.split(' - ')[0], sub: found.title, isAtiva: true, modulo: AppState.aulaAtiva.modulo };
+            AppState.aulaAtiva = null;
+            saveState();
+        }
+
+        let tentativas = 0;
+        let creditosTemp = { ...AppState.mich.creditos };
+
+        while (tentativas < 4) {
+            let classeAtual = this._escolherClasse(creditosTemp);
+            let disciplinaDaVez = this._obterProximaDisciplinaDaClasse(classeAtual);
+
+            if (disciplinaDaVez) {
+                let missao = this._buscarTarefaDaDisciplina(disciplinaDaVez);
+                if (missao) {
+                    missao.disciplina = missao.disciplineName || disciplinaDaVez;
+                    missao.assunto = missao.title ? missao.title.split(' - ')[0] : (missao.nome || disciplinaDaVez);
+                    missao.sub = missao.title || missao.nome;
+                    missao.classeMICH = classeAtual;
+                    return missao;
+                } else {
+                    this._avancarFilaDaClasse(classeAtual);
+                    continue;
+                }
+            }
+            creditosTemp[classeAtual] = -9999;
+            tentativas++;
+        }
+        return null;
     },
-    _atualizarAgendaRevisao(aula) {
-        const key = this._chaveAula(aula); if (!key) return;
-        AppState.revisaoDatas[key] = AppState.revisaoDatas[key] || {};
-        const feitas = this._contarRevisoesFeitas(key);
-        AppState.revisaoDatas[key][`rev${Math.min(feitas + 1, 5)}`] = new Date().toISOString();
+
+    registrarConclusaoMissao(aulaOuKey, options = {}) {
+        this._garantirEstruturas();
+        const aula = this._resolverAulaEntrada(aulaOuKey) || AppState.aulaAtiva;
+        if (!aula) return false;
+
+        const key = this._chaveAula(aula);
+        const tipo = options.tipo || aula.modulo || (aula.blockId === 'leis' ? 'leis' : 'aula');
+
+        AppState.missoesConcluidas[key] = { key, tipo, data: this._agoraISO() };
+
+        if (tipo === 'revisao' || options.foiRevisao === true) {
+            this._atualizarAgendaRevisao(aula);
+        }
+
+        const disciplinaReal = aula.disciplineName || aula.disciplina;
+        const classeExecutada = aula.classeMICH || this.disciplinasMapeamento[disciplinaReal] || '🟠';
+        this._atualizarCreditos(classeExecutada);
+        this._avancarFilaDaClasse(classeExecutada);
+
+        this._registrarEscolha(aula);
+        saveState();
+        return true;
     },
-    preverConclusaoBloco1() { return { data: '--/--/----', atraso: 0 }; }, // Simplificado para não quebrar a tela inicial
-    detectarFadiga() { return 'Normal'; },
-    consistenciaSemanal() { return 100; },
+
+    finalizarAulaAtivaComoRevisao() {
+        if (!AppState.aulaAtiva) return false;
+        const ok = this.registrarConclusaoMissao(AppState.aulaAtiva, { tipo: 'revisao', foiRevisao: true });
+        AppState.aulaAtiva = null; AppState.aulaPausada = false; saveState();
+        return ok;
+    },
+
+    finalizarAulaAtivaComoEstudo() {
+        if (!AppState.aulaAtiva) return false;
+        const ok = this.registrarConclusaoMissao(AppState.aulaAtiva, { tipo: 'estudo' });
+        AppState.aulaAtiva = null; AppState.aulaPausada = false; saveState();
+        return ok;
+    },
+
+    pularMissao() {
+        this._garantirEstruturas();
+        const missaoAtual = this.escolherMissao();
+        if (missaoAtual && missaoAtual.classeMICH) {
+            this._avancarFilaDaClasse(missaoAtual.classeMICH);
+        }
+        AppState.historicoCiclo.push({ modulo: AppState.ciclo?.moduloAtual || 'bloco1', data: this._agoraISO(), acao: 'pular' });
+        if (AppState.historicoCiclo.length > 40) AppState.historicoCiclo.shift();
+        
+        if (AppState.aulaAtiva) {
+            if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
+            AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+        }
+        saveState();
+        return this.escolherMissao();
+    },
+
+    voltarMissao() {
+        this._garantirEstruturas();
+        if (AppState.historicoCiclo.length > 0) {
+            const ultimo = AppState.historicoCiclo.pop();
+            const moduloAnterior = ultimo?.modulo;
+            if (moduloAnterior) AppState.ciclo.moduloAtual = moduloAnterior;
+            if (AppState.aulaAtiva) {
+                if (typeof aulaTimerInterval !== 'undefined' && aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
+                AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+            }
+            saveState();
+            return this.escolherMissao();
+        }
+        return null;
+    },
+
+    avancarCiclo() {
+        this._garantirEstruturas();
+        const ordem = this.ordemModulos;
+        const idx = ordem.indexOf(AppState.ciclo.moduloAtual || 'bloco1');
+        AppState.ciclo.moduloAtual = ordem[(idx + 1) % ordem.length];
+        saveState();
+    },
+
+    // =========================
+    // 8. INTERFACE & PREVISÕES (MANTIDAS)
+    // =========================
     gerarJustificativa(aula) {
-        return `Estratégia MICH: Disciplina alocada na fila de Classe ${aula.classeMICH || '?'}. Fluxo interno executado: ${aula.modulo === 'revisao' ? 'Revisão Prioritária' : aula.modulo === 'bloco2' ? 'Treino de Questões' : aula.modulo === 'leis' ? 'Lei Seca' : 'Avanço Teórico'}.`;
+        if (!aula) return 'Sem justificativa disponível.';
+        if (aula.modulo === 'leis') return 'Leitura pendente e prioritária para a disciplina.';
+        if (aula.modulo === 'revisao') {
+            const atraso = this._diasSemRevisao(aula.key) - this._proximaRevisaoDias(aula.key);
+            if (atraso > 0) return `Revisão vencida há ${atraso} dia(s) (Prioridade MICH).`;
+            return 'Revisão agendada no ciclo espaçado.';
+        }
+        const ip = aula.classeMICH ? `Classe ${aula.classeMICH} (via Motor MICH)` : '';
+        const fatores = [];
+        if (ip) fatores.push(ip);
+        const diasSem = this._diasSemEstudoDisciplina(aula.disciplineName);
+        if (diasSem > 7) fatores.push(`${diasSem} dias sem contato`);
+        return fatores.join('; ') || 'Sequência inteligente do MICH.';
+    },
+
+    preverConclusaoBloco1() {
+        const all = getAllLessonsFlat();
+        const bloco1 = all.filter(i => i.blockIdx === 0);
+        const total = bloco1.length;
+        const concluidos = bloco1.filter(i => AppState.checks?.[i.key]).length;
+        const restantes = total - concluidos;
+        if (restantes === 0) return { data: 'Concluído', atraso: 0, restantes, total };
+        const horasPorDia = AppState.student?.config?.horasPorDia || 4;
+        const tempoMedio = 2.5;
+        const diasNecessarios = Math.ceil((restantes * tempoMedio) / horasPorDia);
+        const dataPrevista = new Date(Date.now() + diasNecessarios * 86400000);
+        const atraso = Math.ceil((dataPrevista - CONFIG.diasProva) / 86400000);
+        return { data: dataPrevista.toLocaleDateString('pt-BR'), atraso, restantes, total };
+    },
+
+    detectarFadiga() {
+        const horasRecentes = (AppState.sessoes || []).slice(-7).reduce((s, e) => s + (e.duracao || 0), 0) / 60;
+        return horasRecentes > 25 ? 'Alta' : horasRecentes > 15 ? 'Média' : 'Baixa';
+    },
+
+    consistenciaSemanal() {
+        const ultimos7 = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(Date.now() - i * 86400000).toLocaleDateString('pt-BR');
+            ultimos7.push((AppState.sessoes || []).some(s => s.data === d));
+        }
+        return Math.round((ultimos7.filter(Boolean).length / 7) * 100);
     }
 };
+
             let missaoSugeridaAtual = null; // GUARDA A MISSÃO DA TELA AQUI
             let aulaTimerInterval = null;
             let aulaStartTime = 0;
@@ -1844,9 +1880,12 @@ const DecisionEngine = {
                         const originalLi = disc.lessons.indexOf(title);
                         const key = `${block.id}|${di}|${originalLi}`;
                         const checked = !!AppState.checks[key];
-                        const forget = DecisionEngine._diasSemEstudo({ key, title, disciplineName: disc.name });
+                        
+                        // Adaptação MICH para _diasSemEstudoDisciplina
+                        const forget = DecisionEngine._diasSemEstudoDisciplina(disc.name);
                         const forgetLabel = forget > 20 ? '🔴' : forget > 10 ? '🟡' : '🟢';
                         const forgetClass = forget > 20 ? 'low' : forget > 10 ? 'medium' : 'high';
+                        
                         const qData = AppState.questoesAulas[key] || { feitas: 0, acertos: 0 };
                         html += `<div class="lesson-item ${checked ? 'done' : ''}">
                             <input type="checkbox" ${checked ? 'checked' : ''} onchange="window.toggleLessonDirect('${key}', this.checked)" />
@@ -1933,7 +1972,7 @@ const renderRevisao = () => {
         reader.readAsText(file);
     };
 
-    // 2. FUNÇÃO LOCAL DE CÁLCULO DE DIAS (Não interfere no resto do seu app)
+    // 2. FUNÇÃO LOCAL DE CÁLCULO DE DIAS
     const calcularDiasSemRevisao = (key) => {
         const datas = AppState.revisaoDatas ? AppState.revisaoDatas[key] : null;
         
@@ -1993,7 +2032,8 @@ const renderRevisao = () => {
 
     concluidas.slice(0, 20).forEach(item => {
         const dias = calcularDiasSemRevisao(item.key);
-        const dominio = (typeof DecisionEngine !== 'undefined' && DecisionEngine._obterDominio) ? DecisionEngine._obterDominio(item) : 0;
+        // Adaptação MICH para domínio de revisão
+        const dominio = (typeof DecisionEngine !== 'undefined' && DecisionEngine._obterDominioGeralDisciplina) ? DecisionEngine._obterDominioGeralDisciplina(item.disciplineName) : 0.5;
         
         const classe = dias > 30 ? 'low' : dias > 15 ? 'medium' : 'high';
         
@@ -2909,7 +2949,7 @@ const renderRevisao = () => {
                 aulaTimerInterval = setInterval(() => { if (!AppState.aulaPausada) { AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000); saveState(); updateDashboard(); } }, 10000);
             }
             setInterval(updateDashboard, 30000);
-            console.log('✅ StudyOS Pro v4.0 + Extras integrados com sucesso.');
+            console.log('✅ StudyOS Pro v4.0 + Extras + Motor MICH integrados com sucesso.');
         })();
     </script>
 	<script src="studyos_ultra.js"></script>
