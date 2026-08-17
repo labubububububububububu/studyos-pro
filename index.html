@@ -456,6 +456,42 @@
         }
         .btn-anotacoes:hover { background: rgba(255, 255, 255, 0.04); color: #d1d5db; }
         .text-muted { color: #4b5563; }
+
+        /* ============================================================
+           ANOTAÇÕES POR LEI
+           ============================================================ */
+        .lei-anotacoes {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px 12px;
+            min-height: 72px;
+            resize: vertical;
+            background: rgba(0, 0, 0, 0.22);
+            border: var(--border-light);
+            border-radius: 12px;
+            color: #d1d5db;
+            font-size: 0.8rem;
+            line-height: 1.45;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .lei-anotacoes::placeholder {
+            color: #4b5563;
+        }
+
+        .lei-anotacoes:focus {
+            border-color: rgba(124, 58, 237, 0.45);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .lei-anotacoes-status {
+            font-size: 0.65rem;
+            color: #4b5563;
+            margin-top: 4px;
+            min-height: 14px;
+        }
+
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -3391,34 +3427,49 @@ const renderRevisao = () => {
                     ).toLocaleDateString('pt-BR')
                     : 'Nunca';
 
+            // Usa o índice real de AppState.leis para manter a anotação
+            // vinculada à lei correta mesmo quando os blocos são filtrados.
+            const idx = AppState.leis.indexOf(lei);
+            const anotacao = lei.anotacoes || '';
+
             html += `
-                <div class="lesson-item">
+                <div class="lesson-item" style="display:block; padding:12px 0;">
 
-                    <span class="lesson-title">
-                        ${lei.nome}
-                    </span>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span class="lesson-title">
+                            ${lei.nome}
+                        </span>
 
-                    <span>
-                        ⏱️ ${tempo} min
-                    </span>
+                        <span>
+                            ⏱️ ${tempo} min
+                        </span>
 
-                    <span>
-                        🔄 ${sessoes} sessão(ões)
-                    </span>
+                        <span>
+                            🔄 ${sessoes} sessão(ões)
+                        </span>
 
-                    <span>
-                        📅 ${ultima}
-                    </span>
+                        <span>
+                            📅 ${ultima}
+                        </span>
 
-                    <span>
-                        ${
-                            lei.status === 'concluido'
-                                ? '✅'
-                                : lei.status === 'andamento'
-                                    ? '⏳'
-                                    : '⏹'
-                        }
-                    </span>
+                        <span>
+                            ${
+                                lei.status === 'concluido'
+                                    ? '✅'
+                                    : lei.status === 'andamento'
+                                        ? '⏳'
+                                        : '⏹'
+                            }
+                        </span>
+                    </div>
+
+                    <textarea
+                        class="lei-anotacoes"
+                        data-lei-index="${idx}"
+                        placeholder="📝 Anotações desta lei... (ex.: artigos importantes, pegadinhas, jurisprudência, pontos para revisar)"
+                        oninput="window.atualizarAnotacaoLei(${idx}, this.value)"
+                    >${anotacao}</textarea>
+                    <div class="lei-anotacoes-status" id="leiAnotacaoStatus_${idx}"></div>
 
                 </div>
             `;
@@ -3431,6 +3482,34 @@ const renderRevisao = () => {
         html ||
         '<p class="text-muted">Nenhuma lei cadastrada.</p>';
 };
+
+            // Atualiza a anotação imediatamente no estado em memória e salva
+            // no localStorage com pequeno debounce. Assim, o texto já estará
+            // presente no JSON se o usuário exportar logo após digitar.
+            const _timersAnotacoesLeis = {};
+
+            window.atualizarAnotacaoLei = (idx, texto) => {
+                const lei = AppState.leis[idx];
+                if (!lei) return;
+
+                lei.anotacoes = texto;
+
+                const statusEl = document.getElementById(`leiAnotacaoStatus_${idx}`);
+                if (statusEl) {
+                    statusEl.textContent = 'Salvando...';
+                }
+
+                clearTimeout(_timersAnotacoesLeis[idx]);
+                _timersAnotacoesLeis[idx] = setTimeout(() => {
+                    saveState();
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Salvo';
+                        setTimeout(() => {
+                            if (statusEl) statusEl.textContent = '';
+                        }, 1200);
+                    }
+                }, 400);
+            };
 
             window.marcarLeituraLei = (idx) => {
                 const lei = AppState.leis[idx];
