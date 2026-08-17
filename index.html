@@ -541,9 +541,134 @@
             .flashcard { height: 150px; }
             .mission-card .title { font-size: 1.3rem; }
         }
+/* ============================================================
+   MISSÃO DE HOJE — AULAS ELEGÍVEIS DA CLASSE
+   ============================================================ */
+
+.mission-options {
+    margin-top: 16px;
+    text-align: left;
+    background: rgba(255,255,255,0.015);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.mission-options-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mission-options-title {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #d1d5db;
+}
+
+.mission-options-meta {
+    font-size: .7rem;
+    color: #6b7280;
+}
+
+.mission-options-body {
+    display: none;
+    padding: 0 12px 12px;
+}
+
+.mission-options-body.open {
+    display: block;
+}
+
+.mission-discipline {
+    margin-top: 8px;
+    border: 1px solid rgba(255,255,255,.03);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.mission-discipline-header {
+    padding: 9px 12px;
+    background: rgba(255,255,255,.02);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.mission-discipline-name {
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.mission-discipline-frequency {
+    font-size: .65rem;
+    color: #6b7280;
+}
+
+.mission-lesson-option {
+    width: 100%;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,.025);
+    background: transparent;
+    color: #d1d5db;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.mission-lesson-option:hover {
+    background: rgba(124,58,237,.08);
+}
+
+.mission-lesson-option.recommended {
+    background: rgba(124,58,237,.07);
+}
+
+.mission-lesson-option.selected {
+    background: rgba(74,222,128,.07);
+    border-left: 3px solid #4ade80;
+}
+
+.mission-lesson-name {
+    flex: 1;
+    font-size: .76rem;
+}
+
+.mission-lesson-meta {
+    font-size: .63rem;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.mission-recommended {
+    color: #a78bfa;
+    font-size: .62rem;
+    font-weight: 700;
+}
+
+.mission-frequency-low {
+    color: #f87171;
+}
+
+.mission-frequency-medium {
+    color: #fbbf24;
+}
+
+.mission-frequency-high {
+    color: #4ade80;
+}
     </style>
 </head>
 <body>
+
     <div class="app" id="app">
         <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
@@ -822,8 +947,63 @@
             </div>
         </div>
     </div>
+<!-- MODAL EDIÇÃO DIÁRIO (AMPLIADO) -->
+<div class="modal-overlay" id="modalDiario">
+    <div class="modal-box">
+        <span class="close-modal" id="closeModalDiario">&times;</span>
+        <h3>✏️ Editar Registro de Estudo</h3>
+        <div class="modal-body">
+            <input type="hidden" id="diarioEditIndex" />
 
-    <script>
+            <label>Data</label>
+            <input type="text" id="diarioEditData" placeholder="DD/MM/AAAA" style="width:100%; margin:8px 0;" />
+
+            <label>Hora</label>
+            <input type="text" id="diarioEditHora" placeholder="HH:MM" style="width:100%; margin:8px 0;" />
+
+            <div id="diarioCamposPadrao">
+                <label>Bloco</label>
+                <input type="text" id="diarioEditBloco" style="width:100%; margin:8px 0;" />
+
+                <label>Disciplina</label>
+                <input type="text" id="diarioEditDisciplina" style="width:100%; margin:8px 0;" />
+
+                <label>Aula</label>
+                <input type="text" id="diarioEditAula" style="width:100%; margin:8px 0;" />
+            </div>
+
+            <div id="diarioCamposLei" style="display:none;">
+                <label>Lei</label>
+                <input type="text" id="diarioEditLei" style="width:100%; margin:8px 0;" />
+
+                <label>Bloco da Lei</label>
+                <input type="number" id="diarioEditBlocoLei" min="1" max="3" style="width:100%; margin:8px 0;" />
+
+                <label>Prioridade</label>
+                <select id="diarioEditPrioridade" style="width:100%; margin:8px 0;">
+                    <option value="alta">Alta</option>
+                    <option value="media">Média</option>
+                    <option value="baixa">Baixa</option>
+                </select>
+            </div>
+
+            <!-- NOVO: campo de duração (comum a todos) -->
+            <label>Duração (minutos)</label>
+            <input type="number" id="diarioEditDuracao" min="0" style="width:100%; margin:8px 0;" value="0" />
+
+            <!-- NOVO: questões para aulas normais -->
+            <div id="diarioCamposQuestoes" style="display:none;">
+                <label>Questões Feitas</label>
+                <input type="number" id="diarioEditQuestFeitas" min="0" style="width:100%; margin:8px 0;" value="0" />
+
+                <label>Questões Acertos</label>
+                <input type="number" id="diarioEditQuestAcertos" min="0" style="width:100%; margin:8px 0;" value="0" />
+            </div>
+
+            <button class="btn-glass primary" id="salvarDiarioEditBtn">💾 Salvar Alterações</button>
+        </div>
+    </div>
+</div>    <script>
         // ================================================================
         // STUDYOS PRO v4.0 + STUDYOS EXTRAS v4.0 (UNIFICADO)
         // ================================================================
@@ -872,15 +1052,64 @@
                 ]
             }];
 
-            const DEFAULT_LEIS = [
-                'Decreto nº 10.160/2019', 'Decreto nº 10.332/2020', 'Decreto nº 9.203/2017',
-                'Constituição Federal/88', 'Lei nº 8.112/1990', 'Lei nº 13.460/2018',
-                'Lei nº 13.303/2016', 'Decreto nº 8.945/2016', 'Lei nº 8.429/1992', 'Lei nº 9.784/1999',
-                'Lei nº 14.133/2021', 'Decreto nº 1.171/1994', 'Decreto nº 6.029/2007', 'Lei nº 12.813/2013',
-                'Lei nº 12.527/2011', 'Decreto nº 7.724/2012', 'Decreto nº 8.777/2016', 'Lei nº 10.180/2001',
-                'Decreto nº 3.591/2000', 'MOT 2017', 'Lei nº 4.320/1964', 'LC nº 101/2000',
-                'NBC TSP', 'Portaria STN nº 518/2018', 'Decreto nº 9.834/2019'
-            ];
+const DEFAULT_LEIS = [
+    // ============================================================
+    // BLOCO 1 — ALTA PRIORIDADE / CORE
+    // ============================================================
+    { nome: 'Constituição Federal/88', prioridade: 'alta', bloco: 1 },
+    { nome: 'Lei nº 8.112/1990', prioridade: 'alta', bloco: 1 },
+    { nome: 'Lei nº 14.133/2021', prioridade: 'alta', bloco: 1 },
+    { nome: 'Lei nº 8.429/1992', prioridade: 'alta', bloco: 1 },
+    { nome: 'Lei nº 9.784/1999', prioridade: 'alta', bloco: 1 },
+    { nome: 'Lei nº 4.320/1964', prioridade: 'alta', bloco: 1 },
+    { nome: 'LC nº 101/2000', prioridade: 'alta', bloco: 1 },
+
+    // ============================================================
+    // BLOCO 2 — MÉDIA PRIORIDADE / ESPECÍFICAS
+    // ============================================================
+    { nome: 'Lei nº 12.527/2011', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 7.724/2012', prioridade: 'media', bloco: 2 },
+    { nome: 'Lei nº 13.460/2018', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 9.203/2017', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 9.834/2019', prioridade: 'media', bloco: 2 },
+    { nome: 'Lei nº 13.303/2016', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 8.945/2016', prioridade: 'media', bloco: 2 },
+    { nome: 'Lei nº 10.180/2001', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 3.591/2000', prioridade: 'media', bloco: 2 },
+    { nome: 'NBC TSP (Normas Contábeis)', prioridade: 'media', bloco: 2 },
+    { nome: 'Portaria STN nº 518/2018', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 1.171/1994', prioridade: 'media', bloco: 2 },
+    { nome: 'Decreto nº 6.029/2007', prioridade: 'media', bloco: 2 },
+    { nome: 'Lei nº 12.813/2013', prioridade: 'media', bloco: 2 },
+
+    // ============================================================
+    // BLOCO 3 — MENOR PRIORIDADE / COMPLEMENTAR
+    // ============================================================
+    { nome: 'Decreto nº 10.160/2019', prioridade: 'baixa', bloco: 3 },
+    { nome: 'Decreto nº 10.332/2020', prioridade: 'baixa', bloco: 3 },
+    { nome: 'Decreto nº 8.777/2016', prioridade: 'baixa', bloco: 3 },
+    { nome: 'MOT 2017', prioridade: 'baixa', bloco: 3 }
+];
+
+const criarEstadoLei = (lei) => ({
+    nome: lei.nome,
+    prioridade: lei.prioridade || 'media',
+    bloco: lei.bloco || 2,
+
+    // Mantidos para compatibilidade com o sistema antigo
+    totalPaginas: lei.totalPaginas || 0,
+    paginaAtual: lei.paginaAtual || 0,
+
+    status: lei.status || 'pendente',
+
+    // NOVO: estudo passa a ser medido em tempo
+    tempoTotal: lei.tempoTotal || 0,
+    sessoes: lei.sessoes || 0,
+    ultimaLeitura: lei.ultimaLeitura || null,
+    ultimaSessaoMinutos: lei.ultimaSessaoMinutos || 0,
+
+    anotacoes: lei.anotacoes || ''
+});
 
             const CONFIG = {
                 estrategias: {
@@ -896,7 +1125,7 @@
             let AppState = {
                 checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
                 leis: [], anotacoes: {}, expanded: {}, tempoEstudoHoje: 0,
-                aulaAtiva: null, aulaPausada: false, revisaoDatas: {}, revisaoNotas: {},
+                aulaAtiva: null, aulaPausada: false, leiAtiva: null, leiPausada: false, revisaoDatas: {}, revisaoNotas: {},
                 questoesAulas: {}, historicoCiclo: [],
                 student: {
                     digitalTwin: {},
@@ -930,8 +1159,33 @@
                     if (saved) {
                         const parsed = JSON.parse(saved);
                         AppState = deepMerge(AppState, parsed);
+                        // Migração/normalização das leis para o modelo baseado em tempo
+                        if (!Array.isArray(AppState.leis)) AppState.leis = [];
+
+                        const leisSalvas = AppState.leis;
+                        const leisNormalizadas = leisSalvas.map((leiSalva, index) => {
+                            const nomeSalvo = typeof leiSalva === 'string' ? leiSalva : leiSalva?.nome;
+                            const cadastro = DEFAULT_LEIS.find(l => l.nome === nomeSalvo) || DEFAULT_LEIS[index];
+                            const base = typeof leiSalva === 'object' && leiSalva ? leiSalva : {};
+                            return criarEstadoLei({
+                                ...base,
+                                nome: cadastro?.nome || nomeSalvo,
+                                prioridade: cadastro?.prioridade || base.prioridade || 'media',
+                                bloco: cadastro?.bloco || base.bloco || 2
+                            });
+                        }).filter(l => l.nome);
+
+                        const nomesExistentes = new Set(leisNormalizadas.map(l => l.nome));
+                        DEFAULT_LEIS.forEach(cadastro => {
+                            if (!nomesExistentes.has(cadastro.nome)) {
+                                leisNormalizadas.push(criarEstadoLei(cadastro));
+                            }
+                        });
+                        AppState.leis = leisNormalizadas;
+                        AppState.leiAtiva = AppState.leiAtiva || null;
+                        AppState.leiPausada = AppState.leiPausada || false;
+
                         if (!AppState.data?.length) AppState.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-                        if (!AppState.leis?.length) AppState.leis = DEFAULT_LEIS.map(n => ({ nome: n, totalPaginas: 30, paginaAtual: 0, status: 'pendente', ultimaLeitura: null, anotacoes: '' }));
                         if (!AppState.flashcards) AppState.flashcards = [];
                         if (!AppState.questoesAulas) AppState.questoesAulas = {};
                         if (!AppState.historicoCiclo) AppState.historicoCiclo = [];
@@ -950,7 +1204,18 @@
             const resetState = () => {
                 AppState = {
                     checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
-                    leis: DEFAULT_LEIS.map(n => ({ nome: n, totalPaginas: 30, paginaAtual: 0, status: 'pendente', ultimaLeitura: null, anotacoes: '' })),
+                    leis: DEFAULT_LEIS.map(criarEstadoLei),
+anotacoes: {},
+expanded: {},
+tempoEstudoHoje: 0,
+
+aulaAtiva: null,
+aulaPausada: false,
+
+leiAtiva: null,
+leiPausada: false,
+
+revisaoDatas: {},
                     anotacoes: {}, expanded: {}, tempoEstudoHoje: 0, aulaAtiva: null, aulaPausada: false,
                     revisaoDatas: {}, revisaoNotas: {}, questoesAulas: {}, historicoCiclo: [],
                     student: {
@@ -1404,26 +1669,296 @@ const Missao4Engine = {
         };
     },
 
-    _escolherLeiInteligente() {
-        const pendentes = (AppState.leis || []).filter(l => l.status !== 'concluido');
-        if (!pendentes.length) return null;
-        pendentes.sort((a, b) => new Date(a.ultimaLeitura || '2020-01-01') - new Date(b.ultimaLeitura || '2020-01-01'));
-        return { blockIdx: -1, key: `lei_${pendentes[0].nome}`, title: pendentes[0].nome, modulo: 'leis', tipo: 'Leis', disciplineName: 'Leis' };
-    },
+    // ============================================================
+// LEIS — SELEÇÃO INTELIGENTE + REGISTRO DE SESSÃO
+// ============================================================
 
-    _escolherRevisaoInteligente() {
-        const vencidas = getAllLessonsFlat().filter(i => AppState.checks?.[i.key] && this._revisaoVencida(i.key));
-        if (!vencidas.length) return null;
+_escolherLeiInteligente() {
 
-        vencidas.sort((a, b) => {
-            const atrasoA = this._diasSemRevisao(a.key) - this._proximaRevisaoDias(a.key);
-            const atrasoB = this._diasSemRevisao(b.key) - this._proximaRevisaoDias(b.key);
-            if (atrasoB !== atrasoA) return atrasoB - atrasoA;
-            return this._obterDominio(a) - this._obterDominio(b);
-        });
+    const leis = (AppState.leis || [])
+        .filter(lei => lei.status !== 'concluido');
 
-        return { ...vencidas[0], disciplina: vencidas[0].disciplineName, assunto: vencidas[0].title.split(' - ')[0], sub: vencidas[0].title, modulo: 'revisao' };
-    },
+    if (!leis.length) return null;
+
+    const agora = new Date();
+
+    // ------------------------------------------------------------
+    // Quantos dias se passaram desde o último contato?
+    // Nunca estudada = 30 dias de prioridade de recência
+    // ------------------------------------------------------------
+    const diasDesdeUltimaLeitura = (lei) => {
+
+        if (!lei.ultimaLeitura) {
+            return 30;
+        }
+
+        const ultima =
+            new Date(lei.ultimaLeitura);
+
+        const dias = Math.floor(
+            (agora - ultima) /
+            (1000 * 60 * 60 * 24)
+        );
+
+        return Math.max(0, Math.min(30, dias));
+    };
+
+    // ------------------------------------------------------------
+    // Quantas vezes a lei foi estudada nos últimos 14 dias?
+    // ------------------------------------------------------------
+    const sessoesRecentes = (lei) => {
+
+        return (AppState.diario || []).filter(registro => {
+
+            if (registro.tipo !== 'lei') return false;
+
+            if (registro.lei !== lei.nome) return false;
+
+            if (!registro.data) return false;
+
+            const partes =
+                registro.data.split('/');
+
+            if (partes.length !== 3) {
+                return false;
+            }
+
+            const [dia, mes, ano] = partes;
+
+            const data =
+                new Date(
+                    `${ano}-${mes}-${dia}T12:00:00`
+                );
+
+            const diferenca =
+                Math.floor(
+                    (agora - data) /
+                    (1000 * 60 * 60 * 24)
+                );
+
+            return diferenca >= 0 &&
+                   diferenca <= 14;
+        }).length;
+    };
+
+    // ------------------------------------------------------------
+    // PESO DOS BLOCOS
+    //
+    // Bloco 1 = Core
+    // Bloco 2 = Específicas
+    // Bloco 3 = Complementar
+    // ------------------------------------------------------------
+    const pesoBloco = {
+        1: 100,
+        2: 60,
+        3: 25
+    };
+
+    // ------------------------------------------------------------
+    // CALCULA A PONTUAÇÃO DE CADA LEI
+    // ------------------------------------------------------------
+    const calcularScore = (lei) => {
+
+        const peso =
+            pesoBloco[lei.bloco] || 25;
+
+        const dias =
+            diasDesdeUltimaLeitura(lei);
+
+        const recentes =
+            sessoesRecentes(lei);
+
+        const tempoTotal =
+            Number(lei.tempoTotal || 0);
+
+        // Quanto mais tempo sem estudar,
+        // maior a pontuação.
+        const bonusRecencia =
+            dias * 2;
+
+        // Penaliza excesso de estudo recente.
+        const penalidadeFrequencia =
+            recentes * 12;
+
+        // Pequeno bônus para leis que receberam
+        // pouco tempo historicamente.
+        const bonusPoucoEstudada =
+            Math.max(
+                0,
+                60 - (tempoTotal / 10)
+            );
+
+        return (
+            peso +
+            bonusRecencia +
+            bonusPoucoEstudada -
+            penalidadeFrequencia
+        );
+    };
+
+    // ------------------------------------------------------------
+    // RANKING
+    // ------------------------------------------------------------
+    const ranking = leis
+        .map(lei => ({
+            lei: lei,
+            score: calcularScore(lei)
+        }))
+        .sort((a, b) => b.score - a.score);
+
+    if (!ranking.length) {
+        return null;
+    }
+
+    const escolhida =
+        ranking[0];
+
+    const lei =
+        escolhida.lei;
+
+    // ------------------------------------------------------------
+    // OBJETO DA MISSÃO
+    // ------------------------------------------------------------
+    return {
+
+        blockIdx: -1,
+
+        key:
+            `lei_${lei.nome}`,
+
+        title:
+            lei.nome,
+
+        sub:
+            lei.nome,
+
+        modulo:
+            'leis',
+
+        tipo:
+            'Leis',
+
+        disciplineName:
+            'Leis',
+
+        prioridade:
+            lei.prioridade,
+
+        blocoLei:
+            lei.bloco,
+
+        scoreLei:
+            Math.round(
+                escolhida.score
+            ),
+
+        // A missão de legislação é baseada em TEMPO.
+        tempoMissao:
+            30,
+
+        tempoTotalLei:
+            Number(
+                lei.tempoTotal || 0
+            ),
+
+        sessoesLei:
+            Number(
+                lei.sessoes || 0
+            ),
+
+        ultimaLeitura:
+            lei.ultimaLeitura || null
+    };
+},
+
+
+// ============================================================
+// REGISTRAR SESSÃO DE LEI
+//
+// Esta função NÃO conclui a lei.
+//
+// Ela registra apenas:
+// "estudei X minutos desta lei".
+//
+// Exemplo:
+// Lei 8.112 → 90 min acumulados
+// nova sessão de 30 min
+// resultado → 120 min acumulados
+// ============================================================
+
+registrarSessaoLei(leiNome, minutos) {
+    if (!leiNome || minutos <= 0) return;
+
+    const lei = AppState.leis.find(l => l.nome === leiNome);
+    if (!lei) return;
+
+    const agora = new Date();
+
+    // Soma tempo e incrementa sessões
+    lei.tempoTotal = Number(lei.tempoTotal || 0) + minutos;
+    lei.sessoes = Number(lei.sessoes || 0) + 1;
+    lei.ultimaSessaoMinutos = minutos;
+    lei.ultimaLeitura = agora.toISOString();
+    lei.status = 'estudada';
+
+    // Registra no diário
+    AppState.diario.push({
+        tipo: 'lei',
+        lei: lei.nome,
+        data: agora.toLocaleDateString('pt-BR'),
+        hora: agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        duracao: minutos,
+        blocoLei: lei.bloco,
+        prioridade: lei.prioridade
+    });
+
+    // ADICIONADO: registra a sessão para contabilizar horas no Progresso
+    AppState.sessoes.push({
+        data: agora.toLocaleDateString('pt-BR'),
+        inicio: agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        duracao: minutos,
+        tipo: 'lei'
+    });
+
+    registrarAtividade('leitura', minutos);
+    saveState();
+},
+
+
+// ============================================================
+// DAQUI PARA BAIXO CONTINUA O SEU CÓDIGO ORIGINAL
+// ============================================================
+
+// ============================================================
+    // REVISÃO INTELIGENTE ALINHADA COM ABA "REVISÕES"
+    // ============================================================
+_escolherRevisaoInteligente() {
+    // Busca todas as aulas concluídas
+    const concluidas = getAllLessonsFlat().filter(aula => AppState.checks[aula.key]);
+    if (!concluidas.length) return null;
+
+    // Filtra as vencidas
+    const vencidas = concluidas.filter(aula => this._revisaoVencida(aula.key));
+    if (!vencidas.length) return null;
+
+    // Ordena pela mais atrasada
+    vencidas.sort((a, b) => this._diasSemRevisao(b.key) - this._diasSemRevisao(a.key));
+
+    const urgente = vencidas[0];
+    
+    // SEGURANÇA: Só retorna se 'urgente' existir e o atraso for válido
+    if (!urgente) return null;
+    if (this._diasSemRevisao(urgente.key) < 1) return null;
+
+    return {
+        ...urgente,
+        disciplina: urgente.disciplineName,
+        assunto: urgente.title.split(' - ')[0],
+        sub: urgente.title,
+        modulo: 'revisao',
+        tipo: 'Revisão'
+    };
+},
 
     avancarCiclo() {
         const idx = this.ordemModulos.indexOf(AppState.ciclo.moduloAtual || 'bloco1');
@@ -1480,7 +2015,47 @@ const Missao4Engine = {
 
     gerarJustificativa(aula) {
         if (!aula) return '';
-        if (aula.modulo === 'leis') return '📜 Missão 4.0: Leitura de Leis.';
+        if (aula.modulo === 'leis') {
+
+    const bloco = aula.blocoLei || 2;
+
+    const prioridade = {
+        1: '🔴 Alta Prioridade — Core',
+        2: '🟡 Média Prioridade — Específicas',
+        3: '🟢 Menor Prioridade — Complementar'
+    }[bloco];
+
+    const lei =
+        AppState.leis.find(
+            l => l.nome === aula.title
+        );
+
+    const tempo =
+        lei?.tempoTotal || 0;
+
+    const sessoes =
+        lei?.sessoes || 0;
+
+    const dias =
+        lei?.ultimaLeitura
+            ? Math.floor(
+                (new Date() - new Date(lei.ultimaLeitura)) /
+                (1000 * 60 * 60 * 24)
+            )
+            : 30;
+
+    return `
+        📜 ${prioridade}.
+        ⏱️ Missão de ${aula.tempoMissao || 30} min.
+        📊 ${tempo} min estudados historicamente.
+        🔄 ${sessoes} sessão(ões).
+        📅 Último contato: ${
+            dias === 30
+                ? 'há 30+ dias ou nunca'
+                : `há ${dias} dia(s)`
+        }.
+    `;
+}
         if (aula.modulo === 'revisao') return '🔄 Missão 4.0: Revisão Inteligente (SM-2).';
 
         const moduloKey = aula.modulo;
@@ -1595,26 +2170,94 @@ const iniciarAula = () => {
     if (!missao) { alert('Nenhuma missão pendente!'); return; }
     
     if (missao.modulo === 'leis') {
-        if (confirm(`Iniciar leitura da lei "${missao.title}"?`)) {
-            const lei = AppState.leis.find(l => l.nome === missao.title);
-            if (lei) {
-                lei.ultimaLeitura = new Date().toISOString();
-                lei.status = lei.status === 'pendente' ? 'andamento' : lei.status;
-                registrarAtividade('leitura', 5);
-                saveState();
-                renderLeis();
-            }
-            salvarAnotacoesMissao(missao.key);
-            salvarQuestoesMissao(missao.key);
-            Missao4Engine.avancarCiclo();
-            missaoSugeridaAtual = null; // Limpa para sortear outra na próxima
-            saveState();
-            updateDashboard();
-            renderAll();
-            return;
-        }
+
+    const lei = AppState.leis.find(
+        l => l.nome === missao.title
+    );
+
+    if (!lei) {
+        alert('Lei não encontrada.');
         return;
     }
+
+    AppState.leiAtiva = {
+        leiNome: lei.nome,
+        inicio: Date.now(),
+        tempoAcumulado: 0,
+        metaMinutos: missao.tempoMissao || 30
+    };
+
+    AppState.leiPausada = false;
+
+    document.getElementById('startLessonBtn').textContent =
+        '▶ Estudando Lei...';
+
+    document.getElementById('startLessonBtn').disabled = true;
+
+    document.getElementById('pauseLessonBtn').disabled = false;
+    document.getElementById('stopLessonBtn').disabled = false;
+
+    document.getElementById('skipLessonBtn').disabled = true;
+    document.getElementById('voltarLessonBtn').disabled = true;
+
+    document.getElementById('pauseLessonBtn').textContent =
+        '⏸ Pausar';
+
+    if (aulaTimerInterval) {
+        clearInterval(aulaTimerInterval);
+    }
+
+    aulaTimerInterval = setInterval(() => {
+
+        if (!AppState.leiAtiva || AppState.leiPausada) {
+            return;
+        }
+
+        const segundos =
+            Math.floor(
+                (Date.now() - AppState.leiAtiva.inicio) / 1000
+            );
+
+        AppState.tempoEstudoHoje = segundos;
+
+        const meta =
+            AppState.leiAtiva.metaMinutos * 60;
+
+        const restante =
+            Math.max(0, meta - segundos);
+
+        const min =
+            Math.floor(restante / 60);
+
+        const seg =
+            restante % 60;
+
+        const timeEl =
+            document.getElementById('missionTime');
+
+        if (timeEl) {
+            timeEl.textContent =
+                `⏱️ ${min}:${String(seg).padStart(2, '0')} restantes`;
+        }
+
+        /*
+         * Ao atingir o tempo da missão,
+         * a sessão é concluída automaticamente.
+         */
+        if (segundos >= meta) {
+            pararAula(false);
+        }
+
+        saveState();
+
+    }, 1000);
+
+    saveState();
+    updateDashboard();
+    renderHome();
+
+    return;
+}
     
     AppState.aulaAtiva = { blockId: missao.blockId, discIdx: missao.discIdx, lessonIdx: missao.lessonIdx, inicio: Date.now(), modulo: missao.modulo || (missao.blockIdx === 0 ? 'bloco1' : 'bloco2') };
     AppState.aulaPausada = false;
@@ -1645,16 +2288,76 @@ const iniciarAula = () => {
 };
 
 const pausarAula = () => {
+
+    // ==========================================================
+    // LEI
+    // ==========================================================
+
+    if (AppState.leiAtiva) {
+
+        if (!AppState.leiPausada) {
+
+            /*
+             * Congela o tempo acumulado até este momento.
+             */
+            AppState.leiAtiva.tempoAcumulado =
+                Math.floor(
+                    (Date.now() - AppState.leiAtiva.inicio) /
+                    1000
+                );
+
+            AppState.leiPausada = true;
+
+        } else {
+
+            /*
+             * Retoma sem contar o tempo em que ficou pausada.
+             */
+            AppState.leiAtiva.inicio =
+                Date.now();
+
+            AppState.leiPausada = false;
+        }
+
+        const btn =
+            document.getElementById('pauseLessonBtn');
+
+        btn.textContent =
+            AppState.leiPausada
+                ? '▶ Continuar'
+                : '⏸ Pausar';
+
+        saveState();
+        renderHome();
+
+        return;
+    }
+
+    // ==========================================================
+    // AULA NORMAL — mantém comportamento existente
+    // ==========================================================
+
     if (!AppState.aulaAtiva) return;
+
     AppState.aulaPausada = !AppState.aulaPausada;
-    const btn = document.getElementById('pauseLessonBtn');
+
+    const btn =
+        document.getElementById('pauseLessonBtn');
+
     if (AppState.aulaPausada) {
+
         btn.textContent = '▶ Continuar';
-        document.getElementById('missionTitle').textContent = '⏸ Pausado';
+
+        document.getElementById('missionTitle')
+            .textContent = '⏸ Pausado';
+
     } else {
+
         btn.textContent = '⏸ Pausar';
+
         aulaStartTime = Date.now();
     }
+
     saveState();
 };
 
@@ -1686,33 +2389,112 @@ const limparCamposMissao = () => {
 };
 
 const pararAula = (semSalvar = false) => {
+    // ============================================================
+    // ENCERRAMENTO DE LEI
+    // ============================================================
+    if (AppState.leiAtiva) {
+        if (aulaTimerInterval) {
+            clearInterval(aulaTimerInterval);
+            aulaTimerInterval = null;
+        }
+
+        let segundos;
+        if (AppState.leiPausada) {
+            segundos = AppState.leiAtiva.tempoAcumulado || 0;
+        } else {
+            segundos = Math.floor((Date.now() - AppState.leiAtiva.inicio) / 1000);
+        }
+
+        const minutos = Math.floor(segundos / 60);
+        const leiNome = AppState.leiAtiva.leiNome;
+
+        if (!semSalvar) {
+            // Registra a sessão da lei (agora com sessoes)
+            Missao4Engine.registrarSessaoLei(leiNome, minutos);
+
+            // Salva questões da lei
+            const feitasLei = parseInt(document.getElementById('missionQuestFeitas')?.value) || 0;
+            const acertosLei = parseInt(document.getElementById('missionQuestAcertos')?.value) || 0;
+            if (feitasLei > 0) {
+                const chaveLei = `lei_${leiNome}`;
+                if (!AppState.questoesAulas[chaveLei]) AppState.questoesAulas[chaveLei] = { feitas: 0, acertos: 0 };
+                AppState.questoesAulas[chaveLei].feitas += feitasLei;
+                AppState.questoesAulas[chaveLei].acertos += Math.min(acertosLei, feitasLei);
+            }
+
+            Missao4Engine.registrarConclusaoMissao({
+                modulo: 'leis',
+                disciplineName: 'Leis',
+                key: `lei_${leiNome}`
+            });
+            Missao4Engine.avancarCiclo();
+            missaoSugeridaAtual = Missao4Engine.gerarMissao();
+        }
+
+        // Limpa estado da lei
+        AppState.leiAtiva = null;
+        AppState.leiPausada = false;
+        AppState.tempoEstudoHoje = 0;
+
+        document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
+        document.getElementById('startLessonBtn').disabled = false;
+        document.getElementById('pauseLessonBtn').disabled = true;
+        document.getElementById('stopLessonBtn').disabled = true;
+        document.getElementById('skipLessonBtn').disabled = false;
+        document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
+
+        limparCamposMissao();
+        saveState();
+        updateDashboard();
+        renderAll();
+        return;
+    }
+
+    // ============================================================
+    // ENCERRAMENTO DE AULA NORMAL OU REVISÃO
+    // ============================================================
     if (!AppState.aulaAtiva) return;
-    if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-    
+
+    if (aulaTimerInterval) {
+        clearInterval(aulaTimerInterval);
+        aulaTimerInterval = null;
+    }
+
     if (!semSalvar) {
         const key = `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
-        const minutos = Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000);
-        
+        const minutos = Math.max(0, Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000));
+
         toggleLesson(key, true);
-        
+
         if (minutos > 0) {
-            AppState.sessoes.push({ data: new Date().toLocaleDateString('pt-BR'), inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), duracao: minutos });
-            registrarAtividade('aula', minutos);
-            AppState.metasSemanais.aulasFeitas += 1;
+            const tipoAtividade = AppState.aulaAtiva.modulo === 'revisao' ? 'revisao' : 'aula';
+
+            AppState.sessoes.push({
+                data: new Date().toLocaleDateString('pt-BR'),
+                inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                duracao: minutos,
+                tipo: tipoAtividade
+            });
+
+            registrarAtividade(tipoAtividade, minutos);
+
+            if (tipoAtividade === 'aula') {
+                AppState.metasSemanais.aulasFeitas += 1;
+            }
         }
-        
+
         salvarAnotacoesMissao(key);
         salvarQuestoesMissao(key);
         Missao4Engine.registrarConclusaoMissao(AppState.aulaAtiva);
         Missao4Engine.avancarCiclo();
         saveState();
     }
-    
+
     AppState.aulaAtiva = null;
     AppState.aulaPausada = false;
     AppState.tempoEstudoHoje = 0;
-    missaoSugeridaAtual = null; // <--- ESTA LINHA LIMPA O CACHE E FORÇA O CICLO A AVANÇAR
-    
+    missaoSugeridaAtual = null;
+
     document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
     document.getElementById('startLessonBtn').disabled = false;
     document.getElementById('pauseLessonBtn').disabled = true;
@@ -1720,59 +2502,57 @@ const pararAula = (semSalvar = false) => {
     document.getElementById('skipLessonBtn').disabled = false;
     document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
     limparCamposMissao();
-    
+
     saveState();
     updateDashboard();
     renderAll();
 };
+
 const pularMissao = () => {
-    if (AppState.aulaAtiva) {
-        if (!confirm('Há uma aula em andamento. Deseja pular mesmo assim?')) return;
-        if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-        AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+    if (AppState.aulaAtiva || AppState.leiAtiva) {
+        if (!confirm('Há uma missão em andamento. Deseja pular mesmo assim?')) return;
+        pararAula(true);
     }
-    
-    // Salva notas da missão antes de pular
+
     const missaoAtual = missaoSugeridaAtual || Missao4Engine.gerarMissao();
     if (missaoAtual && !missaoAtual.isAtiva) {
         salvarAnotacoesMissao(missaoAtual.key);
         salvarQuestoesMissao(missaoAtual.key);
     }
-    
+
     Missao4Engine.pularMissao();
-    missaoSugeridaAtual = null; // Reseta para o renderHome sortear a próxima
+    missaoSugeridaAtual = null;
     limparCamposMissao();
-    
+
     document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
     document.getElementById('startLessonBtn').disabled = false;
     document.getElementById('pauseLessonBtn').disabled = true;
     document.getElementById('stopLessonBtn').disabled = true;
     document.getElementById('skipLessonBtn').disabled = false;
     document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
-    
+
     saveState();
     updateDashboard();
     renderAll();
 };
 
 const voltarMissao = () => {
-    if (AppState.aulaAtiva) {
-        if (!confirm('Há uma aula em andamento. Deseja voltar mesmo assim?')) return;
-        if (aulaTimerInterval) { clearInterval(aulaTimerInterval); aulaTimerInterval = null; }
-        AppState.aulaAtiva = null; AppState.aulaPausada = false; AppState.tempoEstudoHoje = 0;
+    if (AppState.aulaAtiva || AppState.leiAtiva) {
+        if (!confirm('Há uma missão em andamento. Deseja voltar mesmo assim?')) return;
+        pararAula(true);
     }
-    
+
     Missao4Engine.voltarMissao();
     missaoSugeridaAtual = null;
     limparCamposMissao();
-    
+
     document.getElementById('startLessonBtn').textContent = '▶ Iniciar Aula';
     document.getElementById('startLessonBtn').disabled = false;
     document.getElementById('pauseLessonBtn').disabled = true;
     document.getElementById('stopLessonBtn').disabled = true;
     document.getElementById('skipLessonBtn').disabled = false;
     document.getElementById('voltarLessonBtn').disabled = AppState.historicoCiclo.length === 0;
-    
+
     saveState();
     updateDashboard();
     renderAll();
@@ -1805,10 +2585,344 @@ window.atualizarQuestoesAula = (key, campo, valor) => {
     if (document.getElementById('page-progresso').classList.contains('active')) renderProgresso();
 };
 
+// ============================================================
+// MISSÃO DE HOJE — ELEGIBILIDADE E FREQUÊNCIA DA DISCIPLINA
+// ============================================================
+
+const contarFrequenciaDisciplina = (disciplina, dias = 14) => {
+    const agora = new Date();
+
+    return (AppState.diario || []).filter(e => {
+        if (e.disciplina !== disciplina || !e.data) return false;
+
+        const [d, m, y] = e.data.split('/');
+        if (!d || !m || !y) return false;
+
+        const data = new Date(`${y}-${m}-${d}T12:00:00`);
+        const diferenca = Math.floor(
+            (agora - data) / (1000 * 60 * 60 * 24)
+        );
+
+        return diferenca >= 0 && diferenca < dias;
+    }).length;
+};
+
+
+const obterUltimoEstudoDisciplina = (disciplina) => {
+    const registros = (AppState.diario || [])
+        .filter(e => e.disciplina === disciplina && e.data)
+        .map(e => {
+            const [d, m, y] = e.data.split('/');
+            return new Date(`${y}-${m}-${d}T12:00:00`);
+        })
+        .filter(d => !isNaN(d));
+
+    if (!registros.length) return null;
+
+    return new Date(Math.max(...registros.map(d => d.getTime())));
+};
+
+
+const obterDiasDesdeUltimoEstudo = (disciplina) => {
+    const ultima = obterUltimoEstudoDisciplina(disciplina);
+
+    if (!ultima) return null;
+
+    return Math.max(
+        0,
+        Math.floor((new Date() - ultima) / (1000 * 60 * 60 * 24))
+    );
+};
+
+
+const obterNivelFrequenciaDisciplina = (frequencia) => {
+    if (frequencia <= 1) {
+        return {
+            classe: 'mission-frequency-low',
+            label: 'Baixa frequência'
+        };
+    }
+
+    if (frequencia <= 3) {
+        return {
+            classe: 'mission-frequency-medium',
+            label: 'Frequência regular'
+        };
+    }
+
+    return {
+        classe: 'mission-frequency-high',
+        label: 'Alta frequência'
+    };
+};
+
+
+const escaparHTML = (texto) => {
+    return String(texto ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
+
+/*
+ * Retorna TODAS as aulas ainda elegíveis da Classe
+ * escolhida pelo algoritmo.
+ *
+ * Importante:
+ * - não altera RoundManager;
+ * - não altera a fila;
+ * - não conclui nada;
+ * - apenas apresenta alternativas.
+ */
+const obterAulasElegiveisDaMissao = (missao) => {
+    if (!missao) return [];
+
+    if (
+        missao.modulo !== 'bloco1' &&
+        missao.modulo !== 'bloco2'
+    ) {
+        return [];
+    }
+
+    const blockIdx = missao.blockIdx;
+    const block = AppState.data[blockIdx];
+
+    if (!block || !missao.classe) return [];
+
+    const resultado = [];
+
+    block.disciplines.forEach((disc, discIdx) => {
+
+        // A disciplina precisa pertencer à MESMA Classe
+        const classeDisciplina =
+            Missao4Engine._obterClasseDisciplina(disc.name);
+
+        if (classeDisciplina !== missao.classe) return;
+
+        const aulasPendentes = disc.lessons
+            .map((title, lessonIdx) => ({
+                blockIdx,
+                discIdx,
+                lessonIdx,
+                blockId: block.id,
+                disciplineName: disc.name,
+                title,
+                key: `${block.id}|${discIdx}|${lessonIdx}`,
+                modulo: missao.modulo,
+                classe: missao.classe
+            }))
+            .filter(aula => !AppState.checks[aula.key]);
+
+        if (!aulasPendentes.length) return;
+
+        const frequencia = contarFrequenciaDisciplina(
+            disc.name,
+            14
+        );
+
+        const diasSemEstudo =
+            Missao4Engine._diasSemEstudoDisciplina(disc.name);
+
+        const dominio =
+            Missao4Engine._obterDominioDisciplina(disc.name);
+
+        resultado.push({
+            disciplina: disc.name,
+            frequencia14d: frequencia,
+            diasSemEstudo,
+            dominio,
+            aulas: aulasPendentes
+        });
+    });
+
+    return resultado;
+};
+
+const renderAulasElegiveisMissao = (missao) => {
+
+    const existente = document.getElementById('missionEligibleOptions');
+
+    if (existente) existente.remove();
+
+    if (!missao || !missao.classe) return;
+
+    const grupos = obterAulasElegiveisDaMissao(missao);
+
+    if (!grupos.length) return;
+
+    const totalAulas = grupos.reduce(
+        (total, grupo) => total + grupo.aulas.length,
+        0
+    );
+
+    const container = document.createElement('div');
+
+    container.id = 'missionEligibleOptions';
+    container.className = 'mission-options';
+
+    const classeLabel = {
+        prioritaria: '🔴 Prioritária',
+        media: '🟡 Média',
+        baixa: '🟢 Baixa',
+        baixissima: '⚪ Baixíssima'
+    }[missao.classe] || missao.classe;
+
+    container.innerHTML = `
+        <div class="mission-options-header">
+            <div>
+                <div class="mission-options-title">
+                    📚 Outras aulas elegíveis
+                </div>
+                <div class="mission-options-meta">
+                    ${classeLabel} · ${totalAulas} aula(s) em ${grupos.length} disciplina(s)
+                </div>
+            </div>
+
+            <button
+                class="btn-glass"
+                id="toggleMissionOptionsBtn"
+                type="button"
+            >
+                ▼ Ver opções
+            </button>
+        </div>
+
+        <div
+            class="mission-options-body"
+            id="missionOptionsBody"
+        ></div>
+    `;
+
+    const body = container.querySelector('#missionOptionsBody');
+
+    grupos.forEach(grupo => {
+
+        const freqInfo =
+            obterNivelFrequenciaDisciplina(grupo.frequencia14d);
+
+        const ultimoEstudo = grupo.diasSemEstudo === 30
+            ? 'Nunca registrada'
+            : grupo.diasSemEstudo === 0
+                ? 'Estudada hoje'
+                : `há ${grupo.diasSemEstudo} dia(s)`;
+
+        const disciplinaDiv = document.createElement('div');
+        disciplinaDiv.className = 'mission-discipline';
+
+        disciplinaDiv.innerHTML = `
+            <div class="mission-discipline-header">
+                <span class="mission-discipline-name">
+                    ${escaparHTML(grupo.disciplina)}
+                </span>
+
+                <span class="mission-discipline-frequency ${freqInfo.classe}">
+                    ${grupo.frequencia14d} sessão(ões)/14d
+                    · ${ultimoEstudo}
+                </span>
+            </div>
+        `;
+
+        grupo.aulas.forEach(aula => {
+
+            const recomendada =
+                aula.key === missao.key;
+
+            const button = document.createElement('button');
+
+            button.type = 'button';
+
+            button.className =
+                'mission-lesson-option' +
+                (recomendada ? ' recommended' : '');
+
+            button.innerHTML = `
+                <span class="mission-lesson-name">
+                    ${recomendada ? '⭐ ' : ''}
+                    ${escaparHTML(aula.title)}
+                </span>
+
+                <span class="mission-lesson-meta">
+                    ${recomendada ? 'RECOMENDADA' : 'Elegível'}
+                </span>
+            `;
+
+            button.onclick = () => {
+                selecionarAulaDaMissao(aula);
+            };
+
+            disciplinaDiv.appendChild(button);
+        });
+
+        body.appendChild(disciplinaDiv);
+    });
+
+    const missionCard = document.getElementById('missionCard');
+
+    if (missionCard) {
+        missionCard.appendChild(container);
+    }
+
+    document
+        .getElementById('toggleMissionOptionsBtn')
+        ?.addEventListener('click', () => {
+
+            const body =
+                document.getElementById('missionOptionsBody');
+
+            const btn =
+                document.getElementById('toggleMissionOptionsBtn');
+
+            if (!body || !btn) return;
+
+            body.classList.toggle('open');
+
+            btn.textContent = body.classList.contains('open')
+                ? '▲ Ocultar opções'
+                : '▼ Ver opções';
+        });
+};
+
+const selecionarAulaDaMissao = (aula) => {
+
+    if (!aula) return;
+
+    /*
+     * Mantém exatamente a Classe escolhida pelo algoritmo.
+     * Só substitui a aula que será apresentada.
+     */
+    missaoSugeridaAtual = {
+        ...aula,
+        disciplina: aula.disciplineName,
+        assunto: aula.title.split(' - ')[0],
+        sub: aula.title,
+        modulo: aula.modulo,
+        classe: aula.classe,
+        escolhaManual: true
+    };
+
+    renderHome();
+
+    const optionsBody =
+        document.getElementById('missionOptionsBody');
+
+    if (optionsBody) {
+        optionsBody.classList.remove('open');
+    }
+
+    const btn =
+        document.getElementById('toggleMissionOptionsBtn');
+
+    if (btn) {
+        btn.textContent = '▼ Ver opções';
+    }
+};
+
 const renderHome = () => {
-    // Mantém a missão atual caso já tenha sido sorteada, senão gera uma nova.
     const missao = missaoSugeridaAtual || Missao4Engine.gerarMissao();
-    missaoSugeridaAtual = missao; 
+    missaoSugeridaAtual = missao;
 
     const titleEl = document.getElementById('missionTitle');
     const subEl = document.getElementById('missionSub');
@@ -1820,33 +2934,79 @@ const renderHome = () => {
     const skipBtn = document.getElementById('skipLessonBtn');
     const voltarBtn = document.getElementById('voltarLessonBtn');
 
+    if (!titleEl || !subEl || !timeEl || !justifyEl || !startBtn || !pauseBtn || !stopBtn || !skipBtn || !voltarBtn) return;
+
     if (voltarBtn) voltarBtn.disabled = AppState.historicoCiclo.length === 0;
 
+    // ============================================================
+    // LEI EM ANDAMENTO
+    // ============================================================
+    if (AppState.leiAtiva) {
+        const lei = AppState.leis.find(l => l.nome === AppState.leiAtiva.leiNome);
+        const meta = AppState.leiAtiva.metaMinutos || 30;
+        let segundos = 0;
+
+        if (AppState.leiPausada) {
+            segundos = AppState.leiAtiva.tempoAcumulado || 0;
+        } else {
+            segundos = Math.floor((Date.now() - AppState.leiAtiva.inicio) / 1000);
+        }
+
+        const min = Math.floor(segundos / 60);
+        const seg = segundos % 60;
+
+        titleEl.textContent = `📜 ${lei?.nome || AppState.leiAtiva.leiNome}`;
+        subEl.textContent = `Bloco ${lei?.bloco || 2} · ${lei?.prioridade || 'media'} prioridade`;
+        timeEl.textContent = `⏱️ ${min}:${String(seg).padStart(2, '0')} / ${meta}:00`;
+        startBtn.textContent = '▶ Estudando Lei...';
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+        skipBtn.disabled = true;
+        voltarBtn.disabled = true;
+        pauseBtn.textContent = AppState.leiPausada ? '▶ Continuar' : '⏸ Pausar';
+        justifyEl.innerHTML = '💡 <strong>Lei em andamento.</strong> Continue focado!';
+
+        renderAulasElegiveisMissao(null);
+        updateIndicators();
+        renderWeeklyGoals();
+        return;
+    }
+
+    // ============================================================
+    // AULA NORMAL EM ANDAMENTO
+    // ============================================================
     if (AppState.aulaAtiva) {
         const block = AppState.data.find(b => b.id === AppState.aulaAtiva.blockId);
         if (block) {
             const disc = block.disciplines[AppState.aulaAtiva.discIdx];
-            const aulaTitle = disc.lessons[AppState.aulaAtiva.lessonIdx];
-            titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` : `⏳ Estudando: ${aulaTitle}`;
-            subEl.textContent = `${disc.name} · ${block.name}`;
-            timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
-            startBtn.textContent = '▶ Estudando...';
-            startBtn.disabled = true;
-            pauseBtn.disabled = false;
-            stopBtn.disabled = false;
-            skipBtn.disabled = true;
-            voltarBtn.disabled = true;
-            pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
-            justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
-        } else {
-            AppState.aulaAtiva = null;
-            saveState();
-            renderHome();
+            const aulaTitle = disc?.lessons?.[AppState.aulaAtiva.lessonIdx];
+            if (disc && aulaTitle) {
+                titleEl.textContent = AppState.aulaPausada ? `⏸ Pausado: ${aulaTitle}` : `⏳ Estudando: ${aulaTitle}`;
+                subEl.textContent = `${disc.name} · ${block.name}`;
+                timeEl.textContent = `⏱️ ${Math.floor((Date.now() - AppState.aulaAtiva.inicio) / 60000)} min`;
+                startBtn.textContent = '▶ Estudando...';
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                skipBtn.disabled = true;
+                voltarBtn.disabled = true;
+                pauseBtn.textContent = AppState.aulaPausada ? '▶ Continuar' : '⏸ Pausar';
+                justifyEl.innerHTML = '💡 <strong>Aula em andamento.</strong> Continue focado!';
+                updateIndicators();
+                renderWeeklyGoals();
+                return;
+            }
         }
-        updateIndicators();
-        return;
+
+        AppState.aulaAtiva = null;
+        AppState.aulaPausada = false;
+        saveState();
     }
 
+    // ============================================================
+    // NENHUMA MISSÃO
+    // ============================================================
     if (!missao) {
         titleEl.textContent = '🎉 Parabéns! Todas as missões concluídas!';
         subEl.textContent = 'Continue revisando e praticando.';
@@ -1858,28 +3018,57 @@ const renderHome = () => {
         skipBtn.disabled = true;
         voltarBtn.disabled = AppState.historicoCiclo.length === 0;
         justifyEl.innerHTML = '💡 <strong>Você concluiu todo o conteúdo do edital.</strong>';
-    } else {
-        const isLei = missao.modulo === 'leis';
-        const label = isLei ? '📜 Leitura de Lei' : missao.modulo === 'revisao' ? '🔄 Revisão' : missao.blockIdx === 0 ? '📚 Teoria Nova' : '📝 Prática Questões';
-        titleEl.textContent = `${label}: ${missao.sub || missao.title}`;
-        subEl.textContent = isLei ? 'Leis' : `${missao.disciplineName || missao.disciplina} · ${missao.assunto}`;
-        timeEl.textContent = isLei ? '⏱️ Tempo estimado: ~30min' : '⏱️ Tempo estimado: ~2h00';
-        startBtn.textContent = isLei ? '▶ Iniciar Leitura' : '▶ Iniciar Aula';
-        startBtn.disabled = false;
-        pauseBtn.disabled = true;
-        stopBtn.disabled = true;
-        skipBtn.disabled = false;
-        voltarBtn.disabled = AppState.historicoCiclo.length === 0;
-        
-        const just = Missao4Engine.gerarJustificativa(missao);
-        justifyEl.innerHTML = `💡 <strong>Por que esta missão?</strong> ${just}`;
-        
-        const anotacoes = AppState.anotacoes[missao.key]?.texto || '';
-        document.getElementById('missionAnotacoes').value = anotacoes;
-        const q = AppState.questoesAulas[missao.key] || { feitas: 0, acertos: 0 };
-        document.getElementById('missionQuestFeitas').value = q.feitas || '';
-        document.getElementById('missionQuestAcertos').value = q.acertos || '';
+        renderAulasElegiveisMissao(null);
+        updateIndicators();
+        renderWeeklyGoals();
+        return;
     }
+
+    // ============================================================
+    // MISSÃO DISPONÍVEL
+    // ============================================================
+    const isLei = missao.modulo === 'leis';
+
+    if (isLei) {
+        const lei = AppState.leis.find(l => l.nome === missao.title);
+        const meta = missao.tempoMissao || 30;
+
+        titleEl.textContent = `📜 ${missao.title}`;
+        subEl.textContent = `Bloco ${missao.blocoLei || lei?.bloco || 2} · ${missao.prioridade || lei?.prioridade || 'media'} prioridade`;
+        timeEl.textContent = `⏱️ Missão: ${meta} minutos`;
+        startBtn.textContent = '▶ Iniciar Lei Seca';
+        justifyEl.innerHTML = `💡 <strong>Por que esta lei?</strong> ${Missao4Engine.gerarJustificativa(missao)}`;
+    } else {
+        const label = missao.modulo === 'revisao'
+            ? '🔄 Revisão'
+            : missao.blockIdx === 0
+                ? '📚 Teoria Nova'
+                : '📝 Prática Questões';
+
+        titleEl.textContent = `${label} — ${missao.title}`;
+        subEl.textContent = `${missao.disciplineName || missao.disciplina || 'Disciplina'} · ${missao.assunto || missao.sub || ''}`;
+        timeEl.textContent = missao.modulo === 'revisao' ? '⏱️ Revisão' : '⏱️ Tempo estimado: ~2h00';
+        startBtn.textContent = '▶ Iniciar Aula';
+        justifyEl.innerHTML = `💡 <strong>Por que esta missão?</strong> ${Missao4Engine.gerarJustificativa(missao)}`;
+    }
+
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = true;
+    skipBtn.disabled = false;
+    voltarBtn.disabled = AppState.historicoCiclo.length === 0;
+
+    const anotacoes = AppState.anotacoes[missao.key]?.texto || '';
+    const anotacoesEl = document.getElementById('missionAnotacoes');
+    if (anotacoesEl) anotacoesEl.value = anotacoes;
+
+    const q = AppState.questoesAulas[missao.key] || { feitas: 0, acertos: 0 };
+    const feitasEl = document.getElementById('missionQuestFeitas');
+    const acertosEl = document.getElementById('missionQuestAcertos');
+    if (feitasEl) feitasEl.value = q.feitas || '';
+    if (acertosEl) acertosEl.value = q.acertos || '';
+
+    renderAulasElegiveisMissao(isLei ? null : missao);
     updateIndicators();
     renderWeeklyGoals();
 };
@@ -2148,21 +3337,100 @@ const renderRevisao = () => {
             };
 
             const renderLeis = () => {
-                const container = document.getElementById('leisContainer');
-                if (!container) return;
-                let html = '';
-                AppState.leis.forEach((lei, idx) => {
-                    const pct = lei.totalPaginas > 0 ? Math.round((lei.paginaAtual / lei.totalPaginas) * 100) : 0;
-                    html += `<div class="lesson-item">
-                        <span class="lesson-title">${lei.nome}</span>
-                        <span>📄 ${lei.paginaAtual}/${lei.totalPaginas} (${pct}%)</span>
-                        <span>${lei.status === 'concluido' ? '✅' : lei.status === 'andamento' ? '⏳' : '⏹'}</span>
-                        <button class="btn-anotacoes" onclick="window.marcarLeituraLei(${idx})">+5 pág</button>
-                        <button class="btn-anotacoes" onclick="window.marcarConcluidaLei(${idx})">✓ Concluir</button>
-                    </div>`;
-                });
-                container.innerHTML = html || '<p class="text-muted">Nenhuma lei cadastrada.</p>';
-            };
+
+    const container =
+        document.getElementById('leisContainer');
+
+    if (!container) return;
+
+    const ordemBlocos = {
+        1: {
+            titulo: '🔴 Bloco 1 — Alta Prioridade / Core',
+            classe: 'alta'
+        },
+        2: {
+            titulo: '🟡 Bloco 2 — Média Prioridade / Específicas',
+            classe: 'media'
+        },
+        3: {
+            titulo: '🟢 Bloco 3 — Menor Prioridade / Complementar',
+            classe: 'baixa'
+        }
+    };
+
+    let html = '';
+
+    [1, 2, 3].forEach(bloco => {
+
+        const leis =
+            AppState.leis.filter(
+                lei => Number(lei.bloco) === bloco
+            );
+
+        if (!leis.length) return;
+
+        html += `
+            <div class="card" style="margin-bottom:12px;">
+                <h4>
+                    ${ordemBlocos[bloco].titulo}
+                </h4>
+        `;
+
+        leis.forEach(lei => {
+
+            const tempo =
+                Number(lei.tempoTotal || 0);
+
+            const sessoes =
+                Number(lei.sessoes || 0);
+
+            const ultima =
+                lei.ultimaLeitura
+                    ? new Date(
+                        lei.ultimaLeitura
+                    ).toLocaleDateString('pt-BR')
+                    : 'Nunca';
+
+            html += `
+                <div class="lesson-item">
+
+                    <span class="lesson-title">
+                        ${lei.nome}
+                    </span>
+
+                    <span>
+                        ⏱️ ${tempo} min
+                    </span>
+
+                    <span>
+                        🔄 ${sessoes} sessão(ões)
+                    </span>
+
+                    <span>
+                        📅 ${ultima}
+                    </span>
+
+                    <span>
+                        ${
+                            lei.status === 'concluido'
+                                ? '✅'
+                                : lei.status === 'andamento'
+                                    ? '⏳'
+                                    : '⏹'
+                        }
+                    </span>
+
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+    });
+
+    container.innerHTML =
+        html ||
+        '<p class="text-muted">Nenhuma lei cadastrada.</p>';
+};
 
             window.marcarLeituraLei = (idx) => {
                 const lei = AppState.leis[idx];
@@ -2273,17 +3541,243 @@ const renderRevisao = () => {
                 }, 200);
             };
 
-            const renderDiario = () => {
-                const list = document.getElementById('diarioList');
-                if (!list) return;
-                const sorted = [...AppState.diario].reverse().slice(0, 30);
-                let html = '<div class="card"><h3>📖 Últimas atividades</h3>';
-                sorted.forEach(e => html += `<div class="lesson-item"><span>${e.data}</span> ${e.aula} <span class="text-muted">(${e.disciplina})</span></div>`);
-                html += '</div>';
-                list.innerHTML = html || '<p class="text-muted">Nenhum registro.</p>';
-            };
+            // ============================================================
+// DIÁRIO – RENDERIZAÇÃO E EDIÇÃO
+// ============================================================
 
-            const renderSimulados = () => {
+// ============================================================
+// DIÁRIO – RENDERIZAÇÃO E EDIÇÃO
+// ============================================================
+
+// ============================================================
+// DIÁRIO – RENDERIZAÇÃO E EDIÇÃO (BLOCO COMPLETO)
+// ============================================================
+
+// ============================================================
+// DIÁRIO – RENDERIZAÇÃO E EDIÇÃO (BLOCO ÚNICO)
+// ============================================================
+
+// ============================================================
+// DIÁRIO – RENDERIZAÇÃO COM BOTÃO EDITAR + FUNÇÕES DE EDIÇÃO
+// ============================================================
+
+const renderDiario = () => {
+    const list = document.getElementById('diarioList');
+    if (!list) return;
+
+    // Cria um array com o índice original de cada registro
+    const comIndices = AppState.diario
+        .map((entry, index) => ({ entry, index }))
+        .reverse()
+        .slice(0, 30);
+
+    let html = '<div class="card"><h3>📖 Últimas atividades</h3>';
+
+    if (!comIndices.length) {
+        html += '<p class="text-muted">Nenhum registro.</p>';
+    } else {
+        comIndices.forEach(({ entry, index }) => {
+            const isLei = entry.tipo === 'lei';
+            let descricao = '';
+
+            if (isLei) {
+                descricao = `📜 <strong>${entry.lei}</strong> (${entry.duracao || 0} min)`;
+            } else {
+                descricao = `${entry.aula} <span class="text-muted">(${entry.disciplina})</span>`;
+            }
+
+            html += `
+                <div class="lesson-item" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="min-width:80px;">${entry.data}</span>
+                    <span style="min-width:60px;">${entry.hora || ''}</span>
+                    <span style="flex:1;">${descricao}</span>
+                    <button class="btn-glass editar-diario-btn" data-index="${index}">✏️ Editar</button>
+                </div>`;
+        });
+    }
+
+    html += '</div>';
+    list.innerHTML = html;
+};
+
+// ------------------------------------------------------------
+// FUNÇÕES DE EDIÇÃO
+// ------------------------------------------------------------
+
+// ============================================================
+// EDIÇÃO AVANÇADA DO DIÁRIO (tempo, questões, sessões)
+// ============================================================
+
+// ============================================================
+// EDIÇÃO AVANÇADA DO DIÁRIO (tempo, questões, sessões)
+// ============================================================
+
+let diarioEditIndex = null;
+
+window.editarDiario = (index) => {
+    if (index === undefined || !AppState.diario[index]) return;
+
+    diarioEditIndex = index;
+    const entry = AppState.diario[index];
+    const isLei = entry.tipo === 'lei';
+
+    // Alterna exibição dos campos
+    document.getElementById('diarioCamposPadrao').style.display = isLei ? 'none' : 'block';
+    document.getElementById('diarioCamposLei').style.display = isLei ? 'block' : 'none';
+    // Campos de questões visíveis para ambos
+    document.getElementById('diarioCamposQuestoes').style.display = 'block';
+
+    // Preenche dados comuns
+    document.getElementById('diarioEditData').value = entry.data || '';
+    document.getElementById('diarioEditHora').value = entry.hora || '';
+
+    // Duração: tenta obter da sessão correspondente ou do registro
+    let duracao = 0;
+    if (entry.duracao !== undefined) {
+        duracao = entry.duracao;
+    } else {
+        const sessao = AppState.sessoes.find(s => s.data === entry.data && s.inicio === entry.hora);
+        if (sessao) duracao = sessao.duracao || 0;
+    }
+    document.getElementById('diarioEditDuracao').value = duracao;
+
+    // Preenche campos específicos
+    if (isLei) {
+        document.getElementById('diarioEditLei').value = entry.lei || '';
+        document.getElementById('diarioEditBlocoLei').value = entry.blocoLei || 2;
+        document.getElementById('diarioEditPrioridade').value = entry.prioridade || 'media';
+
+        // Questões da lei
+        const chaveLei = `lei_${entry.lei}`;
+        const q = AppState.questoesAulas[chaveLei] || { feitas: 0, acertos: 0 };
+        document.getElementById('diarioEditQuestFeitas').value = q.feitas || 0;
+        document.getElementById('diarioEditQuestAcertos').value = q.acertos || 0;
+    } else {
+        document.getElementById('diarioEditBloco').value = entry.bloco || '';
+        document.getElementById('diarioEditDisciplina').value = entry.disciplina || '';
+        document.getElementById('diarioEditAula').value = entry.aula || '';
+
+        // Questões da aula
+        const aula = getAllLessonsFlat().find(a => a.title === entry.aula && a.disciplineName === entry.disciplina);
+        if (aula) {
+            const q = AppState.questoesAulas[aula.key] || { feitas: 0, acertos: 0 };
+            document.getElementById('diarioEditQuestFeitas').value = q.feitas || 0;
+            document.getElementById('diarioEditQuestAcertos').value = q.acertos || 0;
+        } else {
+            document.getElementById('diarioEditQuestFeitas').value = 0;
+            document.getElementById('diarioEditQuestAcertos').value = 0;
+        }
+    }
+
+    // Abre o modal
+    const modal = document.getElementById('modalDiario');
+    if (modal) {
+        modal.dataset.index = index;
+        modal.classList.add('active');
+    }
+};
+
+// Delegação de eventos para botões dinâmicos
+document.addEventListener('click', (e) => {
+    const botao = e.target.closest('.editar-diario-btn');
+    if (botao) {
+        const index = parseInt(botao.dataset.index);
+        window.editarDiario(index);
+    }
+});
+
+// Fechar modal
+document.getElementById('closeModalDiario')?.addEventListener('click', () => {
+    document.getElementById('modalDiario').classList.remove('active');
+    diarioEditIndex = null;
+});
+
+// Salvar alterações
+document.getElementById('salvarDiarioEditBtn')?.addEventListener('click', () => {
+    const modal = document.getElementById('modalDiario');
+    if (!modal) return;
+
+    const index = parseInt(modal.dataset.index);
+    if (isNaN(index) || !AppState.diario[index]) return;
+
+    const entry = AppState.diario[index];
+    const isLei = entry.tipo === 'lei';
+
+    // Atualiza dados comuns
+    entry.data = document.getElementById('diarioEditData').value.trim();
+    entry.hora = document.getElementById('diarioEditHora').value.trim();
+    const novaDuracao = parseInt(document.getElementById('diarioEditDuracao').value) || 0;
+
+    // Atualiza campos específicos
+    if (isLei) {
+        entry.lei = document.getElementById('diarioEditLei').value.trim();
+        entry.blocoLei = parseInt(document.getElementById('diarioEditBlocoLei').value) || 2;
+        entry.prioridade = document.getElementById('diarioEditPrioridade').value;
+        entry.duracao = novaDuracao;
+    } else {
+        entry.bloco = document.getElementById('diarioEditBloco').value.trim();
+        entry.disciplina = document.getElementById('diarioEditDisciplina').value.trim();
+        entry.aula = document.getElementById('diarioEditAula').value.trim();
+    }
+
+    // Sincroniza a sessão de estudo
+    const sessaoExistente = AppState.sessoes.find(s => s.data === entry.data && s.inicio === entry.hora);
+    if (sessaoExistente) {
+        sessaoExistente.duracao = novaDuracao;
+        sessaoExistente.data = entry.data;
+        sessaoExistente.inicio = entry.hora;
+    } else if (novaDuracao > 0) {
+        AppState.sessoes.push({
+            data: entry.data,
+            inicio: entry.hora,
+            duracao: novaDuracao,
+            tipo: isLei ? 'lei' : 'aula'
+        });
+    }
+
+    // Salva questões (para ambos os tipos)
+    const qFeitas = parseInt(document.getElementById('diarioEditQuestFeitas').value) || 0;
+    const qAcertos = parseInt(document.getElementById('diarioEditQuestAcertos').value) || 0;
+    let chaveQuestoes = '';
+    if (isLei) {
+        chaveQuestoes = `lei_${entry.lei}`;
+    } else {
+        const aula = getAllLessonsFlat().find(a => a.title === entry.aula && a.disciplineName === entry.disciplina);
+        if (aula) chaveQuestoes = aula.key;
+    }
+    if (chaveQuestoes) {
+        if (!AppState.questoesAulas[chaveQuestoes]) AppState.questoesAulas[chaveQuestoes] = { feitas: 0, acertos: 0 };
+        AppState.questoesAulas[chaveQuestoes].feitas = qFeitas;
+        AppState.questoesAulas[chaveQuestoes].acertos = Math.min(qAcertos, qFeitas);
+    }
+
+    // Recalcula metas semanais
+    verificarMetasSemanais();
+    AppState.metasSemanais.horasFeitas = AppState.sessoes.reduce((total, s) => {
+        const dataSessao = new Date(s.data.split('/').reverse().join('-') + 'T12:00:00');
+        const inicioSemana = new Date();
+        inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+        if (dataSessao >= inicioSemana) total += (s.duracao || 0) / 60;
+        return total;
+    }, 0);
+    saveState();
+
+    // Atualiza interface
+    renderDiario();
+    if (typeof updateDashboard === 'function') updateDashboard();
+    if (typeof renderProgresso === 'function' && document.getElementById('page-progresso').classList.contains('active')) renderProgresso();
+
+    modal.classList.remove('active');
+    diarioEditIndex = null;
+});
+
+// Fechar ao clicar fora do modal
+document.getElementById('modalDiario')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modalDiario')) {
+        document.getElementById('modalDiario').classList.remove('active');
+        diarioEditIndex = null;
+    }
+});            const renderSimulados = () => {
                 const container = document.getElementById('simuladosContainer');
                 if (!container) return;
                 let html = `<div class="card"><h3>📋 Simulados</h3><div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
@@ -3019,5 +4513,7 @@ const renderRevisao = () => {
 	<script src="studyos_advanced_analytics_pack.js"></script>
 	<script src="studyos_cognitive_intelligence_pack.js"></script>
 	<script src="ruidos.js"></script>
+
+
 </body>
 </html>
