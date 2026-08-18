@@ -546,6 +546,20 @@
         .search-box { position: relative; margin-bottom: 16px; }
         .search-box input { width: 100%; padding: 8px 16px; border-radius: 40px; border: var(--border-light); background: rgba(0, 0, 0, 0.2); color: #d1d5db; font-size: .85rem; outline: none; }
         .streak-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 1.1rem; }
+
+        .weekly-coach-grid { display:grid; grid-template-columns:repeat(4,minmax(140px,1fr)); gap:10px; margin:12px 0; }
+        .weekly-coach-kpi { background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px; }
+        .weekly-coach-kpi .value { font-size:1.15rem; font-weight:800; }
+        .weekly-coach-kpi .label { font-size:.72rem; color:#8b95a7; margin-top:2px; }
+        .weekly-coach-panel { margin-top:10px; padding:12px; border-radius:16px; background:rgba(124,58,237,.06); border:1px solid rgba(124,58,237,.15); }
+        .weekly-coach-plan { display:grid; grid-template-columns:repeat(7,minmax(72px,1fr)); gap:6px; margin-top:10px; }
+        .weekly-day { border-radius:10px; padding:8px; background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.06); font-size:.72rem; text-align:center; }
+        .weekly-day.today { border-color:rgba(96,165,250,.5); box-shadow:0 0 0 1px rgba(96,165,250,.15) inset; }
+        .weekly-day.off { opacity:.48; }
+        .weekly-coach-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .weekly-priority { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+        .weekly-priority:last-child { border-bottom:none; }
+        @media (max-width:900px){ .weekly-coach-grid{grid-template-columns:repeat(2,minmax(130px,1fr));} .weekly-coach-plan{grid-template-columns:repeat(4,minmax(72px,1fr));} }
         .goal-progress { height: 5px; background: rgba(255, 255, 255, 0.04); border-radius: 10px; overflow: hidden; margin: 4px 0; }
         .goal-progress-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #60a5fa); border-radius: 10px; transition: width 0.5s ease; }
         .questoes-input { display: flex; align-items: center; gap: 4px; margin-left: auto; }
@@ -769,6 +783,94 @@
 @media(max-width:1100px){ .prog-toolbar{grid-template-columns:repeat(6,minmax(0,1fr));} .prog-filter,.prog-filter.wide{grid-column:span 2;} .prog-kpis{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-grid-2,.prog-grid-2.equal{grid-template-columns:1fr;} .prog-diagnosis{grid-template-columns:1fr 1fr;} }
 @media(max-width:700px){ .prog-toolbar{grid-template-columns:1fr 1fr;} .prog-filter,.prog-filter.wide{grid-column:span 2;} .prog-kpis{grid-template-columns:1fr 1fr;} .prog-diagnosis{grid-template-columns:1fr;} .prog-kpi{min-height:82px;} }
 
+
+.weekly-coach-advanced{margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px}
+.weekly-coach-stat{padding:11px 12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.018);border-radius:14px}
+.weekly-coach-stat .v{font-size:1.08rem;font-weight:800}
+.weekly-coach-stat .k{font-size:.7rem;color:#8b95a7;margin-top:2px}
+.weekly-coach-alert{padding:12px 14px;border-radius:15px;margin:10px 0;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02)}
+.weekly-coach-alert.good{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.16)}
+.weekly-coach-alert.warn{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.16)}
+.weekly-coach-alert.bad{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.16)}
+.weekly-coach-grid-3{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:10px;margin-top:10px}
+.weekly-coach-day{padding:9px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.018);min-height:86px}
+.weekly-coach-day.today{outline:1px solid rgba(124,58,237,.55);background:rgba(124,58,237,.065)}
+.weekly-coach-day.off{opacity:.55}
+.weekly-coach-meter{height:7px;border-radius:20px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:5px}
+.weekly-coach-meter > span{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#7c3aed,#60a5fa)}
+.weekly-coach-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+.weekly-coach-table th,.weekly-coach-table td{padding:7px;border-bottom:1px solid rgba(255,255,255,.05);text-align:left}
+.weekly-coach-table th{color:#8b95a7;font-weight:600}
+.weekly-coach-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.05);font-size:.68rem}
+.weekly-coach-preview{margin-top:10px;padding:12px;border-radius:14px;background:rgba(96,165,250,.055);border:1px solid rgba(96,165,250,.12)}
+.weekly-coach-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.weekly-coach-form-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.weekly-coach-section-title{font-size:.78rem;color:#aab4c2;font-weight:700;margin:12px 0 6px}
+.weekly-day-inputs{display:grid;grid-template-columns:repeat(7,minmax(70px,1fr));gap:6px}
+.weekly-day-inputs label{font-size:.68rem;color:#8b95a7}
+@media(max-width:1050px){.weekly-coach-advanced{grid-template-columns:repeat(2,minmax(140px,1fr));}.weekly-coach-grid-3{grid-template-columns:1fr 1fr}.weekly-day-inputs{grid-template-columns:repeat(4,minmax(70px,1fr))}}
+@media(max-width:700px){.weekly-coach-form-grid,.weekly-coach-form-grid-3{grid-template-columns:1fr}.weekly-coach-advanced,.weekly-coach-grid-3{grid-template-columns:1fr 1fr}.weekly-day-inputs{grid-template-columns:1fr 1fr}}
+
+/* ============================================================
+   STUDYOS // NOIR TECH UI
+   Correção visual incremental: preto, minimalista, funcional.
+   ============================================================ */
+:root{
+  --bg:#030405;
+  --surface:#07090c;
+  --surface-2:#0b0e12;
+  --surface-3:#0f1318;
+  --text:#e7eaee;
+  --muted:#77818d;
+  --primary:#64d9ff;
+  --primary-2:#2fb8e6;
+  --border:1px solid rgba(255,255,255,.055);
+  --border-light:1px solid rgba(255,255,255,.065);
+  --border-hover:1px solid rgba(100,217,255,.20);
+  --shadow:0 16px 50px rgba(0,0,0,.38);
+  --shadow-lg:0 24px 90px rgba(0,0,0,.55);
+  --radius:16px;
+  --radius-sm:12px;
+  --radius-xs:8px;
+}
+html,body{background:#030405!important;color:var(--text)!important}
+body{padding:0!important;display:block!important;background-image:none!important}
+.app{max-width:none!important;min-height:100vh!important;border-radius:0!important;background:#030405!important;border:0!important;box-shadow:none!important;padding:0 22px 32px!important;backdrop-filter:none!important}
+.app::before{display:none!important}
+.top-bar{position:sticky!important;top:0;z-index:1100;background:rgba(3,4,5,.94)!important;border-bottom:1px solid rgba(255,255,255,.06)!important;padding:15px 0 13px!important;margin-bottom:18px!important;backdrop-filter:blur(18px)!important}
+.logo h1{font-size:1.2rem!important;background:none!important;-webkit-text-fill-color:var(--text)!important;color:var(--text)!important;letter-spacing:-.3px!important}
+.logo h1 small{color:#6d7783!important;background:#090b0e!important;border-color:rgba(255,255,255,.06)!important;padding:3px 8px!important}
+.top-actions{display:flex!important;gap:7px!important}
+ .progress-clock{--pct:0%;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:58px;height:30px;padding:0 9px;border:1px solid rgba(100,217,255,.15);border-radius:9px;background:conic-gradient(rgba(100,217,255,.9) var(--pct),#10161c var(--pct));color:#c8f4ff;font-size:.72rem;font-weight:800;letter-spacing:.2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)} .weekly-guide{margin-top:7px;padding:9px 11px;border:1px solid rgba(255,255,255,.05);border-radius:10px;background:#090d11}.weekly-guide.bad{border-color:rgba(248,113,113,.18);background:#130b0d}.weekly-guide.warn{border-color:rgba(251,191,36,.16);background:#121006}.weekly-guide.good{border-color:rgba(74,222,128,.15);background:#09110d}.weekly-guide.neutral{border-color:rgba(100,217,255,.12);background:#081017}
+.btn-glass{background:#0b0e12!important;border:1px solid rgba(255,255,255,.065)!important;color:#dce1e6!important;border-radius:9px!important;box-shadow:none!important;backdrop-filter:none!important;transform:none!important}
+.btn-glass:hover{background:#10151b!important;border-color:rgba(100,217,255,.20)!important;transform:none!important}
+.btn-glass.primary{background:#0d2530!important;border-color:rgba(100,217,255,.22)!important;color:#bfefff!important}
+.btn-glass.primary:hover{background:#103440!important}
+.sidebar{background:#050709!important;border-right:1px solid rgba(255,255,255,.06)!important;box-shadow:14px 0 50px rgba(0,0,0,.55)!important;backdrop-filter:blur(18px)!important}
+.logo-side{color:#dfe5ea!important}
+.nav-list li{border-radius:9px!important;color:#8b949e!important}
+.nav-list li:hover{background:#0b0f13!important;color:#dfe5ea!important}
+.nav-list li.active{background:#0e171d!important;color:#c9f4ff!important;border-left:2px solid var(--primary)!important}
+.main-content{max-width:1440px;margin:0 auto!important}
+.card,.mission-card,.prog-panel,.weekly-coach-preview,.weekly-coach-day{background:#080b0f!important;border:1px solid rgba(255,255,255,.055)!important;box-shadow:none!important;border-radius:14px!important;backdrop-filter:none!important}
+.card{padding:18px!important}
+.mission-card{background:#070a0d!important;padding:24px!important}
+.card-header{border-bottom:1px solid rgba(255,255,255,.05)!important}
+.card-header h3,.mission-card .label{color:#dfe6eb!important}
+.mission-card .label{letter-spacing:.08em;text-transform:uppercase;font-size:.68rem!important;color:#7fdfff!important}
+.mission-card .title{color:#f0f3f5!important}
+.mission-card .justify-box{background:#0a1014!important;border-color:rgba(100,217,255,.11)!important}
+.weekly-coach-stat{background:#0a0d11!important;border:1px solid rgba(255,255,255,.05)!important;border-radius:10px!important}
+.weekly-coach-meter{background:#11161b!important}
+.weekly-coach-meter > span{background:linear-gradient(90deg,#2fb8e6,#8ee8ff)!important}
+.page{animation:none!important}
+input,select,textarea{background:#080b0f!important;color:#e4e9ed!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:9px!important}
+input:focus,select:focus,textarea:focus{outline:none!important;border-color:rgba(100,217,255,.35)!important;box-shadow:0 0 0 2px rgba(100,217,255,.06)!important}
+.progress-ring{background:conic-gradient(var(--primary) var(--pct,0%),#11161b var(--pct,0%))!important}
+::-webkit-scrollbar-thumb{background:#1a232b!important}
+::-webkit-scrollbar-thumb:hover{background:#24323d!important}
+@media(max-width:800px){.app{padding:0 12px 20px!important}.top-bar{padding-top:12px!important}.logo h1{font-size:1rem!important}.top-actions .btn-glass{padding:6px 10px!important}}
+
 </style>
 </head>
 <body>
@@ -786,12 +888,7 @@
                 <li data-page="page-leis"><span class="icon">📜</span> Leis</li>
                 <li data-page="page-progresso"><span class="icon">📊</span> Progresso</li>
                 <li data-page="page-diario"><span class="icon">📖</span> Diário</li>
-                <li data-page="page-simulados"><span class="icon">📋</span> Simulados</li>
-                <li data-page="page-flashcards"><span class="icon">🃏</span> Flashcards</li>
-                <li data-page="page-chat"><span class="icon">💬</span> Chat IA</li>
-                <li data-page="page-arquiteto"><span class="icon">🧠</span> Arquiteto IA</li>
                 <li data-page="page-gerenciar"><span class="icon">🛠️</span> Gerenciar Dados</li>
-                <li data-page="page-config"><span class="icon">⚙️</span> Configurações</li>
             </ul>
         </div>
         <div class="overlay" id="overlay"></div>
@@ -802,19 +899,12 @@
                 <button class="menu-toggle" id="menuToggle">☰</button>
                 <div class="logo"><h1>🎯 Coach CGU <small>StudyOS Pro</small></h1></div>
             </div>
-            <div class="top-stats">
-                <div class="stat-item"><span>🔥</span><span class="streak-badge" id="streakTop">0</span><span style="font-size:0.7rem;">dias</span></div>
-                <div class="stat-item"><span>⭐</span><span class="value" id="xpTop">0 XP</span></div>
-                <div class="stat-item"><span>⏱️</span><span class="value" id="clockTime">00:00:00</span></div>
-                <div class="stat-item"><span>📅</span><span class="value" id="diasProvaTop">--</span></div>
-                <div class="stat-item"><span>📌</span><span class="value" id="tarefasPendentesTop">0</span></div>
-                <div class="progress-ring" id="progressRing" data-label="0%"></div>
-                <div class="top-actions">
-                    <button class="btn-glass primary" id="exportBtn">📤 Exportar</button>
-                    <button class="btn-glass" id="importBtn">📥 Importar</button>
-                    <input type="file" id="fileInput" accept=".json" style="display:none;" />
-                    <button class="btn-glass danger" id="resetAllBtn">⟲ Resetar</button>
-                </div>
+            <div class="top-actions" aria-label="Dados e progresso">
+                <button class="btn-glass" id="importBtn">↙ Importar</button>
+                <button class="btn-glass primary" id="exportBtn">↗ Exportar</button>
+                <button class="btn-glass danger" id="resetAllBtn" title="Apaga os dados locais e volta ao estado inicial">♻ Resetar</button>
+                <div class="progress-clock" id="progressClock" title="Percentual de aulas concluídas">◔ <span>0%</span></div>
+                <input type="file" id="fileInput" accept=".json" style="display:none;" />
             </div>
         </div>
 
@@ -850,18 +940,8 @@
                         <textarea id="missionAnotacoes" placeholder="Anotações rápidas desta missão..."></textarea>
                     </div>
                 </div>
-                <div class="indicators-grid" id="indicatorsGrid">
-                    <div class="indicator-card"><div class="number" id="indDominio">0%</div><div class="label">Domínio geral</div></div>
-                    <div class="indicator-card"><div class="number" id="indHorasEstudadas">0h</div><div class="label">Horas estudadas</div></div>
-                    <div class="indicator-card"><div class="number" id="indPrevisao">--</div><div class="label">Previsão Bloco 1</div></div>
-                    <div class="indicator-card"><div class="number" id="indRiscoAtraso">--</div><div class="label">Risco de atraso</div></div>
-                    <div class="indicator-card"><div class="number" id="indConsistencia">--</div><div class="label">Consistência (7d)</div></div>
-                    <div class="indicator-card"><div class="number" id="indFadiga">--</div><div class="label">Fadiga estimada</div></div>
-                    <div class="indicator-card"><div class="number" id="indStreak">0</div><div class="label">Sequência de dias</div></div>
-                    <div class="indicator-card"><div class="number" id="indNivel">1</div><div class="label">Nível</div></div>
-                </div>
-                <div class="card" id="weeklyGoalsCard">
-                    <div class="card-header"><h3>🎯 Metas da Semana</h3><button class="btn-glass" id="definirMetaBtn">Definir Meta</button></div>
+<div class="card" id="weeklyGoalsCard">
+                    <div class="card-header"><div><h3>🎯 Metas da Semana — Coach</h3><div class="sub">Planejamento semanal orientado por prazo, prioridade e evidências do Progresso.</div></div><button class="btn-glass" id="definirMetaBtn">⚙️ Personalizar</button></div>
                     <div id="weeklyGoalsContainer"><p class="text-muted">Nenhuma meta definida.</p></div>
                 </div>
             </div>
@@ -887,72 +967,6 @@
 
             <!-- DIÁRIO -->
             <div id="page-diario" class="page"><div id="diarioContainer"><div id="diarioList"></div></div></div>
-
-            <!-- SIMULADOS -->
-            <div id="page-simulados" class="page"><div id="simuladosContainer"></div></div>
-
-            <!-- FLASHCARDS -->
-            <div id="page-flashcards" class="page">
-                <div class="card">
-                    <div class="card-header"><h3>🃏 Sistema de Flashcards (Repetição Espaçada)</h3></div>
-                    <div id="flashcardsControls" style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
-                        <button class="btn-glass primary" id="novoFlashcardBtn">+ Novo Flashcard</button>
-                        <button class="btn-glass" id="revisarFlashcardsBtn">🔄 Revisar Pendentes</button>
-                        <select id="flashcardDisciplinaFiltro" style="background:rgba(0,0,0,0.2); border:var(--border-light); color:#d1d5db; padding:4px 12px; border-radius:30px;"><option value="">Todas disciplinas</option></select>
-                    </div>
-                    <div id="flashcardReviewArea" style="display:none;">
-                        <div class="flashcard" id="flashcardElement" onclick="flipFlashcard()">
-                            <div class="flashcard-inner">
-                                <div class="flashcard-front" id="flashcardFront">Frente</div>
-                                <div class="flashcard-back" id="flashcardBack">Verso</div>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
-                            <button class="btn-action stop" onclick="avaliarFlashcard(1)">😰 Difícil</button>
-                            <button class="btn-action pause" onclick="avaliarFlashcard(3)">🤔 Médio</button>
-                            <button class="btn-action" onclick="avaliarFlashcard(5)">😊 Fácil</button>
-                        </div>
-                    </div>
-                    <div id="flashcardsList"></div>
-                </div>
-            </div>
-
-            <!-- CHAT IA -->
-            <div id="page-chat" class="page">
-                <div class="chat-container" style="background:rgba(255,255,255,0.015); border-radius:20px; border:1px solid rgba(255,255,255,0.02); display:flex; flex-direction:column; height:420px; overflow:hidden;">
-                    <div class="chat-messages" id="chatMessages" style="flex:1; padding:16px 20px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;"></div>
-                    <div class="chat-input-area" style="display:flex; gap:10px; padding:12px 16px; border-top:1px solid rgba(255,255,255,0.02); background:rgba(0,0,0,0.1);">
-                        <input type="text" id="chatInput" placeholder="Digite sua pergunta..." style="flex:1; padding:8px 16px; border-radius:40px; border:var(--border-light); background:rgba(0,0,0,0.2); color:#d1d5db; font-size:.85rem; outline:none;" />
-                        <button class="btn-glass primary" id="chatSendBtn">Enviar</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ARQUITETO IA -->
-            <div id="page-arquiteto" class="page">
-                <div class="card">
-                    <div class="card-header"><h3>🧠 Arquiteto IA</h3><span class="sub">Assistente inteligente para evolução do sistema</span></div>
-                    <div class="arquiteto-container">
-                        <div class="arquiteto-chat">
-                            <div class="messages" id="arquitetoMessages"></div>
-                            <div class="input-area">
-                                <input type="text" id="arquitetoInput" placeholder="Ex: Melhore o dashboard..." />
-                                <button id="arquitetoSendBtn">Enviar</button>
-                            </div>
-                        </div>
-                        <div class="arquiteto-side">
-                            <div class="card"><h4>📊 Insights & Recomendações</h4><div id="arquitetoInsights"></div></div>
-                            <div class="card"><h4>🔔 Notificações</h4><div id="arquitetoNotificacoes"></div></div>
-                            <div class="card"><h4>📜 Histórico</h4><div id="arquitetoHistorico"></div></div>
-                            <div class="card">
-                                <h4>⚙️ Política</h4>
-                                <select id="arquitetoPolicy"><option value="manual">Manual</option><option value="auto">Automático</option></select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- GERENCIAR DADOS -->
             <div id="page-gerenciar" class="page">
                 <div class="card">
@@ -967,32 +981,7 @@
                 </div>
             </div>
 
-            <!-- CONFIGURAÇÕES -->
-            <div id="page-config" class="page">
-                <div class="card">
-                    <h3>⚙️ Configurações do Sistema</h3>
-                    <label>Estratégia de estudo</label>
-                    <select id="configStrategy" style="width:100%; margin:8px 0;">
-                        <option value="cobertura">Cobertura Máxima</option>
-                        <option value="nota">Maior Nota Esperada</option>
-                        <option value="recuperacao">Recuperação</option>
-                        <option value="retafinal">Reta Final</option>
-                        <option value="manutencao">Manutenção</option>
-                    </select>
-                    <label>Horas por dia</label>
-                    <input type="number" id="configHoursPerDay" value="4" min="1" max="12" step="0.5" style="width:100%; margin:8px 0;" />
-                    <label>Meta semanal de aulas</label>
-                    <input type="number" id="configMetaSemanal" value="14" min="1" max="50" style="width:100%; margin:8px 0;" />
-                    <button class="btn-glass primary" id="configSaveBtn">💾 Salvar</button>
-                    <div id="configStatus" style="margin-top:8px; font-size:.85rem;"></div>
-                </div>
-                <div class="card">
-                    <h3>🔑 API Gemini</h3>
-                    <input type="text" id="configApiKey" placeholder="Chave API" style="width:100%; margin:8px 0;" />
-                    <button class="btn-glass primary" id="configSaveApiKeyBtn">💾 Salvar Chave</button>
-                    <div id="configApiFeedback" style="margin-top:8px; font-size:.85rem;"></div>
-                </div>
-            </div>
+
         </div>
     </div>
 
@@ -1020,37 +1009,79 @@
         </div>
     </div>
 
-    <!-- MODAL FLASHCARD -->
-    <div class="modal-overlay" id="modalFlashcard">
-        <div class="modal-box">
-            <span class="close-modal" id="closeModalFlashcard">&times;</span>
-            <h3>🃏 Novo Flashcard</h3>
+
+    <!-- MODAL METAS -->
+    <div class="modal-overlay" id="modalMetas">
+        <div class="modal-box" style="max-width:980px;">
+            <span class="close-modal" id="closeModalMetas">&times;</span>
+            <h3>🎯 Metas da Semana — Coach Avançado</h3>
             <div class="modal-body">
-                <label>Disciplina</label>
-                <select id="flashcardDisciplina" style="width:100%; margin:8px 0; background:rgba(0,0,0,0.2); border:var(--border-light); color:#d1d5db; padding:8px; border-radius:12px;"></select>
-                <label>Frente (Pergunta)</label>
-                <textarea id="flashcardFrente" placeholder="Ex: O que é o PPA?" style="width:100%; margin:8px 0;"></textarea>
-                <label>Verso (Resposta)</label>
-                <textarea id="flashcardVerso" placeholder="Ex: Plano Plurianual..." style="width:100%; margin:8px 0;"></textarea>
-                <button class="btn-glass primary" id="salvarFlashcardBtn">💾 Salvar</button>
+                <div class="weekly-coach-form-grid">
+                    <div><label>Estratégia</label><select id="metaEstrategia" style="width:100%;margin:8px 0;padding:8px;background:rgba(0,0,0,.2);border:var(--border-light);color:#d1d5db;border-radius:12px;"><option value="prazo">🚨 Prazo</option><option value="equilibrio">⚖️ Equilíbrio</option><option value="recuperacao">🧠 Recuperação</option><option value="desempenho">🎯 Desempenho</option><option value="personalizado">🛠️ Personalizado</option></select></div>
+                    <div><label>Prazo-alvo</label><input type="date" id="metaPrazo" style="width:100%;margin:8px 0;" /></div>
+                </div>
+                <div class="weekly-coach-section-title">🎛️ Metas explícitas</div>
+                <div class="weekly-coach-form-grid-3">
+                    <div><label>Aulas / semana</label><input type="number" id="metaAulas" min="0" max="200" step="1" /></div>
+                    <div><label>Horas / semana</label><input type="number" id="metaHoras" min="0" max="100" step="0.5" /></div>
+                    <div><label>Questões / semana</label><input type="number" id="metaQuestoes" min="0" max="3000" step="5" /></div>
+                    <div><label>Revisões / semana</label><input type="number" id="metaRevisoes" min="0" max="200" step="1" /></div>
+                    <div><label>Questões / aula estimadas</label><input type="number" id="metaQuestoesPorAula" min="1" max="100" step="1" /></div>
+                    <div><label>Precisão mínima desejada (%)</label><input type="number" id="metaPrecisao" min="50" max="100" step="1" /></div>
+                </div>
+                <div class="weekly-coach-section-title">📅 Capacidade e calendário</div>
+                <div class="weekly-coach-form-grid-3">
+                    <div><label>Dias de estudo / semana</label><input type="number" id="metaDiasEstudo" min="1" max="7" step="1" /></div>
+                    <div><label>Limite de horas / dia</label><input type="number" id="metaLimiteHorasDia" min="0.5" max="20" step="0.5" /></div>
+                    <div><label>Limite de questões / dia</label><input type="number" id="metaLimiteQuestoesDia" min="10" max="1000" step="5" /></div>
+                    <div><label>Limite de aulas / dia</label><input type="number" id="metaLimiteAulasDia" min="1" max="20" step="1" /></div>
+                    <div><label>Horas de referência / aula</label><input type="number" id="metaHorasAulaReferencia" min="0.5" max="4" step="0.1" /></div>
+                    <div><label>Peso do histórico de horas (%)</label><input type="number" id="metaPesoHistoricoHoras" min="0" max="100" step="5" /></div>
+                </div>
+                <div class="prog-small" style="margin:8px 0 5px;">Defina quais dias realmente existem para o plano. A carga diária pode ser personalizada por dia.</div>
+                <div class="weekly-day-inputs">
+                    ${['seg','ter','qua','qui','sex','sab','dom'].map(k=>`<div style="display:flex;flex-direction:column;gap:4px"><label><input type="checkbox" id="metaAtivo_${k}" style="margin-right:5px;">${weeklyDayLabel(k)}</label><input type="number" id="metaDia_${k}" min="0" max="20" step="0.5" style="width:100%;" /></div>`).join('')}
+                </div>
+                <div class="weekly-coach-form-grid-3" style="margin-top:8px">
+                    <div><label>Meta de consistência (%)</label><input type="number" id="metaConsistencia" min="30" max="100" step="1" /></div>
+                    <div><label>Modo de distribuição</label><select id="metaModoDistribuicao" style="width:100%;padding:8px;"><option value="capacidade">📐 Pela capacidade</option><option value="uniform">⚖️ Uniforme</option></select></div>
+                    <div><label>Descanso obrigatório</label><select id="metaDescansoObrigatorio" style="width:100%;padding:8px;"><option value="true">Sim</option><option value="false">Não</option></select></div>
+                </div>
+                <div class="weekly-coach-section-title">📐 Critérios de segurança</div>
+                <div class="weekly-coach-form-grid-3">
+                    <div><label>Buffer de prazo (%)</label><input type="number" id="metaBufferPrazo" min="0" max="50" step="1" /></div>
+                    <div><label>Reserva para imprevistos (%)</label><input type="number" id="metaReserva" min="0" max="40" step="1" /></div>
+                    <div><label>Intensidade <span id="metaIntensidadeLabel">100%</span></label><input type="range" id="metaIntensidade" min="70" max="130" step="5" value="100" style="width:100%;" /></div>
+                    <div><label>Meta mínima aceitável (%)</label><input type="number" id="metaPlanoMinimo" min="50" max="100" step="1" /></div>
+                    <div><label>Teto recomendado (%)</label><input type="number" id="metaPlanoMaximo" min="100" max="150" step="1" /></div>
+                    <div><label>Foco</label><select id="metaFoco" style="width:100%;padding:8px;background:rgba(0,0,0,.2);border:var(--border-light);color:#d1d5db;border-radius:12px;"><option value="automatico">🤖 Automático</option><option value="prioridade">🔴 Classe prioritária</option><option value="atraso">⏳ Maior atraso</option><option value="desempenho">📉 Menor desempenho</option><option value="equilibrado">⚖️ Distribuição equilibrada</option></select></div>
+                </div>
+                <div class="weekly-coach-section-title">⚖️ Pesos no modo Personalizado</div>
+                <div class="weekly-coach-form-grid-3">
+                    <div><label>Peso do prazo</label><input type="number" id="metaPesoPrazo" min="0" max="100" step="5" /></div>
+                    <div><label>Peso do desempenho</label><input type="number" id="metaPesoDesempenho" min="0" max="100" step="5" /></div>
+                    <div><label>Peso das revisões</label><input type="number" id="metaPesoRevisao" min="0" max="100" step="5" /></div>
+                    <div><label>Peso das questões</label><input type="number" id="metaPesoQuestoes" min="0" max="100" step="5" /></div>
+                    <div><label>Piso de horas / semana</label><input type="number" id="metaPisoHoras" min="0" max="100" step="0.5" /></div>
+                    <div><label>Teto de horas / semana</label><input type="number" id="metaTetoHoras" min="0" max="120" step="0.5" /></div>
+                </div>
+                <div class="weekly-coach-section-title">🧮 O que é automático e o que é compromisso seu?</div>
+                <div class="weekly-coach-form-grid-3">
+                    <div><label>Aulas</label><select id="metaObjetivoAulas" style="width:100%;padding:8px;"><option value="automatico">🤖 Automático</option><option value="manual">✍️ Fixo</option></select></div>
+                    <div><label>Horas</label><select id="metaObjetivoHoras" style="width:100%;padding:8px;"><option value="automatico">🤖 Automático</option><option value="manual">✍️ Fixo</option></select></div>
+                    <div><label>Questões</label><select id="metaObjetivoQuestoes" style="width:100%;padding:8px;"><option value="automatico">🤖 Automático</option><option value="manual">✍️ Fixo</option></select></div>
+                    <div><label>Revisões</label><select id="metaObjetivoRevisoes" style="width:100%;padding:8px;"><option value="automatico">🤖 Automático</option><option value="manual">✍️ Fixo</option></select></div>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;">
+                    <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="metaAjusteAutomatico" checked /> Recalibrar metas conforme o Progresso mudar</label>
+                </div>
+                <div class="weekly-coach-preview" id="metaLivePreview">Prévia em tempo real.</div>
+                <div class="prog-scope-banner" style="margin-top:10px;">O coach usa prazo, backlog, Classes, desempenho, revisões, ritmo recente e capacidade. Os campos personalizados alteram imediatamente a previsão e a distribuição do plano.</div>
+                <button class="btn-glass primary" id="salvarMetasBtn" style="margin-top:10px;">💾 Salvar e recalcular</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL METAS -->
-    <div class="modal-overlay" id="modalMetas">
-        <div class="modal-box">
-            <span class="close-modal" id="closeModalMetas">&times;</span>
-            <h3>🎯 Definir Metas da Semana</h3>
-            <div class="modal-body">
-                <label>Aulas esta semana</label>
-                <input type="number" id="metaAulas" value="14" min="1" max="50" style="width:100%; margin:8px 0;" />
-                <label>Horas de estudo</label>
-                <input type="number" id="metaHoras" value="20" min="1" max="80" step="0.5" style="width:100%; margin:8px 0;" />
-                <button class="btn-glass primary" id="salvarMetasBtn">💾 Salvar</button>
-            </div>
-        </div>
-    </div>
 <!-- MODAL EDIÇÃO DIÁRIO (AMPLIADO) -->
 <div class="modal-overlay" id="modalDiario">
     <div class="modal-box">
@@ -1241,7 +1272,7 @@ const criarEstadoLei = (lei) => ({
                 arquiteto: { historico: [], notificacoes: [], policy: 'manual', conversas: [] },
                 data: JSON.parse(JSON.stringify(DEFAULT_DATA)),
                 flashcards: [],
-                metasSemanais: { aulas: 14, horas: 20, aulasFeitas: 0, horasFeitas: 0, semana: '' },
+                metasSemanais: { aulas: 14, horas: 20, aulasFeitas: 0, horasFeitas: 0, semana: '', questoes: 60, revisoes: 5, diasEstudo: 6, estrategia: 'prazo', prazo: '', limiteHorasDia: 6, intensidade: 1.0, foco: 'automatico', coachAtivo: true },
                 extras: {
                     mapaCalor: {}, emocoes: [], picosProdutividade: {}, topicosCriticos: [],
                     cronogramaReverso: null, desafiosDiarios: [], badges: [],
@@ -1549,7 +1580,9 @@ revisaoDatas: {},
 
             const verificarMetasSemanais = () => {
                 const inicioSemana = new Date();
-                inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+                inicioSemana.setHours(0,0,0,0);
+                const dia = inicioSemana.getDay();
+                inicioSemana.setDate(inicioSemana.getDate() - (dia === 0 ? 6 : dia - 1));
                 const inicioSemanaStr = inicioSemana.toISOString().slice(0, 10);
                 if (AppState.metasSemanais.semana !== inicioSemanaStr) {
                     AppState.metasSemanais = { ...AppState.metasSemanais, aulasFeitas: 0, horasFeitas: 0, semana: inicioSemanaStr };
@@ -3602,39 +3635,441 @@ const renderHome = () => {
 };
 
 const updateIndicators = () => {
+    // A Home foi deliberadamente simplificada. Esses indicadores pertenciam
+    // ao painel antigo e não têm mais elementos visuais correspondentes.
+    // Mantemos a função segura para que Missão de Hoje possa chamá-la sem
+    // interromper a inicialização do sistema.
     const all = getAllLessonsFlat();
     const done = all.filter(i => AppState.checks[i.key]).length;
-    document.getElementById('indDominio').textContent = Math.round((done / all.length) * 100) + '%';
-    document.getElementById('indHorasEstudadas').textContent = Math.round(AppState.sessoes.reduce((s, e) => s + e.duracao, 0) / 60) + 'h';
+    const pct = all.length ? Math.round((done / all.length) * 100) : 0;
+    const horas = AppState.sessoes.reduce((s, e) => s + (Number(e.duracao) || 0), 0) / 60;
     const previsao = DecisionEngine.preverConclusaoBloco1();
-    document.getElementById('indPrevisao').textContent = previsao.data;
-    document.getElementById('indRiscoAtraso').textContent = previsao.atraso > 0 ? `🔴 ${previsao.atraso}d` : '✅ OK';
-    document.getElementById('indConsistencia').textContent = DecisionEngine.consistenciaSemanal() + '%';
-    document.getElementById('indFadiga').textContent = DecisionEngine.detectarFadiga();
-    document.getElementById('indStreak').textContent = AppState.student.gamificacao.streak || 0;
-    document.getElementById('indNivel').textContent = AppState.student.gamificacao.nivel || 1;
+    const dados = {
+        dominio: pct,
+        horas,
+        previsao,
+        consistencia: DecisionEngine.consistenciaSemanal(),
+        fadiga: DecisionEngine.detectarFadiga(),
+        streak: AppState.student?.gamificacao?.streak || 0,
+        nivel: AppState.student?.gamificacao?.nivel || 1
+    };
+    const mapa = {
+        indDominio: `${dados.dominio}%`,
+        indHorasEstudadas: `${Math.round(dados.horas)}h`,
+        indPrevisao: dados.previsao?.data || '—',
+        indRiscoAtraso: dados.previsao?.atraso > 0 ? `🔴 ${dados.previsao.atraso}d` : '✅ OK',
+        indConsistencia: `${dados.consistencia}%`,
+        indFadiga: dados.fadiga,
+        indStreak: dados.streak,
+        indNivel: dados.nivel
+    };
+    Object.entries(mapa).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    });
+    return dados;
+};
+
+const ensureWeeklyCoachState = () => {
+    AppState.metasSemanais = AppState.metasSemanais || {};
+    const m = AppState.metasSemanais;
+    const defaults = {
+        aulas: 14, horas: 20, questoes: 60, revisoes: 5, diasEstudo: 6,
+        estrategia: 'prazo', prazo: '', limiteHorasDia: 6, intensidade: 1,
+        foco: 'automatico', coachAtivo: true,
+        bufferPrazoPct: 10, reservaRecuperacaoPct: 10, metaPrecisao: 80,
+        revisoesPct: 20, questoesPorAula: 10, ajusteAutomatico: true,
+        toleranciaAtrasoDias: 2, objetivoAulas: 'automatico', objetivoHoras: 'automatico',
+        objetivoQuestoes: 'automatico', objetivoRevisoes: 'automatico',
+        horasPorDiaSemana: { seg:0,ter:0,qua:0,qui:0,sex:0,sab:0,dom:0 },
+        diasPermitidos: ['seg','ter','qua','qui','sex','sab'],
+        planoMinimoPct: 80, planoMaximoPct: 120,
+        horasPorAulaReferencia: 2, pesoHistoricoHoras: 60,
+        metaConsistencia: 70, limiteQuestoesDia: 150, limiteAulasDia: 4,
+        modoDistribuicao: 'capacidade', descansoObrigatorio: true,
+        pisoHorasSemana: 0, tetoHorasSemana: 0,
+        reflexaoSemanal: ''
+    };
+    Object.entries(defaults).forEach(([k,v])=>{
+        if (m[k]===undefined || m[k]===null || (typeof v==='number' && !Number.isFinite(Number(m[k]))))
+            m[k]=Array.isArray(v)?[...v]:(v && typeof v==='object'?{...v}:v);
+    });
+    m.horasPorDiaSemana = {...defaults.horasPorDiaSemana, ...(m.horasPorDiaSemana||{})};
+    m.diasPermitidos = Array.isArray(m.diasPermitidos) && m.diasPermitidos.length ? [...new Set(m.diasPermitidos)] : [...defaults.diasPermitidos];
+    return m;
+};
+
+const weeklyDateISO = d => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const weeklyStart = () => { const d=new Date(); d.setHours(0,0,0,0); const day=d.getDay(); d.setDate(d.getDate()-(day===0?6:day-1)); return d; };
+const weeklyEnd = () => { const d=weeklyStart(); d.setDate(d.getDate()+6); return d; };
+const weeklyDaysUntil = target => Math.max(0,Math.ceil((new Date(target).setHours(23,59,59,999)-Date.now())/86400000));
+const weeklyDateFromBR = v => { if(!v) return null; const s=String(v); if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(`${s}T12:00:00`); const p=s.split('/'); return p.length===3?new Date(`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}T12:00:00`):null; };
+const weeklyDayKey = d => ['dom','seg','ter','qua','qui','sex','sab'][new Date(d).getDay()];
+const weeklyDayLabel = k => ({seg:'Seg',ter:'Ter',qua:'Qua',qui:'Qui',sex:'Sex',sab:'Sáb',dom:'Dom'})[k]||k;
+const weeklyClamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+const weeklyActivityThisWeek = () => {
+    const ini=weeklyStart(), lessonKeys=new Set(), lawKeys=new Set();
+    (AppState.diario||[]).forEach(e=>{
+        const d=weeklyDateFromBR(e.data); if(!d||d<ini)return;
+        if(e.tipo==='lei'){ if(e.lei) lawKeys.add(`lei_${e.lei}`); return; }
+        const found=typeof localizarAulaLegadaPorDiario==='function'?localizarAulaLegadaPorDiario(e):null;
+        const key=found?.key||e.key; if(key)lessonKeys.add(key);
+    });
+    return {lessons:lessonKeys.size,laws:lawKeys.size};
+};
+const weeklyCompletedThisWeek = () => weeklyActivityThisWeek().lessons;
+const weeklyMinutesThisWeek = () => {
+    const ini=weeklyStart();
+    return (AppState.sessoes||[]).filter(s=>{const d=weeklyDateFromBR(s.data);return d&&d>=ini;}).reduce((a,s)=>a+(Number(s.duracao)||0),0);
+};
+const weeklyQuestionsThisWeek = () => {
+    const ini=weeklyStart();
+    return (AppState.historicoQuestoes||[]).filter(q=>{const d=q.iso?weeklyDateFromBR(q.iso):weeklyDateFromBR(q.data);return d&&d>=ini;}).reduce((s,q)=>s+(Number(q.feitas)||0),0);
+};
+const weeklyAccuracyThisWeek = () => {
+    const ini=weeklyStart(); let f=0,a=0;
+    (AppState.historicoQuestoes||[]).forEach(q=>{const d=q.iso?weeklyDateFromBR(q.iso):weeklyDateFromBR(q.data);if(d&&d>=ini){f+=Number(q.feitas)||0;a+=Math.min(Number(q.acertos)||0,Number(q.feitas)||0);}});
+    return f?a/f:null;
+};
+const weeklyRevisionsDoneThisWeek = () => {
+    const ini=weeklyStart(), events=new Set();
+    Object.entries(AppState.revisaoDatas||{}).forEach(([key,r])=>{
+        const add=v=>{if(!v)return;const d=new Date(String(v).length===10?`${v}T12:00:00`:v);if(!isNaN(d)&&d>=ini)events.add(`${key}|${weeklyDateISO(d)}`);};
+        (Array.isArray(r?.historico)?r.historico:[]).forEach(add);
+        ['rev1','rev2','rev3','rev4','rev5','rev6'].forEach(k=>add(r?.[k]));
+    });
+    return events.size;
+};
+const weeklyRevisionsDue = () => getAllLessonsFlat().filter(a=>AppState.checks?.[a.key] && DecisionEngine._revisaoVencida?.(a.key)).length;
+
+const weeklyWindowStats = (daysBack, offset=0) => {
+    const end=new Date(Date.now()-offset*86400000), start=new Date(end.getTime()-daysBack*86400000),
+          active=new Set(), lessonKeys=new Set();
+    let min=0,q=0,a=0, sessions=0;
+    (AppState.diario||[]).forEach(e=>{
+        const d=weeklyDateFromBR(e.data); if(!d||d<start||d>end)return;
+        active.add(weeklyDateISO(d));
+        if(e.tipo==='lei')return;
+        const found=typeof localizarAulaLegadaPorDiario==='function'?localizarAulaLegadaPorDiario(e):null;
+        const key=found?.key||e.key; if(key)lessonKeys.add(key);
+    });
+    (AppState.sessoes||[]).forEach(s=>{
+        const d=weeklyDateFromBR(s.data); if(!d||d<start||d>end)return;
+        min+=Number(s.duracao)||0; sessions++; active.add(weeklyDateISO(d));
+    });
+    (AppState.historicoQuestoes||[]).forEach(x=>{const d=x.iso?weeklyDateFromBR(x.iso):weeklyDateFromBR(x.data);if(!d||d<start||d>end)return;q+=Number(x.feitas)||0;a+=Math.min(Number(x.acertos)||0,Number(x.feitas)||0);});
+    const hours=min/60, lessonCount=lessonKeys.size, activeDays=active.size;
+    return {lessonCount,hours,q,a,accuracy:q?a/q:null,activeDays,sessions,avgSession:sessions?min/sessions:0,lessonHours:lessonCount>0?hours/lessonCount:null,qph:hours>0?q/hours:0};
+};
+
+const weeklyRecentStats = () => {
+    const cur=weeklyWindowStats(28,0), prev=weeklyWindowStats(28,28);
+    const weeklyPace=cur.lessonCount/4, weeklyHours=cur.hours/4, weeklyQuestions=cur.q/4;
+    const prevPace=prev.lessonCount/4, prevHours=prev.hours/4, prevQ=prev.q/4;
+    const trendPace=prevPace>0?cur.weeklyPace/prevPace:1;
+    const trendHours=prevHours>0?cur.hours/prevHours:1;
+    const trendQuestions=prevQ>0?cur.q/prevQ:1;
+    const sample=Math.min(1,(cur.activeDays/14)*0.7+(Math.min(cur.lessonCount,20)/20)*0.3);
+    const confidence=Math.round(weeklyClamp((0.4*sample+0.3*Math.min(1,cur.sessions/10)+0.3*(cur.accuracy===null?0.4:1))*100,20,95));
+    const activePerWeek=cur.activeDays/4;
+    const stability=Math.round(weeklyClamp((1-Math.min(1,Math.abs(trendPace-1)))*100,0,100));
+    return {...cur,weeklyPace,weeklyHours,weeklyQuestions,prevPace,prevHours,prevQ,trendPace,trendHours,trendQuestions,confidence,activePerWeek,stability};
+};
+
+const weeklyBacklog = () => {
+    const all=getAllLessonsFlat(), remainingLessons=all.filter(a=>!AppState.checks?.[a.key]);
+    const priorityCounts={prioritaria:0,media:0,baixa:0,baixissima:0};
+    remainingLessons.forEach(a=>{const c=DecisionEngine._obterClasseDisciplina?.(a.disciplineName)||'media';priorityCounts[c]=(priorityCounts[c]||0)+1;});
+    const pendingLaws=(AppState.leis||[]).filter(l=>l.status!=='concluido').length;
+    const dueRevisions=weeklyRevisionsDue();
+    return {totalLessons:all.length,doneLessons:all.length-remainingLessons.length,remainingLessons,pendingLaws,priorityCounts,dueRevisions};
+};
+
+const weeklyCapacity = m => {
+    const labels=['seg','ter','qua','qui','sex','sab','dom'], base=weeklyClamp(Number(m.limiteHorasDia)||6,.5,20), h={...m.horasPorDiaSemana};
+    let preferred=[...new Set((m.diasPermitidos||[]).filter(k=>labels.includes(k)))];
+    const targetDays=weeklyClamp(Number(m.diasEstudo)||preferred.length||6,1,7);
+    if(!preferred.length)preferred=labels.slice(0,targetDays);
+    if(preferred.length>targetDays)preferred=preferred.slice(0,targetDays);
+    if(preferred.length<targetDays){for(const k of labels){if(preferred.length>=targetDays)break;if(!preferred.includes(k))preferred.push(k);}}
+    const allowed=new Set(preferred), byDay={}; let total=0;
+    labels.forEach(k=>{const v=allowed.has(k)?(Number(h[k])>0?Math.min(base,Number(h[k])):base):0;byDay[k]=v;total+=v;});
+    const activeDays=preferred.length;
+    return {total,days:preferred,byDay,activeDays,base};
+};
+
+const weeklyStrategyWeights = (m,stats) => {
+    const presets={
+        prazo:{coverage:1.25,performance:.85,revision:1.05,questions:1},
+        equilibrio:{coverage:1,performance:1,revision:1,questions:1},
+        recuperacao:{coverage:.85,performance:1.4,revision:1.25,questions:1.25},
+        desempenho:{coverage:.75,performance:1.55,revision:1.05,questions:1.45},
+        personalizado:{coverage:1,performance:1,revision:1,questions:1}
+    };
+    const p=presets[m.estrategia]||presets.prazo;
+    if(m.estrategia!=='personalizado')return p;
+    const wP=Number(m.pesoPrazo)||25,wD=Number(m.pesoDesempenho)||25,wR=Number(m.pesoRevisao)||25,wQ=Number(m.pesoQuestoes)||25,sum=Math.max(1,wP+wD+wR+wQ);
+    return {coverage:1+((wP/sum)-.25)*1.5,performance:1+((wD/sum)-.25)*1.5,revision:1+((wR/sum)-.25)*1.5,questions:1+((wQ/sum)-.25)*1.5};
+};
+
+const weeklyCurrentWeek = () => {
+    const a=weeklyActivityThisWeek();
+    return {lessons:a.lessons,laws:a.laws,hours:weeklyMinutesThisWeek()/60,questions:weeklyQuestionsThisWeek(),revisions:weeklyRevisionsDoneThisWeek(),accuracy:weeklyAccuracyThisWeek()};
+};
+
+const weeklyCoachPlan = () => {
+    const m=ensureWeeklyCoachState(), backlog=weeklyBacklog(), stats=weeklyRecentStats(), cap=weeklyCapacity(m), week=weeklyCurrentWeek(), today=new Date();
+    const deadline=m.prazo?new Date(`${m.prazo}T23:59:59`):new Date(CONFIG.diasProva||new Date(2026,9,1));
+    const daysToDeadline=Math.max(0,Math.ceil((deadline-today)/86400000));
+    const weeksToDeadline=Math.max(1/7,daysToDeadline/7);
+    const w=weeklyStrategyWeights(m,stats);
+    const buffer=1+weeklyClamp(Number(m.bufferPrazoPct)||10,0,50)/100;
+    const remainingLessons=backlog.remainingLessons.length;
+    const deadlineNeed=remainingLessons>0?Math.ceil((remainingLessons/weeksToDeadline)*buffer):0;
+    const adaptiveEnabled=m.ajusteAutomatico!==false;
+    const adaptationFactor=adaptiveEnabled?weeklyClamp(1+((1-Math.min(1,stats.trendPace))*0.25),.9,1.25):1;
+    const recentBase=Math.max(0.01,stats.weeklyPace);
+    const adaptiveNeed=Math.ceil(recentBase*adaptationFactor);
+    const minCommit=stats.weeklyPace>0?Math.ceil(stats.weeklyPace*(Number(m.planoMinimoPct)||80)/100):0;
+    const maxCommit=stats.weeklyPace>0?Math.ceil(stats.weeklyPace*(Number(m.planoMaximoPct)||120)/100):Infinity;
+    const baseLessonsWeek=Math.ceil(Math.max(deadlineNeed,adaptiveNeed,minCommit)*w.coverage);
+    const manualLessons=Number(m.aulas)||0;
+    let lessonsTarget=m.objetivoAulas==='manual'?manualLessons:baseLessonsWeek;
+    if(!remainingLessons)lessonsTarget=0;
+    lessonsTarget=weeklyClamp(Math.ceil(lessonsTarget),0,Math.max(remainingLessons,0));
+    const goalAboveCeiling=isFinite(maxCommit)&&lessonsTarget>maxCommit;
+
+    const histLessonHours=stats.lessonHours;
+    const refHours=weeklyClamp(Number(m.horasPorAulaReferencia)||2,.5,4);
+    const histWeight=weeklyClamp(Number(m.pesoHistoricoHoras)||60,0,100)/100;
+    const estimatedHoursPerLesson=histLessonHours!==null ? weeklyClamp(refHours*(1-histWeight)+histLessonHours*histWeight,.5,4):refHours;
+    const requiredHours=lessonsTarget*estimatedHoursPerLesson*Math.max(.7,Math.min(1.3,Number(m.intensidade)||1));
+    const manualHours=Number(m.horas)||0;
+    let hoursTarget=m.objetivoHoras==='manual'?manualHours:requiredHours;
+    if(m.pisoHorasSemana>0)hoursTarget=Math.max(hoursTarget,Number(m.pisoHorasSemana));
+    if(m.tetoHorasSemana>0)hoursTarget=Math.min(hoursTarget,Number(m.tetoHorasSemana));
+    hoursTarget=Math.round(Math.max(0,hoursTarget)*10)/10;
+
+    const qPerLesson=weeklyClamp(Number(m.questoesPorAula)||10,1,100);
+    const precisionGap=stats.accuracy!==null?Math.max(0,(Number(m.metaPrecisao||80)/100)-stats.accuracy):0;
+    const qualityMultiplier=precisionGap>0?weeklyClamp(1+precisionGap*1.5,1,1.6):1;
+    const requiredQ=Math.ceil(lessonsTarget*qPerLesson*w.questions*qualityMultiplier);
+    const manualQ=Number(m.questoes)||0;
+    let qTarget=m.objetivoQuestoes==='manual'?manualQ:requiredQ;
+    qTarget=Math.max(0,Math.min(5000,Math.ceil(qTarget)));
+
+    const autoRevTarget=Math.min(50,Math.ceil(backlog.dueRevisions*Math.max(1,w.revision)));
+    const manualRev=Number(m.revisoes)||0;
+    let revTarget=m.objetivoRevisoes==='manual'?manualRev:Math.max(autoRevTarget,manualRev||0);
+    revTarget=Math.max(0,Math.ceil(revTarget));
+
+    const reservePct=weeklyClamp(Number(m.reservaRecuperacaoPct)||10,0,40)/100;
+    const capacityReal=Math.max(0,cap.total*(1-reservePct));
+    const utilization=capacityReal>0?hoursTarget/capacityReal:(hoursTarget>0?1:0);
+    const capacityRisk=utilization>1;
+    const planGapHours=Math.max(0,hoursTarget-capacityReal);
+    const paceNeeded=daysToDeadline>0?remainingLessons/(daysToDeadline/7):remainingLessons;
+    const paceRatio=paceNeeded>0?stats.weeklyPace/paceNeeded:1;
+    const consistencyGoal=weeklyClamp(Number(m.metaConsistencia)||70,0,100);
+    const currentConsistency=Math.round((stats.activeDays/28)*100);
+    const qualityRisk=stats.accuracy!==null && stats.accuracy < Number(m.metaPrecisao||80)/100;
+
+    const activeDaysFuture=cap.days.filter(k=>{
+        const d=new Date(weeklyStart().getTime()+['seg','ter','qua','qui','sex','sab','dom'].indexOf(k)*86400000);
+        return d>=new Date(new Date().setHours(0,0,0,0));
+    }).length;
+    const remainingActiveDays=Math.max(1,activeDaysFuture);
+    const weekLessonsLeft=Math.max(0,lessonsTarget-week.lessons);
+    const weekHoursLeft=Math.max(0,hoursTarget-week.hours);
+    const weekQLeft=Math.max(0,qTarget-week.questions);
+    const weekRevLeft=Math.max(0,revTarget-week.revisions);
+    const dailyHours=weekHoursLeft/remainingActiveDays;
+    const dailyLessons=weekLessonsLeft/remainingActiveDays;
+    const dailyQ=remainingActiveDays?Math.ceil(weekQLeft/remainingActiveDays):weekQLeft;
+    const dailyRev=remainingActiveDays?Math.ceil(weekRevLeft/remainingActiveDays):weekRevLeft;
+
+    const goalGapFromDeadline=Math.max(0,deadlineNeed-lessonsTarget);
+    const maxQDay=Math.max(1,Number(m.limiteQuestoesDia)||150), maxLDay=Math.max(1,Number(m.limiteAulasDia)||4);
+    const dailyQCapRisk=dailyQ>maxQDay, dailyLessonCapRisk=dailyLessons>maxLDay;
+    const forecastWeeklyPace=Math.max(.01,stats.weeklyPace*(adaptiveEnabled?weeklyClamp(1+(stats.trendPace-1)*0.35,.75,1.2):1));
+    const projectedDays=remainingLessons>0?Math.ceil((remainingLessons/forecastWeeklyPace)*7):0;
+    const forecastDate=new Date(today.getTime()+projectedDays*86400000);
+    const forecastDelayDays=Math.max(0,Math.ceil((forecastDate-deadline)/86400000));
+
+    const riskScore=Math.min(100,Math.round(
+        (forecastDelayDays>0?35:0)+
+        (capacityRisk?25:0)+
+        (dailyQCapRisk||dailyLessonCapRisk?15:0)+
+        (paceRatio<.8?20:paceRatio<.95?10:0)+
+        (qualityRisk?15:0)+
+        (goalGapFromDeadline>0?30:0)+
+        (backlog.dueRevisions>Math.max(5,revTarget*1.5)?5:0)
+    ));
+    const coachConfidence=Math.round(weeklyClamp(stats.confidence + (stats.activeDays>=14?8:0) - (stats.lessonCount<5?12:0),20,95));
+    const status=riskScore>=60?'alto-risco':riskScore>=30?'atencao':'sustentavel';
+    const mastery=stats.accuracy!==null?Math.round(stats.accuracy*100):null;
+    const deadlineMarginDays=Math.max(0,daysToDeadline-projectedDays);
+    return {m,backlog,stats,cap,week,deadline,daysToDeadline,weeksToDeadline,lessonsTarget,hoursTarget,qTarget,revTarget,requiredHours:requiredHours||0,requiredQ,capacityReal,utilization,capacityRisk,planGapHours,paceRatio,weekHoursLeft,weekLessonsLeft,weekQLeft,weekRevLeft,dailyHours,dailyLessons,dailyQ,dailyRev,remainingActiveDays,forecastDate,forecastDelayDays,deadlineMarginDays,paceNeeded,qualityRisk,riskScore,coachConfidence,status,mastery,estimatedHoursPerLesson,consistencyGoal,currentConsistency,goalAboveCeiling,dailyQCapRisk,dailyLessonCapRisk,adaptationFactor,adaptiveEnabled,activeDaysFuture,precisionGap,qualityMultiplier,maxQDay,maxLDay,deadlineNeed,adaptiveNeed,minCommit,maxCommit,goalGapFromDeadline:Math.max(0,deadlineNeed-lessonsTarget)};
+};
+
+const weeklyPriorityItems = plan => {
+    const scored=[];
+    plan.backlog.remainingLessons.forEach(a=>{
+        const cls=DecisionEngine._obterClasseDisciplina?.(a.disciplineName)||'media', q=AppState.questoesAulas?.[a.key]||{};
+        const feitas=Number(q.feitas)||0, ac=Math.min(Number(q.acertos)||0,feitas), acc=feitas?ac/feitas:null;
+        const daysNoStudy=DecisionEngine._diasSemEstudo?.(a.key) || 0;
+        let score={prioritaria:100,media:70,baixa:40,baixissima:20}[cls]||20;
+        const focus=plan.m.foco||'automatico';
+        const performance=(acc===null?18:(1-acc)*60), revision=DecisionEngine._revisaoVencida?.(a.key)?30:0, backlog=12, delay=Math.min(30,daysNoStudy);
+        score += backlog + (focus==='desempenho'?performance*1.8:performance) + (focus==='atraso'?delay*1.8:delay*.5) + revision;
+        if(focus==='prioridade')score += {prioritaria:50,media:25,baixa:5,baixissima:0}[cls]||0;
+        if(focus==='equilibrado')score += 20/(1+Math.max(0,feitas));
+        scored.push({a,cls,score,acc,feitas});
+    });
+    const byKey=new Map();
+    scored.forEach(x=>{
+        const k=x.a.disciplineName;
+        if(!byKey.has(k))byKey.set(k,{disciplina:k,classe:x.cls,score:0,restantes:0,questoes:0,accs:[],revisoes:0});
+        const g=byKey.get(k); g.score+=x.score; g.restantes++; g.questoes+=x.feitas; if(x.acc!==null)g.accs.push(x.acc); if(DecisionEngine._revisaoVencida?.(x.a.key))g.revisoes++;
+    });
+    return [...byKey.values()].map(g=>({...g,accuracy:g.accs.length?Math.round(g.accs.reduce((a,b)=>a+b,0)/g.accs.length*100):null})).sort((a,b)=>b.score-a.score).slice(0,8);
+};
+
+const weeklyDayPlan = plan => {
+    const start=weeklyStart(), labels=['seg','ter','qua','qui','sex','sab','dom'], capacity=plan.cap.byDay;
+    const active=labels.filter(k=>(capacity[k]||0)>0), capSum=active.reduce((s,k)=>s+(capacity[k]||0),0)||1;
+    const mode=plan.m.modoDistribuicao||'capacidade';
+    const totalHours=plan.hoursTarget;
+    return labels.map((k,i)=>{
+        const d=new Date(start.getTime()+i*86400000), h=capacity[k]||0, share=active.includes(k)?(mode==='uniform'?1/Math.max(1,active.length):h/capSum):0;
+        return {key:k,label:weeklyDayLabel(k),date:d,hours:+(totalHours*share).toFixed(1),lessons:Math.round(plan.lessonsTarget*share),questions:Math.ceil(plan.qTarget*share),revisions:Math.ceil(plan.revTarget*share),today:weeklyDateISO(d)===weeklyDateISO(new Date()),off:h<=0};
+    });
+};
+
+const weeklyCoachNarrative = plan => {
+    if(!plan.m.prazo) return {cls:'warn',title:'🧭 Defina um prazo para o coach assumir o volante.',text:'Sem uma data-alvo, o sistema consegue organizar a semana, mas não consegue afirmar se o ritmo fecha a preparação dentro do tempo.'};
+    if(plan.capacityRisk) return {cls:'bad',title:'🚨 Este plano não cabe na capacidade configurada.',text:`O plano pede ${plan.hoursTarget.toFixed(1)} h e sua capacidade efetiva é ${plan.capacityReal.toFixed(1)} h/semana. Isso não é falta de disciplina: é incompatibilidade matemática. Ajuste prazo, dias ou capacidade.`};
+    if(plan.forecastDelayDays>0) return {cls:'bad',title:'🔴 O ritmo atual não fecha o prazo.',text:`A projeção aponta ${plan.forecastDelayDays} dia(s) de atraso. O coach aumenta o foco nas tarefas de maior valor, em vez de simplesmente mandar estudar mais.`};
+    if(plan.qualityRisk) return {cls:'warn',title:'🟡 O conteúdo avança mais rápido que a consolidação.',text:`A precisão recente está em ${plan.mastery??'—'}%, abaixo do piso de ${plan.m.metaPrecisao}%. O plano desloca esforço para questões e revisões.`};
+    if(plan.riskScore>=30) return {cls:'warn',title:'🟡 Semana de controle.',text:`A utilização está em ${Math.round(plan.utilization*100)}% da capacidade efetiva. Pequenos imprevistos podem empurrar o cronograma.`};
+    return {cls:'good',title:'🟢 Semana sustentável.',text:`O plano cabe na capacidade, mantém margem e usa o prazo para decidir o volume em vez de transformar a meta em um número arbitrário.`};
+};
+
+const weeklyCoachGuide = plan => {
+    const steps=[];
+    const remaining=Math.max(0,Number(plan.weekLessonsLeft)||0);
+    const hours=Math.max(0,Number(plan.weekHoursLeft)||0);
+    const qs=Math.max(0,Number(plan.weekQLeft)||0);
+    const rev=Math.max(0,Number(plan.weekRevLeft)||0);
+    const active=Math.max(1,Number(plan.remainingActiveDays)||1);
+    if (plan.forecastDelayDays>0) {
+        steps.push({tone:'bad',title:'1. Proteger o prazo',text:`Você precisa recuperar aproximadamente ${Math.ceil(Math.max(0,plan.paceNeeded-plan.stats.weeklyPace))} aula(s)/semana de ritmo. Não tente compensar tudo em um único dia.`});
+    } else {
+        steps.push({tone:'good',title:'1. Manter trajetória',text:`O ritmo atual é compatível com a projeção. O trabalho desta semana é preservar a regularidade e evitar acumular dívida.`});
+    }
+    if (plan.qualityRisk) {
+        steps.push({tone:'warn',title:'2. Recuperar qualidade',text:`A precisão está em ${plan.mastery??'—'}%. Reserve parte das questões para os temas com pior desempenho e use revisão ativa antes de avançar volume.`});
+    } else {
+        steps.push({tone:'good',title:'2. Consolidar',text:`A precisão recente não está sinalizando crise. Priorize retenção e prática sobre releitura longa.`});
+    }
+    if (plan.backlog.dueRevisions>0) {
+        steps.push({tone:'warn',title:'3. Pagar a dívida de revisão',text:`Há ${plan.backlog.dueRevisions} revisão(ões) vencida(s). Faça as revisões prioritárias antes de abrir muito conteúdo novo.`});
+    } else {
+        steps.push({tone:'good',title:'3. Espaçar',text:'Não há dívida de revisão relevante. Mantenha espaçamento para proteger a retenção.'});
+    }
+    steps.push({tone:'neutral',title:'4. Compromisso diário',text:`Distribua cerca de ${Math.ceil(hours/active*10)/10} h, ${Math.ceil(qs/active)} questões e ${Math.ceil(rev/active)} revisão(ões) por dia ativo. Restam ${remaining} aula(s) nesta semana.`});
+    if (plan.capacityRisk) {
+        steps.push({tone:'bad',title:'5. Regra de ajuste',text:'O compromisso ultrapassa a capacidade configurada. Reduza escopo, aumente dias disponíveis ou reabra o prazo; não transforme sobrecarga em meta.'});
+    } else {
+        steps.push({tone:'neutral',title:'5. Fechamento semanal',text:'No fim da semana, compare planejado × realizado. O Coach deve aprender com a execução, não punir o estudante por uma meta mal calibrada.'});
+    }
+    return steps;
 };
 
 const renderWeeklyGoals = () => {
-    const container = document.getElementById('weeklyGoalsContainer');
-    if (!container) return;
-    const metas = AppState.metasSemanais;
-    const pctAulas = metas.aulas > 0 ? Math.min(100, Math.round((metas.aulasFeitas / metas.aulas) * 100)) : 0;
-    const pctHoras = metas.horas > 0 ? Math.min(100, Math.round((metas.horasFeitas / metas.horas) * 100)) : 0;
-    container.innerHTML = `
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:200px;">
-                <span>📚 Aulas: ${metas.aulasFeitas}/${metas.aulas}</span>
-                <div class="goal-progress"><div class="goal-progress-fill" style="width:${pctAulas}%"></div></div>
-            </div>
-            <div style="flex:1; min-width:200px;">
-                <span>⏱️ Horas: ${metas.horasFeitas.toFixed(1)}/${metas.horas}h</span>
-                <div class="goal-progress"><div class="goal-progress-fill" style="width:${pctHoras}%"></div></div>
-            </div>
-        </div>
-        ${AppState.student.gamificacao.conquistas.length ? `<div style="margin-top:12px;">🏆 Conquistas: ${AppState.student.gamificacao.conquistas.map(c => `<span class="tema">${c}</span>`).join(' ')}</div>` : ''}
+    const container=document.getElementById('weeklyGoalsContainer'); if(!container)return;
+    const p=weeklyCoachPlan(), m=p.m, days=weeklyDayPlan(p), priorities=weeklyPriorityItems(p), story=weeklyCoachNarrative(p);
+    const pct=(v,t)=>t>0?Math.min(100,Math.round(v/t*100)):0;
+    const current=p.week;
+    container.innerHTML=`
+      <div class="weekly-coach-grid">
+        <div class="weekly-coach-kpi"><div class="value">${current.lessons}/${p.lessonsTarget}</div><div class="label">Aulas · compromisso</div><div class="sub">${p.weekLessonsLeft} restantes nesta semana</div></div>
+        <div class="weekly-coach-kpi"><div class="value">${current.hours.toFixed(1)}/${p.hoursTarget.toFixed(1)}h</div><div class="label">Horas · compromisso</div><div class="sub">${p.dailyHours.toFixed(1)}h/dia ativo</div></div>
+        <div class="weekly-coach-kpi"><div class="value">${current.questions}/${p.qTarget}</div><div class="label">Questões · compromisso</div><div class="sub">${p.dailyQ}/dia ativo</div></div>
+        <div class="weekly-coach-kpi"><div class="value">${current.revisions}/${p.revTarget}</div><div class="label">Revisões · compromisso</div><div class="sub">${p.backlog.dueRevisions} vencidas</div></div>
+      </div>
+      <div class="weekly-coach-alert ${story.cls}"><strong>${story.title}</strong><div class="prog-small" style="margin-top:5px;">${story.text}</div><div class="prog-small" style="margin-top:6px;">Confiança ${p.coachConfidence}% · risco ${p.riskScore}/100 · utilização ${Math.round(p.utilization*100)}% · ritmo ${Math.round(p.paceRatio*100)}% do necessário · tendência ${Math.round((p.stats.trendPace-1)*100)}%.</div></div>
+      <div class="weekly-coach-advanced">
+        <div class="weekly-coach-stat"><div class="v">${p.forecastDate.toLocaleDateString('pt-BR')}</div><div class="k">Previsão de conclusão</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.forecastDelayDays>0?'+'+p.forecastDelayDays+'d':p.deadlineMarginDays+'d'}</div><div class="k">Margem sobre o prazo</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.backlog.remainingLessons.length}</div><div class="k">Aulas restantes</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.backlog.pendingLaws}</div><div class="k">Leis pendentes</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.backlog.dueRevisions}</div><div class="k">Revisões vencidas</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.mastery===null?'—':p.mastery+'%'}</div><div class="k">Precisão recente</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.stats.weeklyPace.toFixed(1)}</div><div class="k">Aulas/semana · 28d</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.stats.weeklyHours.toFixed(1)}h</div><div class="k">Horas/semana · 28d</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.stats.stability}%</div><div class="k">Estabilidade de ritmo</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.currentConsistency}%</div><div class="k">Consistência recente</div></div>
+      </div>
+      <div class="weekly-coach-panel"><strong>🧭 Decisão da semana</strong><div class="prog-small" style="margin-top:5px;">${p.weekLessonsLeft} aulas · ${p.weekHoursLeft.toFixed(1)} h · ${p.weekQLeft} questões · ${p.weekRevLeft} revisões ainda precisam caber.</div><div class="prog-small" style="margin-top:5px;">Capacidade efetiva: ${p.capacityReal.toFixed(1)}h · ${p.cap.activeDays} dias ativos · limite ${p.maxQDay} questões/dia · ${p.maxLDay} aulas/dia.</div><div class="prog-small" style="margin-top:5px;">🎯 ${m.estrategia} · foco ${progEscape(m.foco||'automatico')} · ${m.ajusteAutomatico===false?'adaptação manual':'adaptação automática'}.</div></div>
+      <div class="weekly-coach-grid-3">
+        <div class="weekly-coach-stat"><div class="v">${p.requiredHours.toFixed(1)} h</div><div class="k">Necessário pelo prazo</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.requiredQ}</div><div class="k">Questões calculadas</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.revTarget}</div><div class="k">Revisões alvo</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.adaptationFactor.toFixed(2)}×</div><div class="k">Fator adaptativo</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.goalGapFromDeadline}</div><div class="k">Aulas abaixo do necessário</div></div>
+        <div class="weekly-coach-stat"><div class="v">${p.planGapHours.toFixed(1)}h</div><div class="k">Excesso sobre capacidade</div></div>
+      </div>
+      <div style="margin-top:12px"><div class="prog-small">📅 Plano diário · ${m.modoDistribuicao==='uniform'?'uniforme':'ponderado pela capacidade'}</div><div class="weekly-coach-plan">${days.map(d=>`<div class="weekly-coach-day ${d.today?'today':''} ${d.off?'off':''}"><strong>${d.label}</strong><div>${d.off?'Descanso':'💡 '+d.hours+'h'}</div><div>${d.off?'—':d.lessons+' aula(s) · '+d.questions+' q'}</div><div class="prog-small">${d.off?'':d.revisions+' rev.'}</div></div>`).join('')}</div></div>
+      <div style="margin-top:12px"><div class="prog-small">📊 Acompanhamento da semana</div>${[['Aulas',current.lessons,p.lessonsTarget],['Horas',current.hours,p.hoursTarget],['Questões',current.questions,p.qTarget],['Revisões',current.revisions,p.revTarget]].map(([k,v,t])=>`<div style="margin-top:7px"><div style="display:flex;justify-content:space-between"><span class="prog-small">${k}</span><span class="prog-small">${k==='Horas'?v.toFixed(1)+' / '+Number(t).toFixed(1):v+' / '+t}</span></div><div class="weekly-coach-meter"><span style="width:${pct(v,t)}%"></span></div></div>`).join('')}</div>
+      <div style="margin-top:12px"><div class="prog-small">🎯 Foco do coach</div>${priorities.map((f,i)=>`<div class="weekly-priority"><span style="width:24px;font-weight:800;color:#a78bfa">${i+1}</span><span style="flex:1"><strong>${progEscape(f.disciplina)}</strong><div class="prog-small">${progEscape(f.classe)} · ${f.restantes} aula(s) · ${f.questoes} questões · ${f.revisoes} revisão(ões) vencida(s)${f.accuracy!==null?' · '+f.accuracy+'%':''}</div></span><span class="weekly-coach-chip">${Math.round(f.score)}</span></div>`).join('')||'<div class="prog-empty">Sem pendências suficientes.</div>'}</div>
+      <div class="weekly-coach-panel" style="margin-top:12px"><strong>🧠 Filosofia do coach</strong><div class="prog-small" style="margin-top:5px">A meta não é maximizar horas. É maximizar a probabilidade de terminar o currículo no prazo sem ultrapassar a capacidade sustentável e sem degradar a precisão.</div></div>
+      <div style="margin-top:12px"><div class="prog-small">🧭 Guia de execução</div>${weeklyCoachGuide(p).map(step=>`<div class="weekly-guide ${step.tone}"><strong>${progEscape(step.title)}</strong><div class="prog-small">${progEscape(step.text)}</div></div>`).join('')}</div>
+      <div class="weekly-coach-actions"><button class="btn-glass" onclick="window.recalcularMetasCoach()">🔄 Recalcular</button><button class="btn-glass" onclick="window.definirMetasCoach()">⚙️ Personalizar</button><button class="btn-glass" onclick="window.toggleCoachSemanal()">${m.coachAtivo?'⏸ Pausar coach':'▶ Ativar coach'}</button></div>
     `;
 };
+
+const atualizarPreviewMetasCoach = () => {
+    ensureWeeklyCoachState(); const m=AppState.metasSemanais, get=id=>document.getElementById(id);
+    const readNum=id=>Number(get(id)?.value||0);
+    const dias=['seg','ter','qua','qui','sex','sab','dom'];
+    const ativos=dias.filter(k=>get('metaAtivo_'+k)?.checked);
+    const previewState={...m,
+        estrategia:get('metaEstrategia')?.value||m.estrategia,prazo:get('metaPrazo')?.value||m.prazo,
+        aulas:readNum('metaAulas'),horas:readNum('metaHoras'),questoes:readNum('metaQuestoes'),revisoes:readNum('metaRevisoes'),
+        diasEstudo:Math.max(1,Math.min(7,readNum('metaDiasEstudo')||ativos.length||6)),limiteHorasDia:readNum('metaLimiteHorasDia')||6,
+        limiteQuestoesDia:readNum('metaLimiteQuestoesDia')||150,limiteAulasDia:readNum('metaLimiteAulasDia')||4,
+        horasPorAulaReferencia:readNum('metaHorasAulaReferencia')||2,pesoHistoricoHoras:readNum('metaPesoHistoricoHoras')||60,
+        intensidade:readNum('metaIntensidade')/100||1,bufferPrazoPct:readNum('metaBufferPrazo')||10,reservaRecuperacaoPct:readNum('metaReserva')||10,
+        metaPrecisao:readNum('metaPrecisao')||80,questoesPorAula:readNum('metaQuestoesPorAula')||10,toleranciaAtrasoDias:readNum('metaToleranciaAtraso')||2,
+        planoMinimoPct:readNum('metaPlanoMinimo')||80,planoMaximoPct:readNum('metaPlanoMaximo')||120,foco:get('metaFoco')?.value||m.foco,
+        objetivoAulas:get('metaObjetivoAulas')?.value||m.objetivoAulas,objetivoHoras:get('metaObjetivoHoras')?.value||m.objetivoHoras,
+        objetivoQuestoes:get('metaObjetivoQuestoes')?.value||m.objetivoQuestoes,objetivoRevisoes:get('metaObjetivoRevisoes')?.value||m.objetivoRevisoes,
+        ajusteAutomatico:get('metaAjusteAutomatico')?.checked!==false,modoDistribuicao:get('metaModoDistribuicao')?.value||m.modoDistribuicao,
+        metaConsistencia:readNum('metaConsistencia')||70,pesoPrazo:readNum('metaPesoPrazo')||25,pesoDesempenho:readNum('metaPesoDesempenho')||25,pesoRevisao:readNum('metaPesoRevisao')||25,pesoQuestoes:readNum('metaPesoQuestoes')||25,
+        pisoHorasSemana:readNum('metaPisoHoras'),tetoHorasSemana:readNum('metaTetoHoras'),descansoObrigatorio:get('metaDescansoObrigatorio')?.value!=='false',
+        diasPermitidos:ativos.length?ativos:[...m.diasPermitidos],horasPorDiaSemana:Object.fromEntries(dias.map(k=>[k,readNum('metaDia_'+k)]))
+    };
+    const old=AppState.metasSemanais; AppState.metasSemanais=previewState; let p; try{p=weeklyCoachPlan();}finally{AppState.metasSemanais=old;}
+    const box=get('metaLivePreview'); if(!box||!p)return;
+    box.innerHTML=`<strong>Prévia em tempo real</strong><div class="weekly-coach-grid-3"><div><b>${p.lessonsTarget}</b><div class="prog-small">aulas/semana</div></div><div><b>${p.hoursTarget.toFixed(1)}h</b><div class="prog-small">horas/semana</div></div><div><b>${p.qTarget}</b><div class="prog-small">questões/semana</div></div><div><b>${p.revTarget}</b><div class="prog-small">revisões/semana</div></div><div><b>${p.capacityReal.toFixed(1)}h</b><div class="prog-small">capacidade efetiva</div></div><div><b>${p.riskScore}/100</b><div class="prog-small">risco</div></div></div><div class="prog-small" style="margin-top:6px">Previsão: ${p.forecastDate.toLocaleDateString('pt-BR')} · utilização ${Math.round(p.utilization*100)}% · ${p.remainingActiveDays} dias ativos restantes · ${p.dailyHours.toFixed(1)}h/dia · ${p.dailyQ} questões/dia.</div>`;
+};
+
+const definirMetasCoach = () => {
+    ensureWeeklyCoachState(); const m=AppState.metasSemanais;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+    set('metaEstrategia',m.estrategia||'prazo');set('metaPrazo',m.prazo||'');set('metaAulas',Number(m.aulas)||14);set('metaHoras',Number(m.horas)||20);set('metaQuestoes',Number(m.questoes)||60);set('metaRevisoes',Number(m.revisoes)||5);set('metaDiasEstudo',Number(m.diasEstudo)||6);set('metaLimiteHorasDia',Number(m.limiteHorasDia)||6);set('metaLimiteQuestoesDia',Number(m.limiteQuestoesDia)||150);set('metaLimiteAulasDia',Number(m.limiteAulasDia)||4);set('metaHorasAulaReferencia',Number(m.horasPorAulaReferencia)||2);set('metaPesoHistoricoHoras',Number(m.pesoHistoricoHoras)||60);set('metaIntensidade',Math.round((Number(m.intensidade)||1)*100));set('metaBufferPrazo',Number(m.bufferPrazoPct)||10);set('metaReserva',Number(m.reservaRecuperacaoPct)||10);set('metaPrecisao',Number(m.metaPrecisao)||80);set('metaQuestoesPorAula',Number(m.questoesPorAula)||10);set('metaToleranciaAtraso',Number(m.toleranciaAtrasoDias)||2);set('metaPlanoMinimo',Number(m.planoMinimoPct)||80);set('metaPlanoMaximo',Number(m.planoMaximoPct)||120);set('metaConsistencia',Number(m.metaConsistencia)||70);set('metaModoDistribuicao',m.modoDistribuicao||'capacidade');set('metaDescansoObrigatorio',String(m.descansoObrigatorio!==false));set('metaPesoPrazo',Number(m.pesoPrazo)||25);set('metaPesoDesempenho',Number(m.pesoDesempenho)||25);set('metaPesoRevisao',Number(m.pesoRevisao)||25);set('metaPesoQuestoes',Number(m.pesoQuestoes)||25);set('metaPisoHoras',Number(m.pisoHorasSemana)||0);set('metaTetoHoras',Number(m.tetoHorasSemana)||0);
+    set('metaObjetivoAulas',m.objetivoAulas||'automatico');set('metaObjetivoHoras',m.objetivoHoras||'automatico');set('metaObjetivoQuestoes',m.objetivoQuestoes||'automatico');set('metaObjetivoRevisoes',m.objetivoRevisoes||'automatico');set('metaFoco',m.foco||'automatico');
+    const label=document.getElementById('metaIntensidadeLabel');if(label)label.textContent=Math.round((Number(m.intensidade)||1)*100)+'%';
+    ['seg','ter','qua','qui','sex','sab','dom'].forEach(k=>{set('metaDia_'+k,Number(m.horasPorDiaSemana?.[k])||0);const c=document.getElementById('metaAtivo_'+k);if(c)c.checked=(m.diasPermitidos||[]).includes(k);});
+    document.getElementById('metaAjusteAutomatico').checked=m.ajusteAutomatico!==false;
+    document.getElementById('modalMetas').classList.add('active');
+    atualizarPreviewMetasCoach();
+};
+window.definirMetasCoach=definirMetasCoach;
+window.recalcularMetasCoach=()=>{ensureWeeklyCoachState();saveState();renderWeeklyGoals();};
+window.toggleCoachSemanal=()=>{ensureWeeklyCoachState();AppState.metasSemanais.coachAtivo=!AppState.metasSemanais.coachAtivo;saveState();renderWeeklyGoals();};
 
             const renderBlock = (blockIdx, containerId, filtro = '') => {
                 const container = document.getElementById(containerId);
@@ -5417,16 +5852,29 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
             window.removerArquivo = (i) => { AppState.student.arquivos.splice(i, 1); saveState(); mostrarGerenciador('arquivos'); };
 
             const updateDashboard = () => {
-                const segs = AppState.tempoEstudoHoje || 0;
-                document.getElementById('clockTime').textContent = `${String(Math.floor(segs/3600)).padStart(2,'0')}:${String(Math.floor((segs%3600)/60)).padStart(2,'0')}:${String(segs%60).padStart(2,'0')}`;
-                document.getElementById('diasProvaTop').textContent = (diasAte(CONFIG.diasProva) > 0 ? diasAte(CONFIG.diasProva) + 'd' : '0d');
-                const all = getAllLessonsFlat(), done = all.filter(i => AppState.checks[i.key]).length;
-                document.getElementById('tarefasPendentesTop').textContent = all.length - done;
+                // A barra superior agora contém apenas Importar/Exportar.
+                // Os indicadores antigos continuam calculáveis, mas todos os
+                // elementos visuais são opcionais para não travar a Home.
+                const segs = Number(AppState.tempoEstudoHoje) || 0;
+                const all = getAllLessonsFlat();
+                const done = all.filter(i => AppState.checks[i.key]).length;
                 const pct = all.length ? Math.round((done / all.length) * 100) : 0;
+                const valores = {
+                    clockTime: `${String(Math.floor(segs/3600)).padStart(2,'0')}:${String(Math.floor((segs%3600)/60)).padStart(2,'0')}:${String(segs%60).padStart(2,'0')}`,
+                    diasProvaTop: (diasAte(CONFIG.diasProva) > 0 ? diasAte(CONFIG.diasProva) + 'd' : '0d'),
+                    tarefasPendentesTop: all.length - done,
+                    streakTop: AppState.student?.gamificacao?.streak || 0,
+                    xpTop: `${AppState.student?.gamificacao?.xp || 0} XP`
+                };
+                Object.entries(valores).forEach(([id, value]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = value;
+                });
                 const ring = document.getElementById('progressRing');
                 if (ring) { ring.style.setProperty('--pct', pct + '%'); ring.setAttribute('data-label', `${pct}%`); }
-                document.getElementById('streakTop').textContent = AppState.student.gamificacao.streak || 0;
-                document.getElementById('xpTop').textContent = AppState.student.gamificacao.xp + ' XP';
+                const progressClock = document.getElementById('progressClock');
+                if (progressClock) { progressClock.querySelector('span').textContent = `${pct}%`; progressClock.style.setProperty('--pct', pct + '%'); }
+                return { ...valores, progresso: pct };
             };
 
             const renderAll = () => {
@@ -5437,354 +5885,10 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                 renderLeis();
                 if (document.getElementById('page-progresso').classList.contains('active')) renderProgresso();
                 renderDiario();
-                renderSimulados();
-                renderFlashcards();
-                renderArquitetoSide();
                 updateDashboard();
             };
 
-            // ================================================================
-            // INTEGRAÇÃO DOS EXTRAS (STUDYOS EXTRAS v4.0) DIRETAMENTE NO ESCOPO
-            // ================================================================
-            function initExtrasIntegration() {
-                // 1. Cria barra flutuante de progresso
-                if (!document.getElementById('floatingProgress')) {
-                    const bar = document.createElement('div');
-                    bar.id = 'floatingProgress';
-                    bar.style.cssText = `
-                        position: fixed; bottom: 20px; right: 20px;
-                        background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
-                        border-radius: 30px; padding: 8px 16px;
-                        color: #d1d5db; font-size: 0.75rem; z-index: 9999;
-                        border: 1px solid rgba(255,255,255,0.05);
-                        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-                        display: flex; align-items: center; gap: 10px;
-                        cursor: pointer;
-                    `;
-                    bar.innerHTML = `
-                        <span>📊 Progresso</span>
-                        <span id="floatingPct">0%</span>
-                        <div style="width:80px; height:4px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
-                            <div id="floatingBar" style="height:100%; width:0%; background:linear-gradient(90deg,#7c3aed,#60a5fa); border-radius:4px; transition:width 0.5s;"></div>
-                        </div>
-                        <span id="floatingXP" style="color:#a78bfa;">0 XP</span>
-                    `;
-                    document.body.appendChild(bar);
-                    setInterval(atualizarBarraFlutuante, 30000);
-                    setTimeout(atualizarBarraFlutuante, 1000);
-                }
-
-                // 2. Botão Modo Foco
-                const topBarStats = document.querySelector('.top-bar .top-stats');
-                if (topBarStats && !document.getElementById('focoToggle')) {
-                    const btn = document.createElement('button');
-                    btn.id = 'focoToggle';
-                    btn.className = 'btn-glass';
-                    btn.textContent = '🎯 Foco';
-                    btn.style.cssText = 'font-size:0.7rem;';
-                    btn.title = 'Ativar modo foco (oculta distrações)';
-                    btn.onclick = toggleModoFoco;
-                    topBarStats.appendChild(btn);
-                }
-
-                // 3. Menu "Extras" na sidebar
-                const navList = document.getElementById('navList');
-                if (navList && !navList.querySelector('[data-page="page-extras"]')) {
-                    const li = document.createElement('li');
-                    li.dataset.page = 'page-extras';
-                    li.innerHTML = '<span class="icon">🧩</span> Extras';
-                    navList.appendChild(li);
-                    li.addEventListener('click', function() {
-                        document.querySelectorAll('#navList li').forEach(l => l.classList.remove('active'));
-                        this.classList.add('active');
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        let page = document.getElementById('page-extras');
-                        if (!page) {
-                            page = document.createElement('div');
-                            page.id = 'page-extras';
-                            page.className = 'page';
-                            page.innerHTML = '<div id="extrasContainer"></div>';
-                            document.querySelector('.main-content').appendChild(page);
-                        }
-                        page.classList.add('active');
-                        renderExtrasPage();
-                    });
-                }
-
-                // 4. Container de Lembretes Avançados
-                if (!document.getElementById('lembretesAvancados')) {
-                    const container = document.createElement('div');
-                    container.id = 'lembretesAvancados';
-                    container.style.cssText = 'width:100%; margin-bottom:12px;';
-                    const topBarElem = document.querySelector('.top-bar');
-                    if (topBarElem) topBarElem.parentNode.insertBefore(container, topBarElem.nextSibling);
-                }
-
-                iniciarMapaCalor();
-                iniciarCronogramaReverso();
-                iniciarDesafiosDiarios();
-                iniciarPicosProdutividade();
-                setInterval(atualizarEstatisticas, 60000);
-                setInterval(verificarLembretesAvancados, 300000);
-            }
-
-            function atualizarBarraFlutuante() {
-                const all = getAllLessonsFlat();
-                const total = all.length || 1;
-                const done = all.filter(i => AppState.checks[i.key]).length;
-                const pct = Math.round((done / total) * 100);
-                const pctEl = document.getElementById('floatingPct');
-                const barEl = document.getElementById('floatingBar');
-                const xpEl = document.getElementById('floatingXP');
-                if (pctEl) pctEl.textContent = pct + '%';
-                if (barEl) barEl.style.width = pct + '%';
-                if (xpEl) xpEl.textContent = (AppState.student.gamificacao.xp || 0) + ' XP';
-            }
-
-            function toggleModoFoco() {
-                const ativo = AppState.extras.preferencias.modoFoco = !AppState.extras.preferencias.modoFoco;
-                const btn = document.getElementById('focoToggle');
-                if (ativo) {
-                    btn.textContent = '🔓 Sair Foco';
-                    document.body.style.background = '#000';
-                    document.querySelector('.app').style.boxShadow = '0 0 0 2px #7c3aed';
-                    document.querySelectorAll('.top-stats .stat-item, .top-stats .top-actions, .menu-toggle').forEach(el => el.style.display = 'none');
-                    document.querySelector('.logo h1 small').style.display = 'none';
-                } else {
-                    btn.textContent = '🎯 Foco';
-                    document.body.style.background = '';
-                    document.querySelector('.app').style.boxShadow = '';
-                    document.querySelectorAll('.top-stats .stat-item, .top-stats .top-actions, .menu-toggle').forEach(el => el.style.display = '');
-                    document.querySelector('.logo h1 small').style.display = '';
-                }
-                saveState();
-            }
-
-            function renderExtrasPage() {
-                const container = document.getElementById('extrasContainer');
-                if (!container) return;
-                const html = `
-                    <div class="card">
-                        <h3>🧩 Funcionalidades Extras</h3>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px;">
-                            <div class="indicator-card" onclick="window.verMapaCalor()" style="cursor:pointer;">
-                                <div class="number">🔥</div>
-                                <div class="label">Mapa de Calor</div>
-                            </div>
-                            <div class="indicator-card" onclick="window.verCronogramaReverso()" style="cursor:pointer;">
-                                <div class="number">📅</div>
-                                <div class="label">Cronograma Reverso</div>
-                            </div>
-                            <div class="indicator-card" onclick="window.verDesafios()" style="cursor:pointer;">
-                                <div class="number">🏆</div>
-                                <div class="label">Desafios Diários</div>
-                            </div>
-                            <div class="indicator-card" onclick="window.verPicos()" style="cursor:pointer;">
-                                <div class="number">⏰</div>
-                                <div class="label">Picos de Produtividade</div>
-                            </div>
-                            <div class="indicator-card" onclick="window.verBadges()" style="cursor:pointer;">
-                                <div class="number">🎖️</div>
-                                <div class="label">Badges</div>
-                            </div>
-                            <div class="indicator-card" onclick="window.gerarRelatorioCompleto()" style="cursor:pointer;">
-                                <div class="number">📊</div>
-                                <div class="label">Relatório Completo</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h4>📊 Estatísticas Avançadas</h4>
-                        <div id="extrasStats"></div>
-                    </div>
-                    <div class="card">
-                        <h4>🔔 Lembretes Inteligentes</h4>
-                        <div id="extrasLembretes"></div>
-                    </div>
-                `;
-                container.innerHTML = html;
-                atualizarExtrasStats();
-                atualizarLembretesAvancados();
-            }
-
-            function atualizarExtrasStats() {
-                const div = document.getElementById('extrasStats');
-                if (!div) return;
-                const diasEstudo = AppState.sessoes.length;
-                const media = diasEstudo > 0 ? (AppState.sessoes.reduce((s, e) => s + e.duracao, 0) / 60 / diasEstudo).toFixed(1) : 0;
-                div.innerHTML = `
-                    <div class="indicators-grid">
-                        <div class="indicator-card"><div class="number">${diasEstudo}</div><div class="label">Dias de estudo</div></div>
-                        <div class="indicator-card"><div class="number">${media}h</div><div class="label">Média diária</div></div>
-                        <div class="indicator-card"><div class="number">${AppState.extras.badges.length}</div><div class="label">Badges</div></div>
-                        <div class="indicator-card"><div class="number">${AppState.extras.desafiosDiarios.filter(d => d.cumprido).length}</div><div class="label">Desafios cumpridos</div></div>
-                    </div>
-                `;
-            }
-
-            function atualizarLembretesAvancados() {
-                const div = document.getElementById('extrasLembretes');
-                if (!div) return;
-                const lembretes = gerarLembretesAvancados();
-                if (lembretes.length) {
-                    div.innerHTML = `<ul style="list-style:none; padding:0;">${lembretes.map(l => `<li style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02);">• ${l}</li>`).join('')}</ul>`;
-                } else {
-                    div.innerHTML = '<p class="text-muted">Nenhum lembrete no momento.</p>';
-                }
-            }
-
-            function iniciarMapaCalor() {
-                const hojeStr = hoje();
-                if (!AppState.extras.mapaCalor[hojeStr]) AppState.extras.mapaCalor[hojeStr] = 0;
-                const hojeSessoes = AppState.sessoes.filter(s => s.data === new Date().toLocaleDateString('pt-BR'));
-                const minutos = hojeSessoes.reduce((sum, s) => sum + s.duracao, 0);
-                AppState.extras.mapaCalor[hojeStr] = Math.min(5, Math.floor(minutos / 30));
-                saveState();
-            }
-
-            window.verMapaCalor = function() {
-                const dados = AppState.extras.mapaCalor || {};
-                const dias = Object.keys(dados).sort();
-                if (!dias.length) return alert('Nenhum dado ainda.');
-                let html = '<div style="display:flex; flex-wrap:wrap; gap:4px; max-width:600px; margin:0 auto;">';
-                dias.forEach(d => {
-                    const intensidade = dados[d] || 0;
-                    const cores = ['#1a1a2e', '#2d2d44', '#4a4a7a', '#7c3aed', '#a78bfa', '#60a5fa'];
-                    const cor = cores[Math.min(intensidade, 5)];
-                    html += `<div style="width:20px; height:20px; background:${cor}; border-radius:4px; margin:2px;" title="${d}: ${intensidade}"></div>`;
-                });
-                html += '</div>';
-                alert('Mapa de Calor (Intensidade diária)');
-            };
-
-            function iniciarCronogramaReverso() {
-                if (!AppState.extras.cronogramaReverso) {
-                    const diasAteProva = diasAte(CONFIG.diasProva);
-                    if (diasAteProva > 0) {
-                        const totalAulas = getAllLessonsFlat().length;
-                        const aulasPorDia = Math.ceil(totalAulas / diasAteProva);
-                        AppState.extras.cronogramaReverso = { dataInicio: hoje(), dataProva: CONFIG.diasProva.toISOString().slice(0,10), totalDias: diasAteProva, aulasPorDia, concluido: false };
-                        saveState();
-                    }
-                }
-            }
-
-            window.verCronogramaReverso = function() {
-                const cr = AppState.extras.cronogramaReverso;
-                if (!cr) return alert('Cronograma reverso não iniciado.');
-                const restam = diasAte(new Date(cr.dataProva));
-                const feitas = getAllLessonsFlat().filter(i => AppState.checks[i.key]).length;
-                const total = getAllLessonsFlat().length;
-                const previsao = Math.ceil((total - feitas) / cr.aulasPorDia);
-                alert(`📅 Cronograma Reverso\nData da prova: ${cr.dataProva}\nDias restantes: ${restam}\nAulas por dia: ${cr.aulasPorDia}\nAulas concluídas: ${feitas}/${total}\nPrevisão: ${previsao} dias`);
-            };
-
-            function iniciarDesafiosDiarios() {
-                const hojeStr = hoje();
-                const existe = AppState.extras.desafiosDiarios.some(d => d.data === hojeStr);
-                if (!existe) {
-                    const desafios = [
-                        { descricao: 'Estudar 3 horas seguidas', xp: 30 },
-                        { descricao: 'Fazer 20 questões', xp: 20 },
-                        { descricao: 'Revisar 5 flashcards', xp: 15 },
-                        { descricao: 'Ler 10 páginas de lei', xp: 25 },
-                        { descricao: 'Assistir 2 videoaulas', xp: 20 }
-                    ];
-                    const escolhido = desafios[Math.floor(Math.random() * desafios.length)];
-                    AppState.extras.desafiosDiarios.push({ data: hojeStr, descricao: escolhido.descricao, xp: escolhido.xp, cumprido: false });
-                    saveState();
-                }
-            }
-
-            window.verDesafios = function() {
-                const desafios = AppState.extras.desafiosDiarios.slice(-7);
-                alert('🏆 Desafios recentes:\n' + desafios.map(d => `${d.data}: ${d.descricao} ${d.cumprido ? '✅' : '❌'}`).join('\n'));
-            };
-
-            function iniciarPicosProdutividade() {
-                const sessoes = AppState.sessoes;
-                const horas = {};
-                sessoes.forEach(s => {
-                    const hora = parseInt(s.inicio.split(':')[0]);
-                    if (!horas[hora]) horas[hora] = 0;
-                    horas[hora] += s.duracao;
-                });
-                let maxHora = 0, maxMin = 0;
-                Object.entries(horas).forEach(([h, m]) => { if (m > maxMin) { maxMin = m; maxHora = parseInt(h); } });
-                AppState.extras.picosProdutividade = { melhorHora: maxHora, minutos: maxMin };
-                saveState();
-            }
-
-            window.verPicos = function() {
-                const pico = AppState.extras.picosProdutividade;
-                if (!pico || !pico.melhorHora) return alert('Ainda sem dados suficientes.');
-                alert(`⏰ Pico de produtividade: ${pico.melhorHora}:00 (${pico.minutos} min estudados)`);
-            };
-
-            window.verBadges = function() {
-                const badges = AppState.extras.badges || [];
-                if (!badges.length) return alert('Nenhum badge conquistado ainda.');
-                alert('🎖️ Badges:\n' + badges.map(b => `${b.nome} (${b.data}) - ${b.xp} XP`).join('\n'));
-            };
-
-            window.gerarRelatorioCompleto = function() {
-                const all = getAllLessonsFlat();
-                const total = all.length;
-                const done = all.filter(i => AppState.checks[i.key]).length;
-                const pct = Math.round((done / total) * 100);
-                const sessoes = AppState.sessoes;
-                const totalMin = sessoes.reduce((s, e) => s + e.duracao, 0);
-                const totalHoras = (totalMin / 60).toFixed(1);
-                const questoes = Object.values(AppState.questoesAulas || {}).reduce((s, q) => s + (q.feitas || 0), 0);
-                const acertos = Object.values(AppState.questoesAulas || {}).reduce((s, q) => s + (q.acertos || 0), 0);
-                const taxa = questoes > 0 ? Math.round((acertos / questoes) * 100) : 0;
-                alert(`📊 RELATÓRIO COMPLETO\n========================\n📚 Progresso: ${done}/${total} (${pct}%)\n⏱️ Total estudado: ${totalHoras}h\n📝 Questões: ${questoes} (${taxa}% acerto)\n🃏 Flashcards: ${AppState.flashcards.length}\n🏆 Nível: ${AppState.student.gamificacao.nivel} (${AppState.student.gamificacao.xp} XP)\n🔥 Streak: ${AppState.student.gamificacao.streak} dias`);
-            };
-
-            function gerarLembretesAvancados() {
-                const lembretes = [];
-                const estudouHoje = AppState.sessoes.some(s => s.data === new Date().toLocaleDateString('pt-BR'));
-                if (!estudouHoje) lembretes.push('⚠️ Você ainda não estudou hoje!');
-                const all = getAllLessonsFlat();
-                all.forEach(a => {
-                    if (AppState.checks[a.key]) {
-                        const dias = DecisionEngine._diasSemRevisao ? DecisionEngine._diasSemRevisao(a.key) : 0;
-                        if (dias > 20) lembretes.push(`📚 Revisão atrasada: "${a.title}" (${dias}d)`);
-                    }
-                });
-                const pendentes = AppState.flashcards.filter(f => !f.proximaRevisao || new Date(f.proximaRevisao) <= new Date());
-                if (pendentes.length > 10) lembretes.push(`🃏 ${pendentes.length} flashcards aguardando revisão`);
-                return lembretes.slice(0, 5);
-            }
-
-            function verificarLembretesAvancados() {
-                const container = document.getElementById('lembretesAvancados');
-                if (!container) return;
-                const lembretes = gerarLembretesAvancados();
-                if (lembretes.length) {
-                    container.innerHTML = `<div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.15); border-radius:16px; padding:10px 16px;">
-                        <span style="font-weight:600; color:#f87171;">🔔 Lembretes</span>
-                        <ul style="margin-top:4px; list-style:none; padding:0; font-size:0.85rem;">
-                            ${lembretes.map(l => `<li>• ${l}</li>`).join('')}
-                        </ul>
-                    </div>`;
-                } else {
-                    container.innerHTML = '';
-                }
-            }
-
-            function atualizarEstatisticas() {
-                const dias = Object.keys(AppState.extras.mapaCalor || {}).length;
-                AppState.extras.estatisticas.diasEstudo = dias;
-                const totalMin = AppState.sessoes.reduce((s, e) => s + e.duracao, 0);
-                AppState.extras.estatisticas.mediaDiaria = Math.round((dias > 0 ? (totalMin / 60 / dias) : 0) * 10) / 10;
-                saveState();
-            }
-
-            // Hooks de integração
-            const origToggle = toggleLesson;
-            // Sobrescreve hooks para atualizar extras ao interagir
-            const originalToggleLessonDirect = window.toggleLessonDirect;
+            // Aba Extras removida conforme configuração atual do sistema.
 
             // Eventos globais da interface principal
             const initEvents = () => {
@@ -5800,7 +5904,6 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                     document.getElementById('sidebar').classList.remove('open');
                     document.getElementById('overlay').classList.remove('active');
                     if (this.dataset.page === 'page-gerenciar') mostrarGerenciador('aulas');
-                    if (this.dataset.page === 'page-flashcards') renderFlashcards();
                     if (this.dataset.page === 'page-progresso') renderProgresso();
                 }));
                 document.getElementById('startLessonBtn').onclick = iniciarAula;
@@ -5808,13 +5911,36 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                 document.getElementById('stopLessonBtn').onclick = () => pararAula(false);
                 document.getElementById('skipLessonBtn').onclick = pularMissao;
                 document.getElementById('voltarLessonBtn').onclick = voltarMissao;
-                document.getElementById('pomodoroStartBtn').onclick = iniciarPomodoro;
-                document.getElementById('pomodoroPauseBtn').onclick = pausarPomodoro;
-                document.getElementById('pomodoroResetBtn').onclick = resetarPomodoro;
-                document.getElementById('chatSendBtn').onclick = enviarChat;
-                document.getElementById('chatInput').onkeydown = e => { if (e.key === 'Enter') enviarChat(); };
-                document.getElementById('arquitetoSendBtn').onclick = enviarArquiteto;
-                document.getElementById('arquitetoInput').onkeydown = e => { if (e.key === 'Enter') enviarArquiteto(); };
+                document.getElementById('definirMetaBtn')?.addEventListener('click', definirMetasCoach);
+                document.getElementById('closeModalMetas')?.addEventListener('click', () => document.getElementById('modalMetas')?.classList.remove('active'));
+                const coachInputIds=['metaEstrategia','metaPrazo','metaAulas','metaHoras','metaQuestoes','metaRevisoes','metaDiasEstudo','metaLimiteHorasDia','metaLimiteQuestoesDia','metaLimiteAulasDia','metaHorasAulaReferencia','metaPesoHistoricoHoras','metaIntensidade','metaBufferPrazo','metaReserva','metaPrecisao','metaQuestoesPorAula','metaToleranciaAtraso','metaPlanoMinimo','metaPlanoMaximo','metaConsistencia','metaModoDistribuicao','metaDescansoObrigatorio','metaFoco','metaPesoPrazo','metaPesoDesempenho','metaPesoRevisao','metaPesoQuestoes','metaPisoHoras','metaTetoHoras','metaObjetivoAulas','metaObjetivoHoras','metaObjetivoQuestoes','metaObjetivoRevisoes','metaDia_seg','metaDia_ter','metaDia_qua','metaDia_qui','metaDia_sex','metaDia_sab','metaDia_dom','metaAtivo_seg','metaAtivo_ter','metaAtivo_qua','metaAtivo_qui','metaAtivo_sex','metaAtivo_sab','metaAtivo_dom'];
+                coachInputIds.forEach(id=>{const el=document.getElementById(id); if(el) {el.addEventListener('input',()=>{const lab=document.getElementById('metaIntensidadeLabel');if(lab&&document.getElementById('metaIntensidade'))lab.textContent=document.getElementById('metaIntensidade').value+'%';atualizarPreviewMetasCoach();});el.addEventListener('change',atualizarPreviewMetasCoach);}});
+                document.getElementById('metaAjusteAutomatico')?.addEventListener('change',atualizarPreviewMetasCoach);
+                document.getElementById('salvarMetasBtn')?.addEventListener('click', () => {
+                    ensureWeeklyCoachState();
+                    const m=AppState.metasSemanais;
+                    const num=id=>Number(document.getElementById(id)?.value)||0;
+                    m.estrategia=document.getElementById('metaEstrategia').value;
+                    m.prazo=document.getElementById('metaPrazo').value;
+                    m.aulas=Math.max(0,num('metaAulas')); m.horas=Math.max(0,num('metaHoras')); m.questoes=Math.max(0,num('metaQuestoes')); m.revisoes=Math.max(0,num('metaRevisoes'));
+                    m.diasEstudo=Math.max(1,Math.min(7,num('metaDiasEstudo')||6)); m.limiteHorasDia=Math.max(.5,num('metaLimiteHorasDia')||6); m.limiteQuestoesDia=Math.max(10,num('metaLimiteQuestoesDia')||150); m.limiteAulasDia=Math.max(1,num('metaLimiteAulasDia')||4); m.horasPorAulaReferencia=Math.max(.5,num('metaHorasAulaReferencia')||2); m.pesoHistoricoHoras=Math.max(0,Math.min(100,num('metaPesoHistoricoHoras')||60));
+                    m.intensidade=Math.max(.7,Math.min(1.3,num('metaIntensidade')/100||1)); m.bufferPrazoPct=Math.max(0,num('metaBufferPrazo')||10); m.reservaRecuperacaoPct=Math.max(0,num('metaReserva')||10); m.metaPrecisao=Math.max(50,Math.min(100,num('metaPrecisao')||80)); m.metaConsistencia=Math.max(30,Math.min(100,num('metaConsistencia')||70));
+                    m.questoesPorAula=Math.max(1,num('metaQuestoesPorAula')||10); m.toleranciaAtrasoDias=Math.max(0,num('metaToleranciaAtraso')||2); m.planoMinimoPct=Math.max(50,num('metaPlanoMinimo')||80); m.planoMaximoPct=Math.max(100,num('metaPlanoMaximo')||120);
+                    m.foco=document.getElementById('metaFoco').value; m.modoDistribuicao=document.getElementById('metaModoDistribuicao').value; m.descansoObrigatorio=document.getElementById('metaDescansoObrigatorio').value!=='false'; m.pesoPrazo=Math.max(0,num('metaPesoPrazo')); m.pesoDesempenho=Math.max(0,num('metaPesoDesempenho')); m.pesoRevisao=Math.max(0,num('metaPesoRevisao')); m.pesoQuestoes=Math.max(0,num('metaPesoQuestoes')); m.pisoHorasSemana=Math.max(0,num('metaPisoHoras')); m.tetoHorasSemana=Math.max(0,num('metaTetoHoras')); m.objetivoAulas=document.getElementById('metaObjetivoAulas').value; m.objetivoHoras=document.getElementById('metaObjetivoHoras').value; m.objetivoQuestoes=document.getElementById('metaObjetivoQuestoes').value; m.objetivoRevisoes=document.getElementById('metaObjetivoRevisoes').value;
+                    m.ajusteAutomatico=document.getElementById('metaAjusteAutomatico').checked; m.coachAtivo=true;
+                    m.horasPorDiaSemana={}; ['seg','ter','qua','qui','sex','sab','dom'].forEach(k=>m.horasPorDiaSemana[k]=Math.max(0,num('metaDia_'+k)));
+                    const ordemDias=['seg','ter','qua','qui','sex','sab','dom'];
+                    let preferred=ordemDias.filter(k=>document.getElementById('metaAtivo_'+k)?.checked);
+                    if(!preferred.length)preferred=ordemDias.slice(0,m.diasEstudo);
+                    if(preferred.length>m.diasEstudo)preferred=preferred.slice(0,m.diasEstudo);
+                    if(preferred.length<m.diasEstudo && m.descansoObrigatorio===false){for(const k of ordemDias){if(preferred.length>=m.diasEstudo)break;if(!preferred.includes(k))preferred.push(k);}}
+                    m.diasPermitidos=preferred;
+                    saveState(); document.getElementById('modalMetas')?.classList.remove('active'); renderWeeklyGoals();
+                });
+                document.getElementById('modalMetas')?.addEventListener('click', e => { if (e.target===document.getElementById('modalMetas')) document.getElementById('modalMetas').classList.remove('active'); });
+                document.getElementById('pomodoroStartBtn')?.addEventListener('click', iniciarPomodoro);
+                document.getElementById('pomodoroPauseBtn')?.addEventListener('click', pausarPomodoro);
+                document.getElementById('pomodoroResetBtn')?.addEventListener('click', resetarPomodoro);
                 document.getElementById('exportBtn').onclick = () => { const b = new Blob([JSON.stringify(AppState, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `studyos_backup_${hoje()}.json`; a.click(); };
                 document.getElementById('importBtn').onclick = () => document.getElementById('fileInput').click();
                 document.getElementById('fileInput').onchange = function(e) {
@@ -5836,49 +5962,19 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
     };
     r.readAsText(this.files[0]);
 };
-                document.getElementById('resetAllBtn').onclick = () => { if (confirm('⚠️ Resetar TUDO?')) { resetState(); location.reload(); } };
+                document.getElementById('resetAllBtn')?.addEventListener('click', () => { if (confirm('⚠️ Resetar TUDO? Isso apagará o progresso local, metas, histórico e configurações.')) { resetState(); location.reload(); } });
                 document.getElementById('gerenciarAulasBtn')?.addEventListener('click', () => mostrarGerenciador('aulas'));
                 document.getElementById('gerenciarLeisBtn')?.addEventListener('click', () => mostrarGerenciador('leis'));
                 document.getElementById('gerenciarQuestoesBtn')?.addEventListener('click', () => mostrarGerenciador('questoes'));
                 document.getElementById('gerenciarArquivosBtn')?.addEventListener('click', () => mostrarGerenciador('arquivos'));
-                document.getElementById('novoFlashcardBtn')?.addEventListener('click', window.novoFlashcard);
-                document.getElementById('revisarFlashcardsBtn')?.addEventListener('click', iniciarRevisaoFlashcards);
-                document.getElementById('flashcardDisciplinaFiltro')?.addEventListener('change', renderFlashcards);
                 
-                document.getElementById('configSaveBtn')?.addEventListener('click', () => {
-                    AppState.student.config.estrategia = document.getElementById('configStrategy').value;
-                    AppState.student.config.horasPorDia = parseFloat(document.getElementById('configHoursPerDay').value) || 4;
-                    AppState.student.config.metaSemanalAulas = parseInt(document.getElementById('configMetaSemanal').value) || 14;
-                    AppState.metasSemanais.aulas = AppState.student.config.metaSemanalAulas;
-                    saveState();
-                    const status = document.getElementById('configStatus');
-                    status.textContent = '✅ Configurações salvas com sucesso!';
-                    status.style.color = '#4ade80';
-                    setTimeout(() => { status.textContent = ''; }, 3000);
-                    renderAll();
-                });
-
-                document.getElementById('configSaveApiKeyBtn')?.addEventListener('click', () => {
-                    const keyInput = document.getElementById('configApiKey').value.trim();
-                    AppState.student.config.apiKey = keyInput;
-                    saveState();
-                    const feedback = document.getElementById('configApiFeedback');
-                    feedback.textContent = '✅ Chave da API Gemini salva com sucesso!';
-                    feedback.style.color = '#4ade80';
-                    setTimeout(() => { feedback.textContent = ''; }, 3000);
-                });
             };
 
             // Inicialização geral
             loadState();
-            document.getElementById('configStrategy').value = AppState.student.config.estrategia;
-            document.getElementById('configHoursPerDay').value = AppState.student.config.horasPorDia;
-            document.getElementById('configApiKey').value = AppState.student.config.apiKey || '';
-            if (document.getElementById('configMetaSemanal')) document.getElementById('configMetaSemanal').value = AppState.student.config.metaSemanalAulas || 14;
             verificarMetasSemanais();
             renderAll();
             initEvents();
-            initExtrasIntegration();
             atualizarPomodoroUI();
 
             if (AppState.aulaAtiva && !AppState.aulaPausada) {
@@ -5886,21 +5982,9 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                 aulaTimerInterval = setInterval(() => { if (!AppState.aulaPausada) { AppState.tempoEstudoHoje = Math.floor((Date.now() - aulaStartTime) / 1000); saveState(); updateDashboard(); } }, 10000);
             }
             setInterval(updateDashboard, 30000);
-            console.log('✅ StudyOS Pro v4.0 + Extras integrados com sucesso.');
+            console.log('✅ StudyOS Pro — núcleo integrado iniciado.');
         })();
     </script>
-	<script src="studyos_ultra.js"></script>
-	<script src="studyos_extensao_analytics.js"></script>
-	<script src="studyos_neuro_pack.js"></script>
-	<script src="studyos_home_superpack.js"></script>
-	<script src="studyos_deep_pages_pack.js"></script>
-	<script src="studyos_data_science_pack.js"></script>
-	<script src="studyos_tec_concursos_pack.js"></script>
-	<script src="studyos_genie_pack.js"></script>
-	<script src="studyos_mmorpg_expansion_pack.js"></script>
-	<script src="studyos_advanced_analytics_pack.js"></script>
-	<script src="studyos_cognitive_intelligence_pack.js"></script>
-	<script src="ruidos.js"></script>
 
 
 </body>
