@@ -1228,7 +1228,7 @@ const criarEstadoLei = (lei) => ({
 
             let AppState = {
                 checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
-                leis: [], anotacoes: {}, expanded: {}, tempoEstudoHoje: 0,
+                biEventos: [], leis: [], anotacoes: {}, expanded: {}, tempoEstudoHoje: 0,
                 aulaAtiva: null, aulaPausada: false, leiAtiva: null, leiPausada: false, revisaoDatas: {}, revisaoNotas: {},
                 questoesAulas: {}, historicoQuestoes: [], historicoCiclo: [],
                 student: {
@@ -1255,6 +1255,141 @@ const criarEstadoLei = (lei) => ({
 
             const saveState = () => {
                 try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) { console.warn('Erro:', e); }
+            };
+
+            // ============================================================
+            // LEGACY DATA BRIDGE — compatibilidade histórica
+            // ============================================================
+            // O backup antigo possui duas camadas diferentes:
+            // 1) diario: atividade identificável (disciplina/aula/data/hora);
+            // 2) sessoes: cronômetro agregado, muitas vezes sem key/contexto.
+            // Nunca inventamos disciplina para uma sessão antiga sem evidência.
+            const normalizarNomeTextoBI = (v) => String(v || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                .toLowerCase().replace(/\s+/g,' ').trim();
+
+            const localizarAulaLegadaPorDiario = (entry) => {
+                const disciplina = String(entry?.disciplina || '').trim();
+                const aula = String(entry?.aula || '').trim();
+                if (!disciplina || !aula) return null;
+                const exact = getAllLessonsFlat().find(x => x.disciplineName === disciplina && x.title === aula);
+                if (exact) return exact;
+                const nd = normalizarNomeTextoBI(disciplina);
+                const na = normalizarNomeTextoBI(aula);
+                let best = null, bestScore = 0;
+                getAllLessonsFlat().forEach(x => {
+                    const d = normalizarNomeTextoBI(x.disciplineName);
+                    const a = normalizarNomeTextoBI(x.title);
+                    let score = 0;
+                    if (d === nd) score += 0.65;
+                    if (a === na) score += 0.35;
+                    else if (a && na && (a.includes(na) || na.includes(a))) score += 0.22;
+                    if (score > bestScore) { bestScore = score; best = x; }
+                });
+                return bestScore >= 0.65 ? best : null;
+            };
+
+            const migrarLegadoParaBI = () => {
+                AppState.biEventos = Array.isArray(AppState.biEventos) ? AppState.biEventos : [];
+                const eventos = AppState.biEventos;
+                const existingLegacy = new Set(eventos.filter(e => e.origem === 'legado-diario').map(e => e.id));
+                let adicionados = 0;
+
+                // Atividades identificáveis do diário entram como eventos históricos sem tempo,
+                // evitando fabricar duração. As questões acumuladas continuam vindo de questoesAulas.
+                (AppState.diario || []).forEach((entry, index) => {
+                    const isLei = entry?.tipo === 'lei';
+                    const key = isLei ? `lei_${entry.lei || ''}` : (localizarAulaLegadaPorDiario(entry)?.key || null);
+                    if (!key) return;
+                    const id = `legacy-diario-${index}`;
+                    if (existingLegacy.has(id)) return;
+                    const ctx = resolverContextoBI(key, {
+                        disciplina: isLei ? 'Leis' : entry.disciplina,
+                        tema: isLei ? entry.lei : '',
+                        aula: isLei ? entry.lei : entry.aula,
+                        bloco: isLei ? `Bloco ${entry.blocoLei || 2}` : entry.bloco,
+                        tipo: isLei ? 'lei' : (String(entry.bloco || '').includes('Bloco 2') ? 'revisao' : 'aula')
+                    });
+                    const iso = progDateBRToISO(entry.data) || '';
+                    eventos.push({
+                        id, inicioISO: iso && entry.hora ? `${iso}T${entry.hora}:00` : '',
+                        fimISO: iso && entry.hora ? `${iso}T${entry.hora}:00` : '',
+                        iso, data: entry.data || '', hora: entry.hora || '',
+                        tipo: ctx.tipo || (isLei ? 'lei' : 'aula'),
+                        modulo: ctx.tipo || (isLei ? 'leis' : 'bloco1'), key,
+                        bloco: ctx.bloco || '', classe: ctx.classe || '',
+                        disciplina: ctx.disciplina || (isLei ? 'Leis' : entry.disciplina || ''),
+                        tema: ctx.tema || (isLei ? entry.lei || '' : entry.aula || ''),
+                        aula: ctx.aula || (isLei ? entry.lei || '' : entry.aula || ''),
+                        duracao: isLei ? Math.max(0, Number(entry.duracao)||0) : 0,
+                        feitas: 0, acertos: 0, concluido: true,
+                        origem: 'legado-diario', legacy: true,
+                        questoesInformadas: false
+                    });
+                    adicionados++;
+                });
+
+                if (!Array.isArray(AppState.legacyDataAudit)) AppState.legacyDataAudit = [];
+                const audit = AppState.legacyDataAudit;
+                const fingerprint = `${(AppState.diario||[]).length}|${(AppState.sessoes||[]).length}|${(AppState.questoesAulas||{}) && Object.keys(AppState.questoesAulas||{}).length}`;
+                if (!audit.some(x => x.fingerprint === fingerprint)) audit.push({data:new Date().toISOString(),fingerprint,adicionados});
+                return adicionados;
+            };
+
+            // ============================================================
+            // CGU STUDENT ENGINE — camada reflexiva e protagonista
+            // Não interfere na seleção da Missão de Hoje.
+            // ============================================================
+            const CGUStudentEngine = {
+                garantir() {
+                    AppState.student = AppState.student || {};
+                    AppState.student.cgu = AppState.student.cgu || {
+                        objetivo: 'preparação orientada a resultados para a CGU',
+                        horizonteDias: 60,
+                        reflexoes: [],
+                        decisoes: [],
+                        ultimaAnalise: null,
+                        prioridades: []
+                    };
+                    return AppState.student.cgu;
+                },
+                analisar() {
+                    const c = this.garantir();
+                    const flat = typeof getAllLessonsFlat === 'function' ? getAllLessonsFlat() : [];
+                    const concluidas = flat.filter(x => AppState.checks?.[x.key]).length;
+                    const cobertura = flat.length ? Math.round(concluidas/flat.length*100) : 0;
+                    const sessoes = Array.isArray(AppState.sessoes) ? AppState.sessoes : [];
+                    const totalMin = sessoes.reduce((a,x)=>a+Number(x.duracao||0),0);
+                    const diasAtivos = new Set(sessoes.map(x=>x.data).filter(Boolean)).size;
+                    const q = Object.values(AppState.questoesAulas||{}).reduce((a,x)=>({f:a.f+Number(x.feitas||0),ac:a.ac+Number(x.acertos||0)}),{f:0,ac:0});
+                    const acc = q.f ? Math.round(q.ac/q.f*100) : null;
+                    const atrasadas = Object.keys(AppState.revisaoDatas||{}).filter(k => {
+                        try { return Missao4Engine._revisaoVencida(k); } catch(_){ return false; }
+                    }).length;
+                    const cog = AppState.cognitiveEngine || {};
+                    const notas = [];
+                    if (cobertura < 50) notas.push('Cobertura ainda baixa: proteger constância antes de aumentar complexidade.');
+                    if (acc !== null && acc < 75) notas.push('Precisão abaixo do alvo operacional: priorizar recuperação ativa e análise de erros.');
+                    if (atrasadas > 0) notas.push(`${atrasadas} item(ns) de revisão vencidos: observar retenção, não apenas volume.`);
+                    if (diasAtivos >= 1 && totalMin/diasAtivos > 360) notas.push('Carga diária elevada: observar fadiga antes de ampliar horas.');
+                    if (Number.isFinite(Number(cog.fadigaAtual)) && Number(cog.fadigaAtual) >= 65) notas.push(`Fadiga cognitiva elevada (${Math.round(Number(cog.fadigaAtual))}/100): proteger recuperação e qualidade da sessão.`);
+                    if (Number.isFinite(Number(cog.prontidaoProva)) && Number(cog.prontidaoProva) < 70) notas.push(`Prontidão de prova em ${Math.round(Number(cog.prontidaoProva))}: transformar dados em ações concretas antes de buscar volume.`);
+                    if (!notas.length) notas.push('Trajetória equilibrada: aumentar dificuldade só onde os dados sustentarem a decisão.');
+                    c.prioridades = notas.slice(0,5);
+                    c.ultimaAnalise = new Date().toISOString();
+                    return {cobertura,totalMin,diasAtivos,questoes:q.f,acertos:q.ac,acc,atrasadas,retencao:Number(cog.indiceRetencaoMedia)||null,prontidao:Number(cog.prontidaoProva)||null,fadiga:Number(cog.fadigaAtual)||null,notas};
+                },
+                perguntas() {
+                    const a = this.analisar();
+                    const perguntas = [];
+                    if (a.questoes < 30) perguntas.push('Estou praticando o suficiente para que o percentual de acerto seja confiável?');
+                    else if (a.acc !== null && a.acc < 75) perguntas.push('Quais erros estão reduzindo meu desempenho: desconhecimento, interpretação ou distração?');
+                    else perguntas.push('Meu acerto alto está vindo de domínio real ou de questões já conhecidas?');
+                    if (a.totalMin > 0 && a.diasAtivos > 0) perguntas.push('As horas estudadas estão convertendo-se em retenção e questões acertadas?');
+                    if (a.atrasadas) perguntas.push(`Estou aceitando ${a.atrasadas} revisão(ões) vencida(s) ou estou acumulando dívida cognitiva?`);
+                    perguntas.push('Qual informação do sistema ainda não está chegando ao Progresso de forma confiável?');
+                    return perguntas.slice(0,4);
+                }
             };
 
             const loadState = () => {
@@ -1294,11 +1429,17 @@ const criarEstadoLei = (lei) => ({
                         if (!AppState.flashcards) AppState.flashcards = [];
                         if (!AppState.questoesAulas) AppState.questoesAulas = {};
                         if (!Array.isArray(AppState.historicoQuestoes)) AppState.historicoQuestoes = [];
+                        if (!Array.isArray(AppState.biEventos)) AppState.biEventos = [];
                         if (!AppState.historicoCiclo) AppState.historicoCiclo = [];
                         if (!AppState.student?.gamificacao) AppState.student.gamificacao = { xp: 0, nivel: 1, streak: 0, ultimaAtividade: null, conquistas: [] };
                         if (!AppState.extras) {
                             AppState.extras = { mapaCalor: {}, emocoes: [], picosProdutividade: {}, topicosCriticos: [], cronogramaReverso: null, desafiosDiarios: [], badges: [], metasSemanais: { aulas: 0, questoes: 0, horas: 0, cumpridas: false }, preferencias: { modoFoco: false, notificacoes: true, tema: 'dark', timerTipo: 'pomodoro' }, estatisticas: { diasEstudo: 0, mediaDiaria: 0, melhorDia: null, piorDia: null } };
                         }
+                        migrarLegadoParaBI();
+                        // Remove fontes sem consumidores no aplicativo atual para evitar duas fontes de verdade.
+                        delete AppState.analyticsEngine;
+                        delete AppState.moduloStats;
+                        CGUStudentEngine.garantir();
                         atualizarStreakEGamificacao();
                         return true;
                     }
@@ -1310,7 +1451,7 @@ const criarEstadoLei = (lei) => ({
             const resetState = () => {
                 AppState = {
                     checks: {}, quizData: {}, diario: [], sessoes: [], simulados: [],
-                    leis: DEFAULT_LEIS.map(criarEstadoLei),
+                    biEventos: [], leis: DEFAULT_LEIS.map(criarEstadoLei),
 anotacoes: {},
 expanded: {},
 tempoEstudoHoje: 0,
@@ -1374,6 +1515,8 @@ revisaoDatas: {},
             window.getAllLessonsFlat = getAllLessonsFlat;
             window.hoje = hoje;
             window.saveState = saveState;
+            window.CGUStudentEngine = CGUStudentEngine;
+            window.migrarLegadoParaBI = migrarLegadoParaBI;
 
             const atualizarStreakEGamificacao = () => {
                 const hojeStr = hoje();
@@ -2018,20 +2161,39 @@ registrarSessaoLei(leiNome, minutos) {
         prioridade: lei.prioridade
     });
 
-    // ADICIONADO: registra a sessão para contabilizar horas no Progresso
+    const inicioLeiISO = AppState.leiAtiva?.inicio
+        ? new Date(Date.now() - (minutos * 60000)).toISOString()
+        : agora.toISOString();
+    const eventoLei = registrarEventoBI({
+        tipo:'lei', modulo:'leis', key:`lei_${leiNome}`,
+        bloco:`Bloco ${lei.bloco || 2}`, classe:lei.prioridade || '',
+        disciplina:'Leis', tema:leiNome, aula:leiNome,
+        duracao:minutos, inicioISO:inicioLeiISO, fimISO:agora.toISOString(),
+        data:agora.toLocaleDateString('pt-BR'),
+        hora:new Date(inicioLeiISO).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        origem:'conclusao-lei'
+    });
+
+    // Registra a sessão para contabilizar horas no Progresso
     AppState.sessoes.push({
-        data: agora.toLocaleDateString('pt-BR'),
-        inicio: agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        duracao: minutos,
-        tipo: 'lei',
-        key: `lei_${leiNome}`,
-        disciplina: 'Leis',
-        tema: leiNome,
-        lessonTitle: leiNome
+        id:eventoLei.id,
+        inicioISO:inicioLeiISO,
+        fimISO:agora.toISOString(),
+        data:agora.toLocaleDateString('pt-BR'),
+        inicio:new Date(inicioLeiISO).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        duracao:minutos,
+        tipo:'lei',
+        modulo:'leis',
+        key:`lei_${leiNome}`,
+        classe:lei.prioridade || '',
+        disciplina:'Leis',
+        tema:leiNome,
+        lessonTitle:leiNome
     });
 
     registrarAtividade('leitura', minutos);
     saveState();
+    return eventoLei;
 },
 
 
@@ -2066,7 +2228,8 @@ _escolherRevisaoInteligente() {
         assunto: urgente.title.split(' - ')[0],
         sub: urgente.title,
         modulo: 'revisao',
-        tipo: 'Revisão'
+        tipo: 'Revisão',
+        classe: this._obterClasseDisciplina(urgente.disciplineName)
     };
 },
 
@@ -2471,6 +2634,148 @@ const pausarAula = () => {
     saveState();
 };
 
+
+// ============================================================
+// PROGRESSO BI — EVENTO CANÔNICO DE CONCLUSÃO
+// Uma linha por atividade concluída. O BI usa esta camada
+// quando disponível e mantém compatibilidade com os registros antigos.
+// ============================================================
+const progCanonicalNow = () => {
+    const d = new Date();
+    const iso = d.toISOString();
+    return {
+        iso,
+        data: iso.slice(0,10),
+        hora: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    };
+};
+
+const resolverContextoBI = (key, fallback = {}) => {
+    const k = String(key || '').trim();
+    const out = {
+        key: k || null,
+        disciplina: fallback.disciplina || fallback.disciplineName || '',
+        tema: fallback.tema || '',
+        aula: fallback.aula || fallback.lessonTitle || fallback.title || '',
+        bloco: fallback.bloco || fallback.block || '',
+        classe: fallback.classe || '',
+        tipo: fallback.tipo || fallback.modulo || ''
+    };
+
+    // Lei: chave é semântica e não depende do índice dos blocos.
+    if (k.startsWith('lei_')) {
+        const nome = k.slice(4);
+        const lei = (AppState.leis || []).find(l => l.nome === nome);
+        out.disciplina = out.disciplina || 'Leis';
+        out.tema = out.tema || nome;
+        out.aula = out.aula || nome;
+        out.bloco = out.bloco || `Bloco ${lei?.bloco || 2}`;
+        out.classe = out.classe || lei?.prioridade || '';
+        out.tipo = out.tipo || 'lei';
+        return out;
+    }
+
+    // Chave canônica de aula: blockId|discIdx|lessonIdx.
+    const parts = k.split('|');
+    if (parts.length === 3) {
+        const [blockId, dRaw, lRaw] = parts;
+        const di = Number(dRaw), li = Number(lRaw);
+        const block = (AppState.data || []).find(b => String(b.id) === String(blockId));
+        const disc = block && Number.isInteger(di) ? block.disciplines?.[di] : null;
+        const title = disc && Number.isInteger(li) ? disc.lessons?.[li] : null;
+        if (block && disc && title != null) {
+            out.disciplina = out.disciplina || disc.name || '';
+            out.aula = out.aula || title || '';
+            out.tema = out.tema || (String(title).split(' - ').slice(1).join(' - ') || title || '');
+            out.bloco = out.bloco || block.name || (blockId === 'bloco1' ? 'Bloco 1' : blockId === 'bloco2' ? 'Bloco 2' : blockId);
+            out.classe = out.classe || (out.disciplina ? Missao4Engine._obterClasseDisciplina(out.disciplina) : '');
+            out.tipo = out.tipo || (blockId === 'bloco2' ? 'questoes' : 'aula');
+            return out;
+        }
+    }
+
+    // Último fallback: flat list do conteúdo, sem depender do catálogo BI.
+    try {
+        const found = typeof getAllLessonsFlat === 'function' ? getAllLessonsFlat().find(a => a.key === k) : null;
+        if (found) {
+            out.disciplina = out.disciplina || found.disciplineName || found.disciplina || '';
+            out.aula = out.aula || found.title || found.aula || '';
+            out.tema = out.tema || (found.title ? String(found.title).split(' - ').slice(1).join(' - ') || found.title : '');
+            out.bloco = out.bloco || found.block?.name || (found.blockIdx === 0 ? 'Bloco 1' : found.blockIdx === 1 ? 'Bloco 2' : '');
+            out.classe = out.classe || (out.disciplina ? Missao4Engine._obterClasseDisciplina(out.disciplina) : '');
+            out.tipo = out.tipo || (found.modulo === 'revisao' ? 'revisao' : found.blockIdx === 1 ? 'questoes' : 'aula');
+        }
+    } catch (_) {}
+
+    // REGRA GLOBAL DO PROGRESSO: mesmo quando o registro legado não
+    // possui chave, classe ou metadados de BI, a disciplina continua sendo
+    // a fonte para recuperar a mesma Classe usada pelo restante do sistema.
+    // Assim, históricos antigos nunca caem artificialmente em "Sem classe".
+    if (!out.classe && out.disciplina) {
+        try {
+            out.classe = Missao4Engine._obterClasseDisciplina(out.disciplina) || '';
+        } catch (_) {}
+    }
+    return out;
+};
+
+const registrarEventoBI = (dados = {}) => {
+    AppState.biEventos = Array.isArray(AppState.biEventos) ? AppState.biEventos : [];
+    const fim = dados.fimISO ? new Date(dados.fimISO) : new Date();
+    const inicio = dados.inicioISO ? new Date(dados.inicioISO) : fim;
+    const evento = {
+        id: dados.id || `bi-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+        inicioISO: inicio.toISOString(),
+        fimISO: fim.toISOString(),
+        iso: (dados.iso || fim.toISOString()).slice(0,10),
+        data: dados.data || fim.toLocaleDateString('pt-BR'),
+        hora: dados.hora || inicio.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        tipo: dados.tipo || 'outro',
+        modulo: dados.modulo || dados.tipo || 'outro',
+        key: dados.key || null,
+        bloco: dados.bloco || '',
+        classe: dados.classe || '',
+        disciplina: dados.disciplina || '',
+        tema: dados.tema || '',
+        aula: dados.aula || '',
+        duracao: Math.max(0, Number(dados.duracao)||0),
+        feitas: Math.max(0, Number(dados.feitas)||0),
+        acertos: Math.max(0, Math.min(Number(dados.acertos)||0, Number(dados.feitas)||0)),
+        concluido: dados.concluido !== false,
+        origem: dados.origem || 'conclusao',
+        questoesInformadas: Boolean(dados.questoesInformadas)
+    };
+    AppState.biEventos.push(evento);
+    if (AppState.biEventos.length > 5000) AppState.biEventos.splice(0, AppState.biEventos.length - 5000);
+    return evento;
+};
+
+const registrarEventoBIPorAulaConcluida = ({ aula, minutos, feitas=0, acertos=0, inicioISO }) => {
+    const key = aula?.key || `${aula?.blockId}|${aula?.discIdx}|${aula?.lessonIdx}`;
+    const ctx = resolverContextoBI(key, aula || {});
+    const fim = new Date();
+    return registrarEventoBI({
+        tipo: aula?.modulo === 'revisao' ? 'revisao' : (aula?.modulo || 'aula'),
+        modulo: aula?.modulo || 'aula',
+        key,
+        bloco: ctx.bloco || (aula?.blockIdx === 0 ? 'Bloco 1' : aula?.blockIdx === 1 ? 'Bloco 2' : ''),
+        classe: ctx.classe || aula?.classe || '',
+        disciplina: ctx.disciplina || aula?.disciplineName || aula?.disciplina || '',
+        tema: ctx.tema || (aula?.title ? (aula.title.split(' - ').slice(1).join(' - ') || aula.title) : ''),
+        aula: ctx.aula || aula?.title || '',
+        duracao: minutos,
+        feitas,
+        acertos,
+        inicioISO,
+        fimISO: fim.toISOString(),
+        iso: fim.toISOString(),
+        data: fim.toLocaleDateString('pt-BR'),
+        hora: inicioISO ? new Date(inicioISO).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : fim.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        origem: 'conclusao-aula',
+        questoesInformadas: feitas > 0 || acertos > 0
+    });
+};
+
 const salvarAnotacoesMissao = (key) => {
     const texto = document.getElementById('missionAnotacoes')?.value.trim();
     if (texto) {
@@ -2483,15 +2788,21 @@ const registrarHistoricoQuestoes = (key, feitas, acertos, contexto = {}) => {
     if (!feitas && !acertos) return;
     AppState.historicoQuestoes = Array.isArray(AppState.historicoQuestoes) ? AppState.historicoQuestoes : [];
     const agora = new Date();
+    const f = Math.max(0, Number(feitas)||0);
+    const a = Math.max(0, Math.min(Number(acertos)||0, f));
+    const ctx = resolverContextoBI(key, contexto);
     AppState.historicoQuestoes.push({
-        iso: agora.toISOString().slice(0,10), data: agora.toLocaleDateString('pt-BR'),
-        hora: agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
-        key, feitas: Number(feitas)||0, acertos: Math.min(Number(acertos)||0, Number(feitas)||0),
-        disciplina: contexto.disciplina || '', tema: contexto.tema || '', fonte: contexto.fonte || 'missao', tipo: contexto.tipo || 'aula'
+        eventoId: contexto.eventoId || `hq-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+        iso: contexto.iso || agora.toISOString().slice(0,10),
+        data: contexto.data || agora.toLocaleDateString('pt-BR'),
+        hora: contexto.hora || agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        key, feitas:f, acertos:a,
+        disciplina: ctx.disciplina || '', tema: ctx.tema || '',
+        fonte: contexto.fonte || 'missao', tipo: contexto.tipo || ctx.tipo || 'aula'
     });
 };
 
-const salvarQuestoesMissao = (key) => {
+const salvarQuestoesMissao = (key, eventoId = null) => {
     const feitas = parseInt(document.getElementById('missionQuestFeitas')?.value) || 0;
     const acertos = parseInt(document.getElementById('missionQuestAcertos')?.value) || 0;
     if (feitas > 0 || acertos > 0) {
@@ -2500,7 +2811,7 @@ const salvarQuestoesMissao = (key) => {
         AppState.questoesAulas[key].feitas += feitas;
         AppState.questoesAulas[key].acertos += ac;
         const c = progCatalog ? progCatalog()[key] : null;
-        registrarHistoricoQuestoes(key, feitas, ac, { disciplina:c?.disciplina || '', tema:c?.tema || '', fonte:'missao', tipo: AppState.aulaAtiva?.modulo === 'revisao' ? 'revisao' : (c?.tipo === 'lei' ? 'lei' : 'aula') });
+        registrarHistoricoQuestoes(key, feitas, ac, { disciplina:c?.disciplina || '', tema:c?.tema || '', eventoId, fonte:'missao', tipo: AppState.aulaAtiva?.modulo === 'revisao' ? 'revisao' : (c?.tipo === 'lei' ? 'lei' : 'aula') });
     }
 };
 
@@ -2535,7 +2846,7 @@ const pararAula = (semSalvar = false) => {
 
         if (!semSalvar) {
             // Registra a sessão da lei (agora com sessoes)
-            Missao4Engine.registrarSessaoLei(leiNome, minutos);
+            const eventoLeiConcluido = Missao4Engine.registrarSessaoLei(leiNome, minutos);
 
             // Salva questões da lei
             const feitasLei = parseInt(document.getElementById('missionQuestFeitas')?.value) || 0;
@@ -2546,7 +2857,7 @@ const pararAula = (semSalvar = false) => {
                 const acLei = Math.min(acertosLei, feitasLei);
                 AppState.questoesAulas[chaveLei].feitas += feitasLei;
                 AppState.questoesAulas[chaveLei].acertos += acLei;
-                registrarHistoricoQuestoes(chaveLei, feitasLei, acLei, { disciplina:'Leis', tema:leiNome, fonte:'missao-lei' });
+                registrarHistoricoQuestoes(chaveLei, feitasLei, acLei, { disciplina:'Leis', tema:leiNome, eventoId:eventoLeiConcluido?.id || null, fonte:'missao-lei', tipo:'lei' });
             }
 
             Missao4Engine.registrarConclusaoMissao({
@@ -2588,25 +2899,47 @@ const pararAula = (semSalvar = false) => {
     }
 
     if (!semSalvar) {
-        const key = `${AppState.aulaAtiva.blockId}|${AppState.aulaAtiva.discIdx}|${AppState.aulaAtiva.lessonIdx}`;
-        const minutos = Math.max(0, Math.round((Date.now() - AppState.aulaAtiva.inicio) / 60000));
+        const atividadeConcluida = { ...AppState.aulaAtiva };
+        const key = `${atividadeConcluida.blockId}|${atividadeConcluida.discIdx}|${atividadeConcluida.lessonIdx}`;
+        const fimISO = new Date().toISOString();
+        const minutos = Math.max(0, Math.round((Date.now() - atividadeConcluida.inicio) / 60000));
 
         toggleLesson(key, true);
 
-        if (minutos > 0) {
-            const tipoAtividade = AppState.aulaAtiva.modulo === 'revisao' ? 'revisao' : 'aula';
+        // Captura os valores da missão no momento exato da conclusão,
+        // antes de limpar os campos da interface.
+        const feitasInformadas = parseInt(document.getElementById('missionQuestFeitas')?.value) || 0;
+        const acertosInformados = Math.min(parseInt(document.getElementById('missionQuestAcertos')?.value) || 0, feitasInformadas);
+        let biEventoConcluido = null;
 
-            const _catalog = progCatalog ? progCatalog() : {};
-            const _ctx = _catalog[key] || {};
+        if (minutos > 0) {
+            const tipoAtividade = atividadeConcluida.modulo === 'revisao' ? 'revisao' : 'aula';
+            const _ctx = resolverContextoBI(key, atividadeConcluida);
+            biEventoConcluido = registrarEventoBIPorAulaConcluida({
+                aula: { ...atividadeConcluida, key, disciplineName:_ctx.disciplina, title:_ctx.aula },
+                minutos,
+                feitas: feitasInformadas,
+                acertos: acertosInformados,
+                inicioISO: new Date(atividadeConcluida.inicio).toISOString()
+            });
+
             AppState.sessoes.push({
-                data: new Date().toLocaleDateString('pt-BR'),
-                inicio: new Date(AppState.aulaAtiva.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                id: biEventoConcluido?.id || `sess-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+                eventoId: biEventoConcluido?.id || null,
+                inicioISO: new Date(atividadeConcluida.inicio).toISOString(),
+                fimISO,
+                data: new Date(atividadeConcluida.inicio).toLocaleDateString('pt-BR'),
+                inicio: new Date(atividadeConcluida.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 duracao: minutos,
                 tipo: tipoAtividade,
+                modulo: atividadeConcluida.modulo,
                 key,
+                classe: _ctx.classe || ( _ctx.disciplina ? Missao4Engine._obterClasseDisciplina(_ctx.disciplina) : ''),
                 disciplina: _ctx.disciplina || '',
                 tema: _ctx.tema || '',
-                lessonTitle: _ctx.aula || ''
+                lessonTitle: _ctx.aula || '',
+                feitas: feitasInformadas,
+                acertos: acertosInformados
             });
 
             registrarAtividade(tipoAtividade, minutos);
@@ -2617,8 +2950,8 @@ const pararAula = (semSalvar = false) => {
         }
 
         salvarAnotacoesMissao(key);
-        salvarQuestoesMissao(key);
-        Missao4Engine.registrarConclusaoMissao(AppState.aulaAtiva);
+        salvarQuestoesMissao(key, biEventoConcluido?.id || null);
+        Missao4Engine.registrarConclusaoMissao(atividadeConcluida);
         Missao4Engine.avancarCiclo();
         saveState();
     }
@@ -2813,65 +3146,127 @@ const escaparHTML = (texto) => {
 const obterAulasElegiveisDaMissao = (missao) => {
     if (!missao) return [];
 
-    if (
-        missao.modulo !== 'bloco1' &&
-        missao.modulo !== 'bloco2'
-    ) {
-        return [];
+    // ============================================================
+    // BLOCOS 1/2 — mantém a regra existente da Classe
+    // ============================================================
+    if (missao.modulo === 'bloco1' || missao.modulo === 'bloco2') {
+        const blockIdx = missao.blockIdx;
+        const block = AppState.data[blockIdx];
+        if (!block || !missao.classe) return [];
+
+        const resultado = [];
+        block.disciplines.forEach((disc, discIdx) => {
+            const classeDisciplina = Missao4Engine._obterClasseDisciplina(disc.name);
+            if (classeDisciplina !== missao.classe) return;
+
+            const aulasPendentes = disc.lessons
+                .map((title, lessonIdx) => ({
+                    blockIdx, discIdx, lessonIdx,
+                    blockId: block.id,
+                    disciplineName: disc.name,
+                    title,
+                    key: `${block.id}|${discIdx}|${lessonIdx}`,
+                    modulo: missao.modulo,
+                    classe: missao.classe
+                }))
+                .filter(aula => !AppState.checks[aula.key]);
+
+            if (!aulasPendentes.length) return;
+
+            resultado.push({
+                disciplina: disc.name,
+                frequencia14d: contarFrequenciaDisciplina(disc.name, 14),
+                diasSemEstudo: Missao4Engine._diasSemEstudoDisciplina(disc.name),
+                dominio: Missao4Engine._obterDominioDisciplina(disc.name),
+                aulas: aulasPendentes
+            });
+        });
+        return resultado;
     }
 
-    const blockIdx = missao.blockIdx;
-    const block = AppState.data[blockIdx];
+    // ============================================================
+    // REVISÃO — usa a mesma Classe da disciplina de origem e só
+    // oferece aulas já estudadas que estão efetivamente vencidas.
+    // ============================================================
+    if (missao.modulo === 'revisao') {
+        const classe = missao.classe || Missao4Engine._obterClasseDisciplina(missao.disciplineName || missao.disciplina);
+        const todas = getAllLessonsFlat();
+        const porDisciplina = {};
 
-    if (!block || !missao.classe) return [];
+        todas.forEach(aula => {
+            if (!AppState.checks[aula.key]) return;
+            const classeAula = Missao4Engine._obterClasseDisciplina(aula.disciplineName);
+            if (classeAula !== classe) return;
+            if (!Missao4Engine._revisaoVencida(aula.key)) return;
 
-    const resultado = [];
+            const item = {
+                ...aula,
+                modulo: 'revisao',
+                disciplina: aula.disciplineName,
+                assunto: aula.title.split(' - ')[0],
+                sub: aula.title,
+                classe,
+                key: aula.key
+            };
 
-    block.disciplines.forEach((disc, discIdx) => {
-
-        // A disciplina precisa pertencer à MESMA Classe
-        const classeDisciplina =
-            Missao4Engine._obterClasseDisciplina(disc.name);
-
-        if (classeDisciplina !== missao.classe) return;
-
-        const aulasPendentes = disc.lessons
-            .map((title, lessonIdx) => ({
-                blockIdx,
-                discIdx,
-                lessonIdx,
-                blockId: block.id,
-                disciplineName: disc.name,
-                title,
-                key: `${block.id}|${discIdx}|${lessonIdx}`,
-                modulo: missao.modulo,
-                classe: missao.classe
-            }))
-            .filter(aula => !AppState.checks[aula.key]);
-
-        if (!aulasPendentes.length) return;
-
-        const frequencia = contarFrequenciaDisciplina(
-            disc.name,
-            14
-        );
-
-        const diasSemEstudo =
-            Missao4Engine._diasSemEstudoDisciplina(disc.name);
-
-        const dominio =
-            Missao4Engine._obterDominioDisciplina(disc.name);
-
-        resultado.push({
-            disciplina: disc.name,
-            frequencia14d: frequencia,
-            diasSemEstudo,
-            dominio,
-            aulas: aulasPendentes
+            (porDisciplina[aula.disciplineName] ||= []).push(item);
         });
-    });
 
-    return resultado;
+        return Object.entries(porDisciplina).map(([disciplina, aulas]) => ({
+            disciplina,
+            frequencia14d: contarFrequenciaDisciplina(disciplina, 14),
+            diasSemEstudo: Missao4Engine._diasSemEstudoDisciplina(disciplina),
+            dominio: Missao4Engine._obterDominioDisciplina(disciplina),
+            aulas: aulas.sort((a,b) => Missao4Engine._diasSemRevisao(b.key) - Missao4Engine._diasSemRevisao(a.key))
+        }));
+    }
+
+    // ============================================================
+    // LEIS — não há disciplina/classe de aulas para mapear; por isso,
+    // a alternativa incremental é listar as outras leis elegíveis
+    // do mesmo bloco/prioridade da lei sugerida.
+    // ============================================================
+    if (missao.modulo === 'leis') {
+        const leisElegiveis = (AppState.leis || [])
+            .filter(lei => lei.status !== 'concluido')
+            .map(lei => {
+                const bloco = Number(lei.bloco || 2);
+                return {
+                    blockIdx: -1,
+                    discIdx: -1,
+                    lessonIdx: -1,
+                    blockId: `leis-bloco-${bloco}`,
+                    disciplineName: 'Leis',
+                    title: lei.nome,
+                    key: `lei_${lei.nome}`,
+                    modulo: 'leis',
+                    classe: missao.classe || lei.prioridade || 'media',
+                    blocoLei: bloco,
+                    prioridade: lei.prioridade || 'media',
+                    tempoMissao: 30,
+                    tempoTotalLei: Number(lei.tempoTotal || 0),
+                    sessoesLei: Number(lei.sessoes || 0),
+                    ultimaLeitura: lei.ultimaLeitura || null
+                };
+            });
+
+        if (!leisElegiveis.length) return [];
+        const porBloco = {};
+        leisElegiveis.forEach(lei => {
+            (porBloco[lei.blocoLei] ||= []).push(lei);
+        });
+        return Object.entries(porBloco)
+            .sort(([a],[b]) => Number(a) - Number(b))
+            .map(([bloco, aulas]) => ({
+                disciplina: `Leis · Bloco ${bloco}`,
+                frequencia14d: 0,
+                diasSemEstudo: 0,
+                dominio: 0,
+                aulas
+            }));
+    }
+
+    return [];
 };
 
 const renderAulasElegiveisMissao = (missao) => {
@@ -2880,7 +3275,7 @@ const renderAulasElegiveisMissao = (missao) => {
 
     if (existente) existente.remove();
 
-    if (!missao || !missao.classe) return;
+    if (!missao || (!missao.classe && missao.modulo !== 'leis')) return;
 
     const grupos = obterAulasElegiveisDaMissao(missao);
 
@@ -2901,16 +3296,16 @@ const renderAulasElegiveisMissao = (missao) => {
         media: '🟡 Média',
         baixa: '🟢 Baixa',
         baixissima: '⚪ Baixíssima'
-    }[missao.classe] || missao.classe;
+    }[missao.classe] || (missao.modulo === 'leis' ? '📜 Lei / mesmo bloco' : 'Classe contextual');
 
     container.innerHTML = `
         <div class="mission-options-header">
             <div>
                 <div class="mission-options-title">
-                    📚 Outras aulas elegíveis
+                    ${missao.modulo === 'leis' ? '📜 Outras leis elegíveis' : missao.modulo === 'revisao' ? '🔄 Outras revisões elegíveis' : '📚 Outras aulas elegíveis'}
                 </div>
                 <div class="mission-options-meta">
-                    ${classeLabel} · ${totalAulas} aula(s) em ${grupos.length} disciplina(s)
+                    ${classeLabel} · ${totalAulas} opção(ões) em ${grupos.length} grupo(s)
                 </div>
             </div>
 
@@ -3201,7 +3596,7 @@ const renderHome = () => {
     if (feitasEl) feitasEl.value = q.feitas || '';
     if (acertosEl) acertosEl.value = q.acertos || '';
 
-    renderAulasElegiveisMissao(isLei ? null : missao);
+    renderAulasElegiveisMissao(missao);
     updateIndicators();
     renderWeeklyGoals();
 };
@@ -3306,6 +3701,26 @@ const renderRevisao = () => {
         if(!AppState.revisaoDatas[key].historico) AppState.revisaoDatas[key].historico = [];
         AppState.revisaoDatas[key].historico.push(dataHoje);
 
+        const aulaRev = getAllLessonsFlat().find(a => a.key === key);
+        const agoraRev = new Date();
+        AppState.sessoes = Array.isArray(AppState.sessoes) ? AppState.sessoes : [];
+        const biEventoRevisao = registrarEventoBIPorAulaConcluida({
+            aula: {...(aulaRev||{}), modulo:'revisao', classe:aulaRev ? Missao4Engine._obterClasseDisciplina(aulaRev.disciplineName) : ''},
+            minutos:5, inicioISO: agoraRev.toISOString()
+        });
+        AppState.sessoes.push({
+            id: biEventoRevisao?.id || `sess-rev-${Date.now()}`,
+            eventoId: biEventoRevisao?.id || null,
+            inicioISO: agoraRev.toISOString(),
+            fimISO: agoraRev.toISOString(),
+            data: agoraRev.toLocaleDateString('pt-BR'),
+            inicio: agoraRev.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+            duracao: 5, tipo:'revisao', modulo:'revisao', key,
+            classe: aulaRev ? Missao4Engine._obterClasseDisciplina(aulaRev.disciplineName) : '',
+            disciplina: aulaRev?.disciplineName || '',
+            tema: aulaRev ? (aulaRev.title.split(' - ').slice(1).join(' - ') || aulaRev.title) : '',
+            lessonTitle: aulaRev?.title || ''
+        });
         if (typeof registrarAtividade === 'function') registrarAtividade('revisao', 5); 
         saveState();
         renderRevisao(); 
@@ -3677,6 +4092,11 @@ const renderRevisao = () => {
                 const iso = progDateBRToISO(d);
                 return iso ? new Date(`${iso}T12:00:00`) : null;
             };
+            const progRecordDate = (rec) => {
+                if (rec?.fimISO) return new Date(rec.fimISO);
+                if (rec?.iso && /^\d{4}-\d{2}-\d{2}$/.test(rec.iso)) return new Date(`${rec.iso}T12:00:00`);
+                return progISOFromBR(rec?.data) || null;
+            };
             const progStartOfDay = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
             const progDaysDiff = (a,b) => Math.floor((progStartOfDay(a)-progStartOfDay(b))/86400000);
             const progWeekday = d => ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(d).getDay()];
@@ -3688,58 +4108,318 @@ const renderRevisao = () => {
 
             const progCatalog = () => {
                 const map = {};
-                (AppState.data || []).forEach((block) => {
+                (AppState.data || []).forEach((block, blockIdx) => {
                     (block.disciplines || []).forEach((disc, di) => {
+                        const classe = (() => {
+                            try { return Missao4Engine._obterClasseDisciplina(disc.name); }
+                            catch (_) { return ''; }
+                        })();
                         (disc.lessons || []).forEach((title, li) => {
                             const key = `${block.id}|${di}|${li}`;
                             const parts = String(title).split(' - ');
                             map[key] = {
-                                key, disciplina: disc.name, tema: parts.length > 1 ? parts.slice(1).join(' - ') : title,
-                                aula: title, bloco: block.name, tipo: block.id === 'bloco1' ? 'aula' : 'questoes'
+                                key,
+                                blockId: block.id,
+                                blockIdx,
+                                discIdx: di,
+                                lessonIdx: li,
+                                disciplina: disc.name,
+                                classe,
+                                tema: parts.length > 1 ? parts.slice(1).join(' - ') : title,
+                                aula: title,
+                                bloco: block.name,
+                                tipo: block.id === 'bloco1' ? 'aula' : 'questoes'
                             };
                         });
                     });
                 });
                 (AppState.leis || []).forEach((lei) => {
                     const key = `lei_${lei.nome}`;
-                    map[key] = { key, disciplina:'Leis', tema:lei.nome, aula:lei.nome, bloco:`Bloco ${lei.bloco || 2}`, tipo:'lei' };
+                    map[key] = {
+                        key,
+                        disciplina:'Leis',
+                        classe:lei.prioridade || '',
+                        tema:lei.nome,
+                        aula:lei.nome,
+                        bloco:`Bloco ${lei.bloco || 2}`,
+                        tipo:'lei'
+                    };
                 });
                 return map;
             };
 
-            const progSessionRecords = () => {
+            /*
+             * DIMENSÃO CURRICULAR — FONTE DE VERDADE DO CONTEÚDO
+             *
+             * A existência/realização de uma aula não depende de sessão,
+             * diário ou BI-evento. A verdade histórica é AppState.checks +
+             * AppState.data. O Progresso usa esta dimensão para garantir que
+             * todas as disciplinas, classes e aulas realizadas continuem
+             * visíveis, mesmo quando registros antigos não possuem tempo.
+             */
+            const progCurriculumRecords = () => {
                 const catalog = progCatalog();
-                const diario = Array.isArray(AppState.diario) ? AppState.diario : [];
-                return (AppState.sessoes || []).map((s, i) => {
-                    const iso = progDateBRToISO(s.data) || (typeof s.data === 'string' && /^\d{4}-/.test(s.data) ? s.data : '');
-                    let rec = { id:i, iso, data:s.data || '', inicio:s.inicio || '00:00', duracao:Number(s.duracao)||0, tipo:s.tipo || 'outro', key:s.key || null,
-                        disciplina:s.disciplina || s.disciplineName || '', tema:s.tema || s.lessonTitle || '', fonte:'sessao' };
-                    if ((!rec.disciplina || !rec.key) && diario.length) {
-                        const candidatos = diario.filter(e => e.data === s.data && (!s.inicio || e.hora === s.inicio));
-                        const e = candidatos[candidatos.length-1];
-                        if (e) {
-                            if (e.tipo === 'lei') { rec.key = rec.key || `lei_${e.lei}`; rec.disciplina = rec.disciplina || 'Leis'; rec.tema = rec.tema || e.lei; rec.tipo = rec.tipo === 'outro' ? 'lei' : rec.tipo; }
-                            else { const found = Object.values(catalog).find(x => x.aula === e.aula && x.disciplina === e.disciplina); rec.key = rec.key || found?.key; rec.disciplina = rec.disciplina || e.disciplina || ''; rec.tema = rec.tema || (found?.tema || e.aula || ''); }
-                        }
+                const diaryByKey = {};
+                (AppState.diario || []).forEach((entry, idx) => {
+                    const isLei = entry?.tipo === 'lei';
+                    const key = isLei
+                        ? `lei_${entry?.lei || ''}`
+                        : (localizarAulaLegadaPorDiario(entry)?.key || entry?.key || null);
+                    if (!key) return;
+                    const iso = progDateBRToISO(entry.data) || '';
+                    if (!iso) return;
+                    const current = diaryByKey[key];
+                    if (!current || String(iso) > String(current.iso)) {
+                        diaryByKey[key] = { iso, data: entry.data || '', hora: entry.hora || '', index: idx };
                     }
-                    if (rec.key && catalog[rec.key]) { rec.disciplina = rec.disciplina || catalog[rec.key].disciplina; rec.tema = rec.tema || catalog[rec.key].tema; }
-                    return rec;
+                });
+
+                const out = [];
+                Object.values(catalog).forEach(c => {
+                    const completed = c.disciplina === 'Leis'
+                        ? Boolean((AppState.leis || []).find(l => `lei_${l.nome}` === c.key && ['estudada','andamento','concluido'].includes(l.status)))
+                        : Boolean(AppState.checks?.[c.key]);
+
+                    const last = diaryByKey[c.key] || null;
+                    out.push({
+                        id:`curr-${c.key}`,
+                        key:c.key,
+                        disciplina:c.disciplina,
+                        classe:c.classe || '',
+                        tema:c.tema,
+                        aula:c.aula,
+                        bloco:c.bloco,
+                        tipo:c.tipo,
+                        concluida:completed,
+                        iso:last?.iso || '',
+                        data:last?.data || '',
+                        hora:last?.hora || '',
+                        atividadeCount:last ? 1 : 0
+                    });
+                });
+                return out;
+            };
+
+            /*
+             * ATORES HISTÓRICOS DO DIÁRIO
+             * Cada entrada prova que determinada aula/lei ocorreu. Não
+             * inventamos duração; tempo continua vindo de sessoes.
+             */
+            const progDiaryActivityRecords = () => {
+                const catalog = progCatalog();
+                return (AppState.diario || []).map((entry, idx) => {
+                    const isLei = entry?.tipo === 'lei';
+                    const found = isLei ? catalog[`lei_${entry?.lei || ''}`] : localizarAulaLegadaPorDiario(entry);
+                    const key = found?.key || entry?.key || null;
+                    const ctx = resolverContextoBI(key, {
+                        disciplina: isLei ? 'Leis' : entry?.disciplina,
+                        tema: isLei ? entry?.lei : entry?.aula,
+                        aula: isLei ? entry?.lei : entry?.aula,
+                        bloco: isLei ? `Bloco ${entry?.blocoLei || 2}` : entry?.bloco,
+                        tipo: isLei ? 'lei' : (String(entry?.bloco || '').includes('Bloco 2') ? 'revisao' : 'aula')
+                    });
+                    return {
+                        id:`diario-${idx}`,
+                        iso:progDateBRToISO(entry?.data) || '',
+                        data:entry?.data || '',
+                        inicio:entry?.hora || '00:00',
+                        duracao:isLei ? Number(entry?.duracao)||0 : 0,
+                        tipo:ctx.tipo || (isLei ? 'lei' : 'aula'),
+                        modulo:ctx.tipo || (isLei ? 'leis' : 'bloco1'),
+                        key:key,
+                        classe:ctx.classe || '',
+                        disciplina:ctx.disciplina || '',
+                        tema:ctx.tema || '',
+                        lessonTitle:ctx.aula || '',
+                        fonte:'diario-historico',
+                        atividadeCount:1
+                    };
                 });
             };
 
-            const progQuestionRecords = () => {
-                const catalog = progCatalog();
-                const recs = [];
-                (AppState.historicoQuestoes || []).forEach((q,i) => {
-                    const c = catalog[q.key] || {};
-                    recs.push({ id:`hq-${i}`, iso:q.iso || progDateBRToISO(q.data), data:q.data || '', hora:q.hora || '',
-                        feitas:Number(q.feitas)||0, acertos:Number(q.acertos)||0, key:q.key || null,
-                        disciplina:q.disciplina || c.disciplina || 'Sem disciplina', tema:q.tema || c.tema || q.key || 'Sem tema', fonte:q.fonte || 'histórico' });
+            const normalizarIntegridadeProgresso = () => {
+                let mudou = false;
+                AppState.biEventos = Array.isArray(AppState.biEventos) ? AppState.biEventos : [];
+
+                // Repara o ledger canônico já existente.
+                AppState.biEventos.forEach(e => {
+                    const ctx = resolverContextoBI(e.key, e);
+                    const fields = ['disciplina','tema','aula','bloco','classe'];
+                    fields.forEach(f => {
+                        if ((!e[f] || e[f] === 'Sem disciplina' || e[f] === 'Sem tema') && ctx[f]) {
+                            e[f] = ctx[f]; mudou = true;
+                        }
+                    });
                 });
-                // Simulados já possuem data e podem entrar na camada temporal.
+
+                // Repara sessões legadas para que dados antigos também sejam inteligíveis.
+                (AppState.sessoes || []).forEach(s => {
+                    const ctx = resolverContextoBI(s.key, s);
+                    const pairs = { disciplina:'disciplina', tema:'tema', lessonTitle:'aula', bloco:'bloco', classe:'classe' };
+                    Object.entries(pairs).forEach(([field, cfield]) => {
+                        if ((!s[field] || s[field] === 'Sem disciplina' || s[field] === 'Sem tema') && ctx[cfield]) {
+                            s[field] = ctx[cfield]; mudou = true;
+                        }
+                    });
+                });
+
+                // Repara histórico temporal de questões sem recriar perguntas.
+                (AppState.historicoQuestoes || []).forEach(q => {
+                    const ctx = resolverContextoBI(q.key, q);
+                    if ((!q.disciplina || q.disciplina === 'Sem disciplina') && ctx.disciplina) { q.disciplina = ctx.disciplina; mudou = true; }
+                    if ((!q.tema || q.tema === 'Sem tema') && ctx.tema) { q.tema = ctx.tema; mudou = true; }
+                    if ((!q.classe || q.classe === 'Sem classe') && ctx.classe) { q.classe = ctx.classe; mudou = true; }
+                });
+
+                if (mudou) saveState();
+                return mudou;
+            };
+
+            const progSessionRecords = () => {
+                normalizarIntegridadeProgresso();
+                const eventos = Array.isArray(AppState.biEventos) ? AppState.biEventos : [];
+                const canonical = eventos.map((e,i) => {
+                    const ctx = resolverContextoBI(e.key, e);
+                    return {
+                        id:`bi-${e.id || i}`,
+                        eventoId:e.id || null,
+                        iso:e.iso || (e.fimISO ? new Date(e.fimISO).toISOString().slice(0,10) : ''),
+                        data:e.data || '',
+                        inicio:e.hora || (e.inicioISO ? new Date(e.inicioISO).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '00:00'),
+                        duracao:Number(e.duracao)||0,
+                        tipo:e.tipo || e.modulo || 'outro',
+                        modulo:e.modulo || e.tipo || 'outro',
+                        key:e.key || null,
+                        classe:e.classe || ctx.classe || '',
+                        disciplina:e.disciplina || ctx.disciplina || '',
+                        tema:e.tema || ctx.tema || e.aula || '',
+                        lessonTitle:e.aula || ctx.aula || '',
+                        fonte:'bi-evento',
+                        feitas:Number(e.feitas)||0,
+                        acertos:Number(e.acertos)||0,
+                        fimISO:e.fimISO || '', inicioISO:e.inicioISO || ''
+                    };
+                });
+
+                const canonicalIds = new Set(eventos.map(e => e.id).filter(Boolean));
+                const canonicalSig = new Set(canonical.map(e => [e.key||'',e.iso||'',e.inicio||'',e.duracao||0,e.tipo||''].join('|')));
+                const legacyBase = (AppState.sessoes || []).filter(s => {
+                    if (s.eventoId && canonicalIds.has(s.eventoId)) return false;
+                    const iso = progDateBRToISO(s.data) || (typeof s.data === 'string' && /^\d{4}-/.test(s.data) ? s.data : '');
+                    const sig = [s.key||'', iso, s.inicio||'', Number(s.duracao)||0, s.tipo||s.modulo||''].join('|');
+                    return !canonicalSig.has(sig);
+                }).map((s,i) => {
+                    const ctx = resolverContextoBI(s.key, s);
+                    const iso = progDateBRToISO(s.data) || (typeof s.data === 'string' && /^\d{4}-/.test(s.data) ? s.data : '');
+                    const hasContext = Boolean(s.key || s.disciplina || s.lessonTitle || ctx.disciplina);
+                    return {
+                        id:`legacy-${i}`, iso, data:s.data||'',
+                        inicio:s.inicio || (s.inicioISO ? new Date(s.inicioISO).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '00:00'),
+                        duracao:Number(s.duracao)||0,
+                        tipo:s.tipo||s.modulo||ctx.tipo||'tempo-legado',
+                        modulo:s.modulo||s.tipo||ctx.tipo||'tempo-legado', key:s.key||null,
+                        classe:s.classe||ctx.classe||'',
+                        disciplina:s.disciplina||ctx.disciplina||'',
+                        tema:s.tema||ctx.tema||'', lessonTitle:s.lessonTitle||ctx.aula||'',
+                        fonte:'sessao-legada', legadoSemContexto:!hasContext,
+                        feitas:Number(s.feitas)||0, acertos:Number(s.acertos)||0,
+                        inicioISO:s.inicioISO||'', fimISO:s.fimISO||''
+                    };
+                });
+
+                // HISTÓRICO LEGADO: sessões antigas sem key não podem ser tratadas como
+                // "tempo sem disciplina" quando o Diário preserva, na mesma data,
+                // quais aulas/disciplinas efetivamente foram realizadas. O tempo é
+                // então repartido entre as atividades identificáveis daquele dia,
+                // preservando 100% do total de minutos sem fabricar uma aula específica.
+                const diaryByDate = {};
+                progDiaryActivityRecords().forEach(a => {
+                    if (!a.iso || !a.disciplina || !a.key) return;
+                    const map = diaryByDate[a.iso] || (diaryByDate[a.iso] = new Map());
+                    map.set(a.key, (map.get(a.key) || 0) + 1);
+                });
+                const legacyAllocated = [];
+                const legacyUnallocated = [];
+                legacyBase.forEach(s => {
+                    if (!s.legadoSemContexto || !s.iso || !(Number(s.duracao)>0)) {
+                        legacyUnallocated.push(s); return;
+                    }
+                    const weights = diaryByDate[s.iso];
+                    if (!weights || !weights.size) {
+                        legacyUnallocated.push(s); return;
+                    }
+                    const items = [...weights.entries()];
+                    const totalW = items.reduce((a,[,w]) => a+w, 0) || 1;
+                    let used = 0;
+                    items.forEach(([key,w], idx) => {
+                        const ctx = resolverContextoBI(key, {});
+                        let min = idx === items.length-1
+                            ? Math.max(0, Number(s.duracao)-used)
+                            : Math.round((Number(s.duracao)*w/totalW)*10)/10;
+                        used += min;
+                        legacyAllocated.push({
+                            ...s,
+                            id:`${s.id}-alocado-${idx}`,
+                            key,
+                            classe:ctx.classe || '',
+                            disciplina:ctx.disciplina || '',
+                            tema:ctx.tema || '',
+                            lessonTitle:ctx.aula || '',
+                            tipo:ctx.tipo || s.tipo,
+                            modulo:ctx.tipo || s.modulo,
+                            duracao:min,
+                            fonte:'sessao-legada-alocada',
+                            legadoSemContexto:false,
+                            legadoAlocado:true,
+                            atividadeCount:1
+                        });
+                    });
+                });
+                return [...legacyUnallocated, ...legacyAllocated, ...canonical];
+            };
+
+            const progQuestionRecords = () => {
+                normalizarIntegridadeProgresso();
+                const recs = [];
+                const historico = Array.isArray(AppState.historicoQuestoes) ? AppState.historicoQuestoes : [];
+                const eventoIdsComQuestoes = new Set(historico.map(q => q.eventoId).filter(Boolean));
+                historico.forEach((q,i) => {
+                    const ctx = resolverContextoBI(q.key, q);
+                    recs.push({
+                        id:q.eventoId || `hq-${i}`,
+                        eventoId:q.eventoId || null,
+                        iso:q.iso || progDateBRToISO(q.data),
+                        data:q.data || '', hora:q.hora || '',
+                        feitas:Number(q.feitas)||0, acertos:Number(q.acertos)||0,
+                        key:q.key || null,
+                        disciplina:q.disciplina || ctx.disciplina || 'Sem disciplina',
+                        classe:q.classe || ctx.classe || '',
+                        tema:q.tema || ctx.tema || q.key || 'Sem tema',
+                        fonte:q.fonte || 'histórico',
+                        tipo:q.tipo || ctx.tipo || 'aula'
+                    });
+                });
+
+                // Somente eventos sem registro de questão vinculado entram como fallback.
+                (AppState.biEventos || []).forEach((e,i) => {
+                    const f=Number(e.feitas)||0, a=Number(e.acertos)||0;
+                    if (!f || eventoIdsComQuestoes.has(e.id)) return;
+                    const ctx=resolverContextoBI(e.key,e);
+                    recs.push({
+                        id:`biq-${e.id||i}`, eventoId:e.id||null,
+                        iso:e.iso || (e.fimISO ? e.fimISO.slice(0,10) : ''),
+                        data:e.data||'', hora:e.hora||'', feitas:f, acertos:a,
+                        key:e.key||null, disciplina:e.disciplina||ctx.disciplina||'Sem disciplina',
+                        classe:e.classe||ctx.classe||'',
+                        tema:e.tema||ctx.tema||e.aula||'Sem tema', fonte:'bi-evento', tipo:e.tipo||ctx.tipo||'aula'
+                    });
+                });
+
                 (AppState.simulados || []).forEach((q,i) => {
-                    recs.push({ id:`sim-${i}`, iso:progDateBRToISO(q.data), data:q.data || '', hora:q.hora || '', feitas:Number(q.total)||0, acertos:Number(q.acertos)||0,
-                        key:null, disciplina:q.disciplina || 'Simulados', tema:q.tema || q.tema || q.termo || q.nome || 'Simulado', fonte:'simulado' });
+                    recs.push({ id:`sim-${i}`, iso:q.iso || progDateBRToISO(q.data), data:q.data||'', hora:q.hora||'',
+                        feitas:Number(q.total)||0, acertos:Number(q.acertos)||0, key:null,
+                        disciplina:q.disciplina||'Simulados', classe:q.classe || (q.disciplina ? (Missao4Engine._obterClasseDisciplina(q.disciplina)||'') : ''),
+                        tema:q.tema||q.termo||q.nome||'Simulado', fonte:'simulado', tipo:'simulado' });
                 });
                 return recs;
             };
@@ -3751,11 +4431,11 @@ const renderRevisao = () => {
             };
 
             const progCumulativeQuestions = () => {
-                const catalog = progCatalog();
+                normalizarIntegridadeProgresso();
                 return Object.entries(AppState.questoesAulas || {}).map(([key,q]) => {
-                    const c=catalog[key] || {};
+                    const c=resolverContextoBI(key,{});
                     return { id:`ac-${key}`, iso:'', data:'', hora:'', feitas:Number(q?.feitas)||0, acertos:Number(q?.acertos)||0,
-                        key, disciplina:c.disciplina || 'Sem disciplina', tema:c.tema || key, fonte:'acumulado' };
+                        key, disciplina:c.disciplina || 'Sem disciplina', classe:c.classe || '', tema:c.tema || key, fonte:'acumulado', tipo:c.tipo || 'aula' };
                 }).filter(q => q.feitas>0);
             };
 
@@ -3775,7 +4455,7 @@ const renderRevisao = () => {
 
             const progWithinScope = rec => {
                 if (!rec.iso) return progressoBIState.periodo === 'all';
-                const d = progISOFromBR(rec.iso) || new Date(`${rec.iso}T12:00:00`);
+                const d = progRecordDate(rec);
                 const {ini,fim} = progDateScope();
                 return d >= ini && d <= new Date(fim.getTime()+86399999);
             };
@@ -3783,46 +4463,128 @@ const renderRevisao = () => {
             const progSelection = () => {
                 let sessions = progSessionRecords().filter(progWithinScope);
                 let questions = progQuestionRecordsSafe().filter(progWithinScope);
+                let curriculumAll = progCurriculumRecords();
+                let curriculum = curriculumAll;
+
+                // Para filtros temporais, só entram no recorte as conclusões
+                // que possuem evidência temporal. O currículo completo continua
+                // disponível separadamente para calcular cobertura histórica real.
+                if (progressoBIState.periodo !== 'all') {
+                    curriculum = curriculum.filter(c => c.concluida && c.iso && progWithinScope(c));
+                }
+
                 if (!progressoBIState.tipos.includes('todos')) {
-                    sessions = sessions.filter(s => progressoBIState.tipos.includes(s.tipo));
+                    sessions = sessions.filter(s => progressoBIState.tipos.includes(s.tipo === 'leitura' ? 'lei' : (s.tipo || 'outro')));
                     questions = questions.filter(q => progressoBIState.tipos.includes(q.fonte === 'simulado' ? 'simulado' : (q.tipo || 'aula')));
+                    curriculum = curriculum.filter(c => progressoBIState.tipos.includes(c.tipo === 'questoes' ? 'aula' : c.tipo));
                 }
                 if (!progressoBIState.disciplinas.includes('todos')) {
                     sessions = sessions.filter(s => progressoBIState.disciplinas.includes(s.disciplina));
                     questions = questions.filter(q => progressoBIState.disciplinas.includes(q.disciplina));
+                    curriculum = curriculum.filter(c => progressoBIState.disciplinas.includes(c.disciplina));
                 }
                 if (!progressoBIState.weekdays.includes('todos')) {
-                    sessions = sessions.filter(s => progressoBIState.weekdays.includes(progWeekday(progISOFromBR(s.iso)||new Date())));
-                    questions = questions.filter(q => progressoBIState.weekdays.includes(progWeekday(progISOFromBR(q.iso)||new Date())));
+                    sessions = sessions.filter(s => s.iso && progressoBIState.weekdays.includes(progWeekday(progRecordDate(s)||new Date())));
+                    questions = questions.filter(q => q.iso && progressoBIState.weekdays.includes(progWeekday(progRecordDate(q)||new Date())));
+                    curriculum = curriculum.filter(c => c.iso && progressoBIState.weekdays.includes(progWeekday(progRecordDate(c)||new Date())));
                 }
                 if (progressoBIState.foco) {
                     const f = progressoBIState.foco;
                     if (f.type === 'disciplina') {
                         sessions = sessions.filter(s => s.disciplina === f.value);
                         questions = questions.filter(q => q.disciplina === f.value);
+                        curriculum = curriculum.filter(c => c.disciplina === f.value);
                     } else if (f.type === 'tema') {
                         sessions = sessions.filter(s => s.tema === f.value);
                         questions = questions.filter(q => q.tema === f.value);
+                        curriculum = curriculum.filter(c => c.tema === f.value);
+                    } else if (f.type === 'classe') {
+                        sessions = sessions.filter(s => s.classe === f.value);
+                        questions = questions.filter(q => q.classe === f.value);
+                        curriculum = curriculum.filter(c => c.classe === f.value);
                     }
                 }
-                return {sessions, questions};
+                return {sessions, questions, curriculum, curriculumAll};
             };
 
-            const progAggregate = (sessions, questions, dim='disciplina') => {
+            const progAggregate = (sessions, questions, dim='disciplina', curriculum=[]) => {
                 const groups = {};
-                const keyOf = x => dim === 'disciplina' ? (x.disciplina || 'Sem disciplina') : dim === 'tema' ? (x.tema || 'Sem tema') : dim === 'tipo' ? (x.tipo || x.fonte || 'outro') : dim === 'weekday' ? progWeekday(progISOFromBR(x.iso)||new Date()) : dim === 'hour' ? `${progHours(x).toString().padStart(2,'0')}h` : 'Total';
-                const ensure = k => groups[k] || (groups[k]={label:k,min:0,sessoes:0,feitas:0,acertos:0,dias:new Set(),keys:new Set()});
-                sessions.forEach(s => { const g=ensure(keyOf(s)); g.min+=s.duracao; g.sessoes++; if(s.iso) g.dias.add(s.iso); if(s.key) g.keys.add(s.key); });
-                questions.forEach(q => { const g=ensure(keyOf(q)); g.feitas+=q.feitas; g.acertos+=q.acertos; if(q.iso) g.dias.add(q.iso); if(q.key) g.keys.add(q.key); });
-                return Object.values(groups).map(g=>({...g,accuracy:progPct(g.acertos,g.feitas),efficiency:g.min>0?(g.feitas/(g.min/60)):0,activeDays:g.dias.size, status:progStatus(g.accuracy,g.feitas)})).sort((a,b)=> b.min+b.feitas-a.min-a.feitas);
+                const keyOf = x => {
+                    if (dim === 'disciplina') return x.disciplina || (x.fonte === 'sessao-legada' ? 'Tempo não atribuído · histórico antigo' : 'Sem disciplina');
+                    if (dim === 'classe') return x.classe || 'Sem classe';
+                    if (dim === 'tema') return x.tema || (x.fonte === 'sessao-legada' ? 'Tempo histórico agregado' : 'Sem tema');
+                    if (dim === 'tipo') return x.tipo || x.fonte || 'outro';
+                    if (dim === 'weekday') return progWeekday(progRecordDate(x)||new Date());
+                    if (dim === 'hour') return `${progHours(x).toString().padStart(2,'0')}h`;
+                    return 'Total';
+                };
+                const ensure = k => groups[k] || (groups[k]={
+                    label:k,min:0,sessoes:0,feitas:0,acertos:0,dias:new Set(),keys:new Set(),
+                    aulas:0,concluidas:0,atividades:0
+                });
+
+                curriculum.forEach(c => {
+                    if ((dim === 'weekday' || dim === 'hour') && !c.iso) return;
+                    const g=ensure(keyOf(c));
+                    g.aulas += 1;
+                    g.concluidas += c.concluida ? 1 : 0;
+                    g.atividades += Number(c.atividadeCount)||0;
+                    if(c.iso) g.dias.add(c.iso);
+                    if(c.key) g.keys.add(c.key);
+                });
+                progDiaryActivityRecords().filter(progWithinScope).forEach(a => {
+                    // Só acrescenta atividade histórica se a dimensão ainda não
+                    // recebeu a evidência curricular correspondente.
+                    const g=ensure(keyOf(a));
+                    g.atividades += 1;
+                    if(a.iso) g.dias.add(a.iso);
+                    if(a.key) g.keys.add(a.key);
+                });
+                sessions.forEach(s => {
+                    const g=ensure(keyOf(s));
+                    g.min+=s.duracao;
+                    // Alocações históricas repartem uma sessão agregada entre aulas,
+                    // mas não criam artificialmente N novas sessões.
+                    if (Number(s.duracao)>0 && !s.legadoAlocado) g.sessoes++;
+                    if(s.iso) g.dias.add(s.iso);
+                    if(s.key) g.keys.add(s.key);
+                });
+                questions.forEach(q => {
+                    const g=ensure(keyOf(q));
+                    g.feitas+=q.feitas;
+                    g.acertos+=q.acertos;
+                    if(q.iso) g.dias.add(q.iso);
+                    if(q.key) g.keys.add(q.key);
+                });
+                return Object.values(groups).map(g=>({
+                    ...g,
+                    accuracy:progPct(g.acertos,g.feitas),
+                    efficiency:g.min>0?(g.feitas/(g.min/60)):0,
+                    activeDays:g.dias.size,
+                    coverage:g.aulas>0?Math.round((g.concluidas/g.aulas)*100):0,
+                    status:progStatus(g.accuracy,g.feitas)
+                })).sort((a,b)=> (b.concluidas-b.aulas*0.001) - (a.concluidas-a.aulas*0.001) || b.min+b.feitas-a.min-a.feitas);
             };
 
-            const progOverall = (sessions, questions) => {
+            const progOverall = (sessions, questions, curriculum=[]) => {
                 const min=sessions.reduce((a,x)=>a+x.duracao,0), feitas=questions.reduce((a,x)=>a+x.feitas,0), acertos=questions.reduce((a,x)=>a+x.acertos,0);
-                const days = new Set([...sessions.map(x=>x.iso), ...questions.map(x=>x.iso)].filter(Boolean));
+                const days = new Set([...sessions.map(x=>x.iso), ...questions.map(x=>x.iso), ...curriculum.map(x=>x.iso)].filter(Boolean));
                 const {ini,fim}=progDateScope(); const calendar=Math.max(1,progDaysDiff(fim,ini)+1);
                 const sessionAvg=sessions.length ? min/sessions.length : 0;
-                return {min,feitas,acertos,accuracy:progPct(acertos,feitas),days:days.size,calendar,consistency:Math.round((days.size/calendar)*100),avgSession:sessionAvg,efficiency:min>0?feitas/(min/60):0,status:progStatus(progPct(acertos,feitas),feitas)};
+                const totalAulas=curriculum.length;
+                const aulasConcluidas=curriculum.filter(x=>x.concluida).length;
+                return {
+                    min,feitas,acertos,
+                    accuracy:progPct(acertos,feitas),
+                    days:days.size,
+                    calendar,
+                    consistency:Math.round((days.size/calendar)*100),
+                    avgSession:sessionAvg,
+                    efficiency:min>0?feitas/(min/60):0,
+                    totalAulas,aulasConcluidas,
+                    coverage:totalAulas?Math.round(aulasConcluidas/totalAulas*100):0,
+                    status:progStatus(progPct(acertos,feitas),feitas)
+                };
             };
 
             const progFormatDate = iso => iso ? new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
@@ -3849,19 +4611,106 @@ const renderRevisao = () => {
                 window.__progressoCharts.push(new Chart(el.getContext('2d'), config));
             };
 
+
+            // ============================================================
+            // PROGRESSO BI — ESTATÍSTICA / PROBABILIDADE / PREVISÃO
+            // ============================================================
+            const progWeightedMean = (values, weights=[]) => {
+                if (!values.length) return 0;
+                if (!weights.length) return values.reduce((a,b)=>a+b,0)/values.length;
+                const sw=weights.reduce((a,b)=>a+b,0)||1;
+                return values.reduce((s,v,i)=>s+v*(weights[i]||0),0)/sw;
+            };
+            const progStd = values => {
+                if (values.length<2) return 0;
+                const m=values.reduce((a,b)=>a+b,0)/values.length;
+                return Math.sqrt(values.reduce((s,v)=>s+Math.pow(v-m,2),0)/values.length);
+            };
+            const progMedian = values => {
+                if (!values.length) return 0;
+                const a=[...values].sort((x,y)=>x-y), m=Math.floor(a.length/2);
+                return a.length%2 ? a[m] : (a[m-1]+a[m])/2;
+            };
+            const progLinearTrend = (values) => {
+                if (values.length<2) return {slope:0,intercept:values[0]||0,next:values[0]||0};
+                const n=values.length, xm=(n-1)/2, ym=values.reduce((a,b)=>a+b,0)/n;
+                const den=values.reduce((s,_,i)=>s+Math.pow(i-xm,2),0)||1;
+                const slope=values.reduce((s,v,i)=>s+(i-xm)*(v-ym),0)/den;
+                const intercept=ym-slope*xm;
+                return {slope,intercept,next:intercept+slope*n};
+            };
+            const progWilson = (successes,trials,z=1.96) => {
+                if (!trials) return {low:0,high:0};
+                const p=successes/trials, den=1+z*z/trials;
+                const center=p+z*z/(2*trials);
+                const adj=z*Math.sqrt((p*(1-p)+z*z/(4*trials))/trials);
+                return {low:Math.max(0,(center-adj)/den),high:Math.min(1,(center+adj)/den)};
+            };
+            const progPredictiveModel = (sessions, questions) => {
+                const days = {};
+                sessions.forEach(s => {
+                    const iso=s.iso; if(!iso) return;
+                    days[iso] ||= {min:0,q:0,a:0,s:0};
+                    days[iso].min += Number(s.duracao)||0; days[iso].s++;
+                });
+                questions.forEach(q => {
+                    const iso=q.iso; if(!iso) return;
+                    days[iso] ||= {min:0,q:0,a:0,s:0};
+                    days[iso].q += Number(q.feitas)||0; days[iso].a += Number(q.acertos)||0;
+                });
+                const ordered=Object.keys(days).sort();
+                const timeSeries=ordered.map(d=>days[d].min);
+                const accSeries=ordered.map(d=>days[d].q ? days[d].a/days[d].q*100 : null).filter(v=>v!==null);
+                const pace=progLinearTrend(timeSeries);
+                const accTrend=progLinearTrend(accSeries);
+                const qTotal=questions.reduce((s,q)=>s+(Number(q.feitas)||0),0);
+                const aTotal=questions.reduce((s,q)=>s+(Number(q.acertos)||0),0);
+                const baseAcc=qTotal? aTotal/qTotal : 0;
+                const wilson=progWilson(aTotal,qTotal);
+                const avgDailyMin=ordered.length ? timeSeries.reduce((a,b)=>a+b,0)/ordered.length : 0;
+                const next7Min=Math.max(0,pace.next*7);
+                const projectedAcc=Math.max(0,Math.min(100, baseAcc*100 + accTrend.slope));
+                const cv = timeSeries.length>=2 ? progStd(timeSeries)/Math.max(1,avgDailyMin) : 0;
+                return {
+                    days:ordered.length, avgDailyMin, next7Min,
+                    nextDayMin:Math.max(0,pace.next), trendMinPerDay:pace.slope,
+                    accuracy:baseAcc*100, lowerAccuracy:wilson.low*100, upperAccuracy:wilson.high*100,
+                    projectedAccuracy:projectedAcc, accuracyTrend:accTrend.slope,
+                    medianDailyMin:progMedian(timeSeries), cv,
+                    stability:Math.max(0,Math.min(100,Math.round(100*(1-Math.min(1,cv))))),
+                    sample:qTotal
+                };
+            };
+            const progOpportunityScore = (row) => {
+                const lowAccuracy = row.feitas>=5 ? Math.max(0,100-row.accuracy) : 45;
+                const lowVolume = Math.max(0,25-Math.min(25,row.feitas));
+                const lowTime = row.min>0 ? Math.max(0,60-row.min)/60*10 : 10;
+                return Math.round(lowAccuracy*0.7 + lowVolume*0.2 + lowTime*0.1);
+            };
+
             const renderProgresso = () => {
+                normalizarIntegridadeProgresso();
                 const container=document.getElementById('progressoContainer'); if(!container) return;
                 window.__progressoCharts?.forEach(c=>{try{c.destroy();}catch(e){}}); window.__progressoCharts=[];
                 const catalog=progCatalog();
-                const allDisc=[...new Set(Object.values(catalog).map(x=>x.disciplina))].sort();
+                const allDisc=[...new Set(Object.values(catalog).map(x=>x.disciplina).filter(Boolean))].sort();
+                const allClasses=[...new Set(Object.values(catalog).map(x=>x.classe).filter(Boolean))].sort();
                 const selected=progSelection();
                 const legacyQ=progCumulativeQuestions();
-                const performanceQuestions = progressoBIState.questBase === 'acumulado' || (progressoBIState.questBase === 'auto' && (progressoBIState.periodo === 'all' || selected.questions.length === 0)) ? legacyQ : selected.questions;
-                const overall=progOverall(selected.sessions,performanceQuestions);
-                const rowsDisc=progAggregate(selected.sessions,performanceQuestions,'disciplina');
-                const rowsTheme=progAggregate(selected.sessions,performanceQuestions,'tema');
-                const rowsDay=progAggregate(selected.sessions,selected.questions,'weekday');
-                const rowsHour=progAggregate(selected.sessions,selected.questions,'hour');
+                const temQuestaoTemporal = selected.questions.some(q => q.iso);
+                // REGRA DO PROGRESSO: enquanto o histórico temporal completo de questões
+                // ainda não existir, o modo Automático usa a mesma base acumulada que o
+                // sistema anterior já guardava por aula. O filtro temporal não deve fazer
+                // o desempenho histórico desaparecer por falta de data em registros legados.
+                const performanceQuestions = progressoBIState.questBase === 'temporal'
+                    ? selected.questions
+                    : legacyQ;
+                const overall=progOverall(selected.sessions,performanceQuestions,selected.curriculumAll);
+                const rowsDisc=progAggregate(selected.sessions,performanceQuestions,'disciplina',selected.curriculum);
+                const rowsClass=progAggregate(selected.sessions,performanceQuestions,'classe',selected.curriculum);
+                const rowsTheme=progAggregate(selected.sessions,performanceQuestions,'tema',selected.curriculum);
+                const rowsDay=progAggregate(selected.sessions,selected.questions,'weekday',selected.curriculum);
+                const rowsHour=progAggregate(selected.sessions,selected.questions,'hour',selected.curriculum);
                 const types=['todos','aula','revisao','lei','simulado'];
                 const weekdays=['todos','Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 
@@ -3869,22 +4718,25 @@ const renderRevisao = () => {
                 const sessionHasDates=selected.sessions.some(s=>s.iso);
                 const questionHistoryCount=(AppState.historicoQuestoes||[]).length;
                 const focusHtml=progressoBIState.foco ? `<div class="prog-focusbar"><strong>🎯 Filtro focal:</strong><span class="prog-chip active">${progEscape(progressoBIState.foco.type==='disciplina'?'Disciplina':'Tema')}: ${progEscape(progressoBIState.foco.value)}</span><button class="btn-glass" onclick="window.progLimparFoco()">Limpar foco</button></div>` : '';
-                const usingLegacyBase = progressoBIState.questBase === 'acumulado' || (progressoBIState.questBase === 'auto' && (progressoBIState.periodo === 'all' || selected.questions.length === 0));
+                const usingLegacyBase = progressoBIState.questBase !== 'temporal';
+                const legacyUnassigned = selected.sessions.filter(s=>s.fonte==='sessao-legada' && s.legadoSemContexto).length;
+                const legacyAllocatedMin = selected.sessions.filter(s=>s.legadoAlocado).reduce((a,s)=>a+Number(s.duracao||0),0);
                 const scopeNote=usingLegacyBase
-                    ? `Desempenho de questões usando a base acumulada por tema/lei (${legacyQ.reduce((a,q)=>a+q.feitas,0)} questões). A data do filtro controla as sessões/tempo, mas os totais acumulados não são retrodatados.`
-                    : `Histórico temporal de questões disponível para ${questionHistoryCount} registro(s). O recorte temporal está aplicado às questões registradas nesse histórico.`;
+                    ? `Desempenho histórico integrado pela base acumulada por aula (${legacyQ.reduce((a,q)=>a+q.feitas,0)} questões). O tempo antigo identificável pelo Diário é redistribuído entre as aulas realizadas no mesmo dia (${Math.round(legacyAllocatedMin)} min reconciliados).` + (legacyUnassigned ? ` Restam ${legacyUnassigned} sessão(ões) antigas sem evidência suficiente para atribuição.` : '')
+                    : `Base temporal explícita: somente questões com registro de data entram no recorte atual.` + (legacyUnassigned ? ` Tempo legado sem vínculo específico continua separado.` : '');
 
                 let html=`<div class="prog-bi">
                     <div class="card">
                         <div class="card-header"><h3>📊 Progresso BI — Learning Analytics</h3><span class="sub">Exploração cruzada de tempo, questões, precisão, frequência e diagnóstico</span></div>
                         <div class="prog-tabs">
-                            ${[['visao','Visão geral'],['matriz','Matriz BI'],['tempo','Tempo & Horário'],['diagnostico','Diagnóstico']].map(([k,l])=>`<button class="prog-tab ${progressoBIState.tab===k?'active':''}" onclick="window.progSetTab('${k}')">${l}</button>`).join('')}
+                            ${[['visao','Visão geral'],['matriz','Matriz BI'],['tempo','Tempo & Horário'],['diagnostico','Diagnóstico'],['analitica','Mega BI']].map(([k,l])=>`<button class="prog-tab ${progressoBIState.tab===k?'active':''}" onclick="window.progSetTab('${k}')">${l}</button>`).join('')}
                         </div>
                     </div>
                     <div class="card">
                         <div class="prog-toolbar">
                             <div class="prog-filter"><label>Período</label><select id="progPeriodo"><option value="7">Últimos 7 dias</option><option value="14">Últimos 14 dias</option><option value="30">Últimos 30 dias</option><option value="60">Últimos 60 dias</option><option value="90">Últimos 90 dias</option><option value="all">Todo o histórico</option><option value="custom">Personalizado</option></select></div>
                             <div class="prog-filter wide"><label>Disciplinas</label><select id="progDisciplinas" multiple size="3">${['todos',...allDisc].map(d=>`<option value="${progEscape(d)}" ${progressoBIState.disciplinas.includes(d)?'selected':''}>${d==='todos'?'Todas as disciplinas':d}</option>`).join('')}</select></div>
+                            <div class="prog-filter"><label>Classes</label><div class="prog-small" style="padding-top:8px">{allClasses.join(" · ")}</div></div>
                             <div class="prog-filter"><label>Tipo</label><select id="progTipo">${types.map(t=>`<option value="${t}" ${progressoBIState.tipos.includes(t)?'selected':''}>${t==='todos'?'Tudo':t==='revisao'?'Revisões':t==='lei'?'Lei seca':t==='simulado'?'Simulados':'Aulas'}</option>`).join('')}</select></div>
                             <div class="prog-filter wide"><label>Dias da semana</label><select id="progWeekdays" multiple size="3">${weekdays.map(d=>`<option value="${d}" ${progressoBIState.weekdays.includes(d)?'selected':''}>${d==='todos'?'Todos os dias':d}</option>`).join('')}</select></div>
                             <div class="prog-filter"><label>Base de questões</label><select id="progQuestBase"><option value="auto">Automática</option><option value="temporal">Histórico temporal</option><option value="acumulado">Total acumulado</option></select></div><div class="prog-filter"><label>Métrica da Matriz</label><select id="progMetric"><option value="tempo">Tempo</option><option value="questoes">Questões</option><option value="acertos">Acertos</option><option value="taxa">% Acerto</option><option value="eficiencia">Questões/h</option></select></div>
@@ -3899,6 +4751,7 @@ const renderRevisao = () => {
                         <div class="prog-kpi"><div class="value">${overall.accuracy}%</div><div class="label">Precisão</div><div class="sub">${progStatusBadge(overall.accuracy,overall.feitas)}</div></div>
                         <div class="prog-kpi"><div class="value">${overall.efficiency.toFixed(1)}</div><div class="label">Questões / hora</div><div class="sub">eficiência operacional</div></div>
                         <div class="prog-kpi"><div class="value">${overall.avgSession.toFixed(0)} min</div><div class="label">Sessão média</div><div class="sub">${overall.sessoes || selected.sessions.length} sessões</div></div>
+                        <div class="prog-kpi"><div class="value">${overall.coverage}%</div><div class="label">Cobertura de conteúdo</div><div class="sub">${overall.aulasConcluidas}/${overall.totalAulas} aulas concluídas</div></div>
                         <div class="prog-kpi"><div class="value">${overall.consistency}%</div><div class="label">Consistência</div><div class="sub">dias ativos / dias do período</div></div>
                     </div>`;
 
@@ -3915,14 +4768,14 @@ const renderRevisao = () => {
                     </div>`;
                     setTimeout(()=>{
                         progRenderChart('progChartTime',{type:'line',data:{labels:dayLabels,datasets:[{label:'Minutos',data:dayTime,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.09)',fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#697385',maxTicksLimit:12}},y:{beginAtZero:true,ticks:{color:'#697385'}}}}});
-                        const dr=rowsDisc.slice(0,10); progRenderChart('progChartDisc',{type:'bar',data:{labels:dr.map(x=>x.label),datasets:[{label:'% acerto',data:dr.map(x=>x.accuracy),backgroundColor:dr.map(x=>progBarColor(x.accuracy)),borderRadius:6}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,max:100,ticks:{color:'#697385'}},y:{ticks:{color:'#697385',font:{size:10}}}}}});
+                        const dr=rowsDisc.filter(x=>x.feitas>0).sort((a,b)=>b.feitas-a.feitas).slice(0,10); progRenderChart('progChartDisc',{type:'bar',data:{labels:dr.map(x=>x.label),datasets:[{label:'% acerto',data:dr.map(x=>x.accuracy),backgroundColor:dr.map(x=>progBarColor(x.accuracy)),borderRadius:6}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,max:100,ticks:{color:'#697385'}},y:{ticks:{color:'#697385',font:{size:10}}}}}});
                         progRenderChart('progChartQ',{type:'bar',data:{labels:dr.map(x=>x.label),datasets:[{label:'Questões',data:dr.map(x=>x.feitas),backgroundColor:'rgba(96,165,250,.65)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#697385'}},x:{ticks:{color:'#697385',maxRotation:45}}}}});
                         const dw=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>{const x=rowsDay.find(r=>r.label===d); return {d,min:x?.min||0,q:x?.feitas||0,acc:x?.accuracy||0};}); progRenderChart('progChartWeek',{type:'bar',data:{labels:dw.map(x=>x.d),datasets:[{label:'Minutos',data:dw.map(x=>x.min),backgroundColor:'rgba(167,139,250,.6)',borderRadius:5},{label:'Questões',data:dw.map(x=>x.q),backgroundColor:'rgba(96,165,250,.6)',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8892a2',font:{size:10}}}},scales:{y:{beginAtZero:true,ticks:{color:'#697385'}},x:{ticks:{color:'#697385'}}}}});
                     },0);
                 }
 
                 if (progressoBIState.tab==='matriz') {
-                    const dim=progressoBIState.dim; const rows=dim==='disciplina'?rowsDisc:dim==='tema'?rowsTheme:dim==='weekday'?rowsDay:rowsHour;
+                    const dim=progressoBIState.dim; const rows=dim==='disciplina'?rowsDisc:dim==='classe'?rowsClass:dim==='tema'?rowsTheme:dim==='weekday'?rowsDay:rowsHour;
                     const sorted=[...rows].sort((a,b)=>{
                         if(progressoBIState.metric==='taxa') return b.accuracy-a.accuracy;
                         if(progressoBIState.metric==='questoes') return b.feitas-a.feitas;
@@ -3930,20 +4783,76 @@ const renderRevisao = () => {
                         if(progressoBIState.metric==='eficiencia') return b.efficiency-a.efficiency;
                         return b.min-a.min;
                     });
-                    html+=`<div class="prog-panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap"><div><h4>🧮 Matriz de desempenho</h4><div class="hint">Clique em uma linha para focalizar a análise. A matriz funciona como um cubo: dimensão × métricas × filtros globais.</div></div><div class="prog-filter-actions"><span class="prog-small">Dimensão:</span>${[['disciplina','Disciplina'],['tema','Tema'],['weekday','Dia'],['hour','Hora']].map(([k,l])=>`<button class="prog-chip ${dim===k?'active':''}" onclick="window.progSetDim('${k}')">${l}</button>`).join('')}</div></div>
-                        <div class="prog-table-wrap"><table class="prog-table"><thead><tr><th>${dim==='disciplina'?'Disciplina':dim==='tema'?'Tema':dim==='weekday'?'Dia':'Hora'}</th><th>Tempo</th><th>Questões</th><th>Acertos</th><th>%</th><th>Questões/h</th><th>Atividade</th><th>Status</th></tr></thead><tbody>
-                        ${sorted.map(r=>`<tr class="${progressoBIState.foco?.type===dim && progressoBIState.foco?.value===r.label?'focused':''}" onclick="window.progFoco('${dim}','${progEscape(r.label).replace(/'/g,"\\'")}')"><td><strong>${progEscape(r.label)}</strong><div class="prog-small">${r.activeDays} dia(s)</div></td><td>${progFmtMin(r.min)}</td><td>${r.feitas}</td><td>${r.acertos}/${r.feitas||0}</td><td><div style="display:flex;align-items:center;gap:7px"><span>${r.accuracy}%</span><div class="prog-meter"><span style="width:${Math.min(100,r.accuracy)}%;background:${progBarColor(r.accuracy)}"></span></div></div></td><td>${r.efficiency.toFixed(1)}</td><td>${r.sessoes} sessões</td><td>${progStatusBadge(r.accuracy,r.feitas)}</td></tr>`).join('') || `<tr><td colspan="8"><div class="prog-empty">Nenhum dado encontrado para o recorte atual.</div></td></tr>`}
+                    html+=`<div class="prog-panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap"><div><h4>🧮 Matriz de desempenho</h4><div class="hint">Clique em uma linha para focalizar a análise. A matriz funciona como um cubo: dimensão × métricas × filtros globais.</div></div><div class="prog-filter-actions"><span class="prog-small">Dimensão:</span>${[['disciplina','Disciplina'],['classe','Classe'],['tema','Tema'],['weekday','Dia'],['hour','Hora']].map(([k,l])=>`<button class="prog-chip ${dim===k?'active':''}" onclick="window.progSetDim('${k}')">${l}</button>`).join('')}</div></div>
+                        <div class="prog-table-wrap"><table class="prog-table"><thead><tr><th>${dim==='disciplina'?'Disciplina':dim==='tema'?'Tema':dim==='weekday'?'Dia':'Hora'}</th><th>Aulas</th><th>Tempo</th><th>Questões</th><th>Acertos</th><th>%</th><th>Questões/h</th><th>Atividade</th><th>Status</th></tr></thead><tbody>
+                        ${sorted.map(r=>`<tr class="${progressoBIState.foco?.type===dim && progressoBIState.foco?.value===r.label?'focused':''}" onclick="window.progFoco('${dim}','${progEscape(r.label).replace(/'/g,"\\'")}')"><td><strong>${progEscape(r.label)}</strong><div class="prog-small">${r.activeDays} dia(s)</div></td><td>${r.concluidas}/${r.aulas || 0}</td><td>${progFmtMin(r.min)}</td><td>${r.feitas}</td><td>${r.acertos}/${r.feitas||0}</td><td><div style="display:flex;align-items:center;gap:7px"><span>${r.accuracy}%</span><div class="prog-meter"><span style="width:${Math.min(100,r.accuracy)}%;background:${progBarColor(r.accuracy)}"></span></div></div></td><td>${r.efficiency.toFixed(1)}</td><td>${r.sessoes} sessões</td><td>${progStatusBadge(r.accuracy,r.feitas)}</td></tr>`).join('') || `<tr><td colspan="9"><div class="prog-empty">Nenhum dado encontrado para o recorte atual.</div></td></tr>`}
                         </tbody></table></div></div>`;
                 }
 
                 if (progressoBIState.tab==='tempo') {
                     const byHour=Array.from({length:24},(_,h)=>rowsHour.find(r=>r.label===`${h.toString().padStart(2,'0')}h`)||{label:`${h.toString().padStart(2,'0')}h`,min:0,feitas:0,acertos:0,accuracy:0});
                     html+=`<div class="prog-grid-2">
-                        <div class="prog-panel"><h4>⏰ Mapa de calor — hora × dia da semana</h4><div class="hint">Mostra onde o estudo está concentrado. O brilho representa minutos estudados.</div><div class="prog-heatmap"><div></div>${Array.from({length:24},(_,h)=>`<div class="prog-heatlabel">${h}</div>`).join('')}${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(day=>`<div class="prog-heatlabel" style="text-align:left">${day}</div>${Array.from({length:24},(_,h)=>{const min=selected.sessions.filter(s=>s.iso&&progWeekday(progISOFromBR(s.iso)||new Date())===day&&progHours(s)===h).reduce((a,x)=>a+x.duracao,0);const max=Math.max(1,...selected.sessions.map(s=>s.duracao));const intensity=Math.min(1,min/Math.max(60,max));return `<div class="prog-heatcell" title="${day}, ${h}h — ${min} min" style="background:rgba(124,58,237,${min?0.10+0.75*intensity:0.03})" onclick="window.progFocarHorario('${day}',${h})"></div>`}).join('')}`).join('')}</div><div class="prog-tooltip-note">Clique em uma célula para focalizar dia/horário na leitura analítica.</div></div>
+                        <div class="prog-panel"><h4>⏰ Mapa de calor — hora × dia da semana</h4><div class="hint">Mostra onde o estudo está concentrado. O brilho representa minutos estudados.</div><div class="prog-heatmap"><div></div>${Array.from({length:24},(_,h)=>`<div class="prog-heatlabel">${h}</div>`).join('')}${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(day=>`<div class="prog-heatlabel" style="text-align:left">${day}</div>${Array.from({length:24},(_,h)=>{const min=selected.sessions.filter(s=>s.iso&&progWeekday(progRecordDate(s)||new Date())===day&&progHours(s)===h).reduce((a,x)=>a+x.duracao,0);const max=Math.max(1,...selected.sessions.map(s=>s.duracao));const intensity=Math.min(1,min/Math.max(60,max));return `<div class="prog-heatcell" title="${day}, ${h}h — ${min} min" style="background:rgba(124,58,237,${min?0.10+0.75*intensity:0.03})" onclick="window.progFocarHorario('${day}',${h})"></div>`}).join('')}`).join('')}</div><div class="prog-tooltip-note">Clique em uma célula para focalizar dia/horário na leitura analítica.</div></div>
                         <div class="prog-panel"><h4>📊 Ritmo por hora</h4><div class="hint">Questões/h combina intensidade de prática com tempo investido; sem histórico temporal de questões, o valor permanece apenas onde existem registros.</div><div class="prog-chart-wrap"><canvas id="progChartHour"></canvas></div></div>
                     </div>
                     <div class="prog-panel"><h4>📆 Dia da semana — volume e precisão</h4><div class="prog-table-wrap"><table class="prog-table"><thead><tr><th>Dia</th><th>Tempo</th><th>Questões</th><th>%</th><th>Sessões</th><th>Interpretação</th></tr></thead><tbody>${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>{const r=rowsDay.find(x=>x.label===d)||{min:0,feitas:0,acertos:0,accuracy:0,sessoes:0};const interpretation=r.min===0?'Pouco/nenhum estudo':r.feitas<10?'Amostra baixa':r.accuracy>90?'Excelente':r.accuracy>80?'Bom':r.accuracy>=70?'Atenção':'Crítico';return `<tr><td><strong>${d}</strong></td><td>${progFmtMin(r.min)}</td><td>${r.feitas}</td><td>${progStatusBadge(r.accuracy,r.feitas)}</td><td>${r.sessoes}</td><td>${interpretation}</td></tr>`}).join('')}</tbody></table></div></div>`;
                     setTimeout(()=>progRenderChart('progChartHour',{type:'bar',data:{labels:byHour.map(x=>x.label),datasets:[{label:'Minutos',data:byHour.map(x=>x.min),backgroundColor:'rgba(124,58,237,.6)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#697385'}},y:{beginAtZero:true,ticks:{color:'#697385'}}}}}),0);
+                }
+
+                if (progressoBIState.tab==='analitica') {
+                    const pred = progPredictiveModel(selected.sessions, selected.questions);
+                    const targetHours = Number(AppState.student?.config?.horasPorDia || 4);
+                    const daysPerWeek = Math.max(1, Math.round((pred.avgDailyMin || (targetHours*60))/60));
+                    const rowsAll = [...rowsTheme].map(r=>({...r,opportunity:progOpportunityScore(r)})).sort((a,b)=>b.opportunity-a.opportunity);
+                    const top = rowsAll.slice(0,10);
+                    const values=[...selected.sessions].sort((a,b)=>String(a.iso).localeCompare(String(b.iso)));
+                    const daily = {};
+                    values.forEach(s=>{ if(!s.iso)return; daily[s.iso]=(daily[s.iso]||0)+(Number(s.duracao)||0); });
+                    const trendLabels=Object.keys(daily).sort().slice(-21);
+                    const trendValues=trendLabels.map(k=>daily[k]);
+                    const chartType=progressoBIState.chartType || 'line';
+                    const chartData={
+                        labels:trendLabels.map(progFormatDate),
+                        datasets:[{label:'Minutos/dia',data:trendValues,fill:chartType==='line',tension:.28,borderWidth:2}]
+                    };
+                    html+=`
+                        <div class="prog-scope-banner">🧠 <strong>Motor preditivo:</strong> combina tendência temporal, precisão observada, intervalo de confiança de Wilson, consistência, variabilidade e pressão por conteúdo. As projeções são heurísticas para tomada de decisão, não garantias.</div>
+                        <div class="prog-kpis">
+                            <div class="prog-kpi"><div class="value">${Math.round(pred.nextDayMin)} min</div><div class="label">Ritmo previsto amanhã</div><div class="sub">tendência por dia</div></div>
+                            <div class="prog-kpi"><div class="value">${Math.round(pred.next7Min/60*10)/10} h</div><div class="label">Ritmo projetado · 7d</div><div class="sub">mantido o padrão atual</div></div>
+                            <div class="prog-kpi"><div class="value">${Math.round(pred.projectedAccuracy)}%</div><div class="label">Precisão projetada</div><div class="sub">inclui tendência recente</div></div>
+                            <div class="prog-kpi"><div class="value">${Math.round(pred.lowerAccuracy)}–${Math.round(pred.upperAccuracy)}%</div><div class="label">IC 95% da precisão</div><div class="sub">${pred.sample} questões</div></div>
+                            <div class="prog-kpi"><div class="value">${pred.stability}%</div><div class="label">Estabilidade do ritmo</div><div class="sub">menor CV = melhor</div></div>
+                            <div class="prog-kpi"><div class="value">${Math.round(pred.medianDailyMin)} min</div><div class="label">Mediana diária</div><div class="sub">resiste a dias atípicos</div></div>
+                        </div>
+                        <div class="prog-panel">
+                            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
+                                <div><h4>🔮 Série temporal + escolha de visual</h4><div class="hint">Troque entre linha, barras e radar. O gráfico respeita os filtros do BI.</div></div>
+                                <div class="prog-filter-actions">
+                                    ${[['line','Linha'],['bar','Barras'],['radar','Radar']].map(([k,l])=>`<button class="prog-chip ${chartType===k?'active':''}" onclick="window.progSetChart('${k}')">${l}</button>`).join('')}
+                                </div>
+                            </div>
+                            <div class="prog-chart-wrap tall"><canvas id="progChartPredictive"></canvas></div>
+                        </div>
+                        <div class="prog-grid-2 equal">
+                            <div class="prog-panel"><h4>🎯 Oportunidades de maior retorno</h4><div class="hint">Score heurístico: menor precisão + baixa amostra + baixa exposição tendem a subir.</div>
+                                ${top.map((r,i)=>`<div class="lesson-item"><span style="width:22px;font-weight:800;color:#a78bfa">${i+1}</span><span style="flex:1"><strong>${progEscape(r.label)}</strong><div class="prog-small">${r.feitas} questões · ${progFmtMin(r.min)} · ${r.accuracy}%</div></span><span class="prog-status ${r.accuracy<70?'critico':r.accuracy<80?'regular':r.accuracy<90?'bom':'otimo'}">${r.opportunity}</span></div>`).join('') || '<div class="prog-empty">Sem amostra suficiente.</div>'}
+                            </div>
+                            <div class="prog-panel"><h4>📐 Estatística resumida</h4>
+                                <div class="prog-compare">
+                                    <div class="prog-compare-card"><div class="v">${pred.accuracy.toFixed(1)}%</div><div class="prog-small">precisão observada</div></div>
+                                    <div class="prog-compare-card"><div class="v">${pred.accuracyTrend>=0?'+':''}${pred.accuracyTrend.toFixed(2)} pp/dia</div><div class="prog-small">tendência da precisão</div></div>
+                                    <div class="prog-compare-card"><div class="v">${(pred.cv*100).toFixed(1)}%</div><div class="prog-small">coeficiente de variação do ritmo</div></div>
+                                </div>
+                                <div style="margin-top:10px" class="prog-scope-banner">📌 Alvo configurado: ${targetHours} h/dia. Para aproximar o alvo sem aumentar risco de fadiga, compare ritmo previsto, consistência e precisão antes de elevar volume.</div>
+                            </div>
+                        </div>`;
+                    setTimeout(()=>{
+                        const metricData = chartType==='radar'
+                            ? {labels:['Precisão','Estabilidade','Consistência','Volume'],datasets:[{label:'Índice',data:[pred.accuracy,pred.stability,overall.consistency,Math.min(100,overall.feitas)]}]}
+                            : chartData;
+                        progRenderChart('progChartPredictive',{type:chartType==='radar'?'radar':chartType,data:metricData,options:{responsive:true,maintainAspectRatio:false,scales:chartType==='radar'?{r:{beginAtZero:true,max:100,ticks:{color:'#697385'}}}:{x:{ticks:{color:'#697385',maxTicksLimit:14}},y:{beginAtZero:true,ticks:{color:'#697385'}}},plugins:{legend:{labels:{color:'#8892a2',font:{size:10}}}}}});
+                    },0);
                 }
 
                 if (progressoBIState.tab==='diagnostico') {
@@ -3974,6 +4883,7 @@ const renderRevisao = () => {
             };
 
             window.progSetTab = tab => { progressoBIState.tab=tab; renderProgresso(); };
+            window.progSetChart = chartType => { progressoBIState.chartType=chartType; renderProgresso(); };
             window.progSetDim = dim => { progressoBIState.dim=dim; renderProgresso(); };
             window.progFoco = (type,value) => {
                 const map={disciplina:'disciplina',tema:'tema'};
@@ -3985,7 +4895,7 @@ const renderRevisao = () => {
             window.progLimparFiltros = () => { progressoBIState={...progressoBIState,periodo:'30',tab:progressoBIState.tab,dim:'disciplina',metric:'tempo',questBase:'auto',tipos:['todos'],disciplinas:['todos'],weekdays:['todos'],dataInicio:'',dataFim:'',foco:null}; renderProgresso(); };
             window.progExportCSV = () => {
                 const sel=progSelection(); const legacy=progCumulativeQuestions();
-                const q = progressoBIState.questBase === 'acumulado' || (progressoBIState.questBase === 'auto' && (progressoBIState.periodo === 'all' || sel.questions.length === 0)) ? legacy : sel.questions;
+                const q = progressoBIState.questBase === 'acumulado' ? legacy : (progressoBIState.questBase === 'auto' && !sel.questions.some(x=>x.iso) ? legacy : sel.questions);
                 const rows=progAggregate(sel.sessions,q,progressoBIState.dim);
                 const header=['Dimensão','Minutos','Questões','Acertos','Aproveitamento','Questões/h','Sessões','Dias ativos','Status'];
                 const lines=[header,...rows.map(r=>[r.label,Math.round(r.min),r.feitas,r.acertos,r.accuracy,r.efficiency.toFixed(2),r.sessoes,r.activeDays,r.status.label])];
@@ -4446,7 +5356,7 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                 const key = AppState.student.config.apiKey;
                 if (!key) { container.innerHTML += `<div class="msg bot">Configure a chave API.</div>`; return; }
                 try {
-                    const ctx = `Sistema StudyOS. Progresso: ${Math.round(getAllLessonsFlat().filter(i=>AppState.checks[i.key]).length/getAllLessonsFlat().length*100)}%. ${msg}`;
+                    const cgu = CGUStudentEngine.analisar(); const ctx = `Sistema StudyOS / estudante CGU. Cobertura: ${cgu.cobertura}%. Questões: ${cgu.questoes}. Precisão acumulada: ${cgu.acc ?? 'sem amostra'}%. Dias ativos: ${cgu.diasAtivos}. Revisões vencidas: ${cgu.atrasadas}. Prioridades: ${(cgu.notas||[]).join(' | ')}. ${msg}`;
                     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: ctx }] }] }) });
                     const data = await resp.json();
                     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta.';
@@ -4464,7 +5374,11 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                 const aiInsights = document.getElementById('arquitetoInsights');
                 const aiNotif = document.getElementById('arquitetoNotificacoes');
                 const aiHist = document.getElementById('arquitetoHistorico');
-                if (aiInsights) aiInsights.innerHTML = `<p>📊 ${getAllLessonsFlat().filter(i=>AppState.checks[i.key]).length} aulas</p><p>🃏 ${AppState.flashcards.length} flashcards</p><p>📋 ${AppState.simulados.length} simulados</p>`;
+                if (aiInsights) {
+                    const cgu = CGUStudentEngine.analisar();
+                    const qs = CGUStudentEngine.perguntas();
+                    aiInsights.innerHTML = `<p>📊 ${getAllLessonsFlat().filter(i=>AppState.checks[i.key]).length} aulas concluídas</p><p>🃏 ${AppState.flashcards.length} flashcards</p><p>📋 ${AppState.simulados.length} simulados</p><hr style="border:0;border-top:1px solid rgba(255,255,255,.08);margin:10px 0"><strong>🎓 Estudante CGU</strong><p class="prog-small">Cobertura: ${cgu.cobertura}% · ${cgu.questoes} questões · ${cgu.acc===null?'precisão ainda sem amostra':cgu.acc+'% de acerto'}</p><div class="prog-small">${cgu.notas.map(n=>`• ${progEscape(n)}`).join('<br>')}</div><div style="margin-top:10px"><strong>❓ Perguntas para o estudante</strong>${qs.map(q=>`<div class="prog-small" style="margin-top:5px">${progEscape(q)}</div>`).join('')}</div>`;
+                }
                 if (aiNotif) aiNotif.innerHTML = AppState.arquiteto.notificacoes.slice(-5).map(n => `<div class="notif-item">${n.texto}</div>`).join('') || '<p class="text-muted">Nenhuma.</p>';
                 if (aiHist) aiHist.innerHTML = AppState.arquiteto.historico.slice(-5).map(h => `<div class="historico-item"><strong>${h.pergunta.slice(0,50)}...</strong><br><small>${h.resposta.slice(0,80)}...</small></div>`).join('') || '<p class="text-muted">Nenhum.</p>';
             };
@@ -4903,7 +5817,25 @@ document.getElementById('modalDiario')?.addEventListener('click', (e) => {
                 document.getElementById('arquitetoInput').onkeydown = e => { if (e.key === 'Enter') enviarArquiteto(); };
                 document.getElementById('exportBtn').onclick = () => { const b = new Blob([JSON.stringify(AppState, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `studyos_backup_${hoje()}.json`; a.click(); };
                 document.getElementById('importBtn').onclick = () => document.getElementById('fileInput').click();
-                document.getElementById('fileInput').onchange = function(e) { if (!this.files.length) return; const r = new FileReader(); r.onload = ev => { try { const d = JSON.parse(ev.target.result); if (confirm('Substituir progresso?')) { AppState = deepMerge(AppState, d); saveState(); location.reload(); } } catch (ex) { alert('Arquivo inválido.'); } }; r.readAsText(this.files[0]); };
+                document.getElementById('fileInput').onchange = function(e) {
+    if (!this.files.length) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        try {
+            const d = JSON.parse(ev.target.result);
+            if (!confirm('Substituir progresso?')) return;
+            AppState = deepMerge(AppState, d);
+            if (!Array.isArray(AppState.biEventos)) AppState.biEventos = [];
+            if (typeof migrarLegadoParaBI === 'function') migrarLegadoParaBI();
+            if (typeof normalizarIntegridadeProgresso === 'function') normalizarIntegridadeProgresso();
+            saveState();
+            location.reload();
+        } catch (ex) {
+            alert('Arquivo inválido.');
+        }
+    };
+    r.readAsText(this.files[0]);
+};
                 document.getElementById('resetAllBtn').onclick = () => { if (confirm('⚠️ Resetar TUDO?')) { resetState(); location.reload(); } };
                 document.getElementById('gerenciarAulasBtn')?.addEventListener('click', () => mostrarGerenciador('aulas'));
                 document.getElementById('gerenciarLeisBtn')?.addEventListener('click', () => mostrarGerenciador('leis'));
